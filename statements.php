@@ -91,7 +91,7 @@ if (!$temple) {
         if ($canSubmit && $state !== 'future' && !$closed) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="' . e($rep ? 'ส่งรายงานเดือนนี้ใหม่?' : ($now['count'] === 0 ? 'เดือนนี้ไม่มีรายการ ยืนยันส่งรายงาน (ไม่มีรายการ)?' : 'ยืนยันส่งรายงานประจำเดือนนี้?')) . '">'
                 . csrf_field() . '<input type="hidden" name="action" value="submit_report"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
-                . '<input name="note" maxlength="255" placeholder="หมายเหตุ (ถ้ามี)" class="w-56 !py-1 text-sm">'
+                . '<input name="note" maxlength="255" placeholder="หมายเหตุ (ถ้ามี)" class="w-56 ctl-sm">'
                 . '<button class="btn btn-sm">' . ($rep ? 'ส่งรายงานใหม่' : 'ส่งรายงานประจำเดือน') . '</button></form>';
         }
         if ($canClose && !$closed && $state === 'ok') {
@@ -102,7 +102,7 @@ if (!$temple) {
         if ($canReopen && $closed) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="เปิดงวดเดือนนี้ให้แก้ไขรายการได้?">' . csrf_field()
                 . '<input type="hidden" name="action" value="reopen_month"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
-                . '<input name="reason" required minlength="5" maxlength="255" placeholder="เหตุผลที่เปิดงวด (จำเป็น)" class="w-64 !py-1 text-sm"><button class="btn btn-sm btn-danger">เปิดงวด</button></form>';
+                . '<input name="reason" required minlength="5" maxlength="255" placeholder="เหตุผลที่เปิดงวด (จำเป็น)" class="w-64 ctl-sm"><button class="btn btn-sm btn-danger">เปิดงวด</button></form>';
         }
         if ($evs) {
             echo '<details class="basis-full text-sm"><summary class="cursor-pointer text-stone-600">ประวัติปิด/เปิดงวด (' . count($evs) . ')</summary><ul class="mt-1 grid gap-0.5">';

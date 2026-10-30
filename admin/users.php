@@ -134,7 +134,7 @@ require __DIR__ . '/../includes/header.php';
       <?php if ($r['email']): ?><span class="whitespace-nowrap"><?= e(mask_email($r['email'])) ?></span><?php else: ?><span class="text-red-700"><?= $r['role'] === 'admin' ? 'ยังไม่ยืนยัน (ยืนยันตอนเข้าสู่ระบบ)' : 'ยังไม่มีอีเมล — เข้าสู่ระบบไม่ได้' ?></span><?php endif; ?>
       <?php if (in_array($r['role'], ['district', 'province'], true)): ?>
       <form method="post" class="mt-1 flex gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="set_email"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <input type="email" name="email" placeholder="<?= $r['email'] ? 'เปลี่ยนอีเมล' : 'อีเมล' ?>" maxlength="190" required class="w-44 !py-1 text-sm"><button class="btn btn-sm btn-outline">บันทึก</button></form>
+        <input type="email" name="email" placeholder="<?= $r['email'] ? 'เปลี่ยนอีเมล' : 'อีเมล' ?>" maxlength="190" required class="w-44 ctl-sm"><button class="btn btn-sm btn-outline">บันทึก</button></form>
       <?php endif; ?>
     </td>
     <td><?= $r['is_active'] ? '<span class="badge badge-ok">ใช้งาน</span>' : '<span class="badge">ปิดใช้งาน</span>' ?></td>
@@ -143,7 +143,7 @@ require __DIR__ . '/../includes/header.php';
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิด' : 'เปิด' ?></button></form>
       <?php endif; ?>
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="reset"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <input type="password" name="password" placeholder="รหัสผ่านใหม่ (10+ ตัว)" minlength="10" class="w-40 !py-1 text-sm" autocomplete="new-password"><button class="btn btn-sm btn-outline ml-1">เปลี่ยนรหัส</button></form>
+        <input type="password" name="password" placeholder="รหัสผ่านใหม่ (10+ ตัว)" minlength="10" class="w-40 ctl-sm" autocomplete="new-password"><button class="btn btn-sm btn-outline ml-1">เปลี่ยนรหัส</button></form>
     </td>
     <?php else: ?>
     <td colspan="5" class="text-stone-500">— ว่าง —</td>

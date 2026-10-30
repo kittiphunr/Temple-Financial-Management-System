@@ -147,6 +147,16 @@ def _run(R, q, app):
         r = sp.run(['node', '-e', js], capture_output=True, text=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()})
         sizes = {x for v in __import__('json').loads(r.stdout.strip().splitlines()[-1]).values() for x in v} if r.returncode == 0 else {'error'}
         check('U26 ในเบราว์เซอร์จริง ช่องกรอก/ตัวเลือก/ปุ่มทุกตัวสูง 44px และขอบมน 12px เท่ากัน', sizes == {'44/12px'}, f'{sizes} {r.stderr[-200:]}')
+        aud = """const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+        await p.goto('%s/login.php');await p.fill('input[name=username]','admin');await p.fill('input[name=password]','Test12345pw');await p.click('form button');await p.waitForLoadState('networkidle');
+        const bad=[];for(const pg of %s){await p.goto('%s'+pg);await p.waitForLoadState('networkidle');
+        const r=await p.evaluate(()=>{const out=[];const vis=e=>e.offsetParent!==null;document.querySelectorAll('main *').forEach(par=>{const ctl=[...par.children].filter(vis).filter(k=>k.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),select,.btn,button'));
+        if(!ctl.some(k=>k.matches('input,select'))||ctl.length<2||!/flex|grid/.test(getComputedStyle(par).display))return;const rs=ctl.map(k=>{const r=k.getBoundingClientRect();return {h:Math.round(r.height),b:Math.round(r.bottom),t:Math.round(r.top),n:k.tagName+'.'+(k.className||'').toString().slice(0,24)}});
+        for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++){const a=rs[i],c=rs[j];if(Math.abs(a.t-c.t)<20&&(a.h!==c.h||a.b!==c.b))out.push(a.n+' h'+a.h+'|'+c.n+' h'+c.h)}});return out});
+        r.forEach(x=>bad.push(pg+' '+x))}console.log(JSON.stringify(bad));await b.close()})()""" % (base, __import__('json').dumps(['/dashboard.php', f'/accounts.php?temple={t0}', '/report_status.php', f'/statements.php?temple={t0}', '/admin/users.php', '/admin/subdistricts.php', '/admin/temple_accounts.php', f'/profile.php?temple={t0}', '/transactions.php?type=income', '/reports.php']), base)
+        ra = sp.run(['node', '-e', aud], capture_output=True, text=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()})
+        mism = __import__('json').loads(ra.stdout.strip().splitlines()[-1]) if ra.returncode == 0 else ['error ' + ra.stderr[-200:]]
+        check('U29 แถวฟอร์มที่มีช่องกรอก/ตัวเลือกคู่กับปุ่ม: ทุกตัวสูงเท่ากันและชิดขอบล่างเดียวกัน (ตรวจ 10 หน้าในเบราว์เซอร์จริง)', mism == [], '; '.join(mism[:4]))
     else:
         check('U26 (ข้าม: ไม่มี Node/Playwright ในเครื่องนี้) ตรวจขนาดตัวควบคุมในเบราว์เซอร์จริง', True)
 

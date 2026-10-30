@@ -188,7 +188,7 @@ require __DIR__ . '/../includes/header.php';
     <p class="mb-4 text-sm text-stone-600">ดาวน์โหลดแม่แบบ (รหัสวัด, อีเมล, ...) กรอกอีเมลที่สืบเสาะมา แล้วอัปโหลดกลับ ช่องอีเมลที่ว่างจะไม่ถูกแก้ไข</p>
     <form method="post" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
       <?= csrf_field() ?><input type="hidden" name="action" value="import_emails"><input type="hidden" name="return" value="<?= e($return) ?>">
-      <input type="file" name="csv" accept=".csv,text/csv" required class="max-w-[14rem] text-sm">
+      <input type="file" name="csv" accept=".csv,text/csv" required class="max-w-[14rem] ctl-sm">
       <button class="btn btn-sm">นำเข้า</button>
       <a class="btn btn-outline btn-sm" href="?download=email_template">⇩ แม่แบบ CSV</a>
     </form>
@@ -213,7 +213,7 @@ require __DIR__ . '/../includes/header.php';
     <td>
       <form method="post" class="flex gap-1">
         <?= csrf_field() ?><input type="hidden" name="action" value="save_email"><input type="hidden" name="temple_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="return" value="<?= e($return) ?>">
-        <input type="email" name="email" value="<?= e($r['email']) ?>" maxlength="190" placeholder="ยังไม่ได้ลงทะเบียน" class="w-56 !py-1 text-sm">
+        <input type="email" name="email" value="<?= e($r['email']) ?>" maxlength="190" placeholder="ยังไม่ได้ลงทะเบียน" class="w-56 ctl-sm">
         <button class="btn btn-outline btn-sm">บันทึก</button>
       </form>
     </td>

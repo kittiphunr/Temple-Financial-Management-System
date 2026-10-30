@@ -106,7 +106,7 @@ require __DIR__ . '/includes/header.php';
     </div>
     <form method="post" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
       <?= csrf_field() ?><input type="hidden" name="action" value="logo_upload">
-      <input type="file" name="logo" accept="image/jpeg,image/png,image/webp" required class="max-w-[16rem] text-sm">
+      <input type="file" name="logo" accept="image/jpeg,image/png,image/webp" required class="max-w-[16rem] ctl-sm">
       <button class="btn btn-sm"><?= $t['logo_media_id'] ? 'เปลี่ยนโลโก้' : 'อัปโหลดโลโก้' ?></button>
     </form>
     <?php if ($t['logo_media_id']): ?>

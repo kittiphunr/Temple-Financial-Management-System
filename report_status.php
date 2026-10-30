@@ -109,7 +109,7 @@ require __DIR__ . '/includes/header.php';
   <?php endif; ?>
   <?php if ($u['role'] === 'admin'): ?>
   <form method="post" class="ml-auto flex items-center gap-2"><?= csrf_field() ?><input type="hidden" name="action" value="set_due"><input type="hidden" name="year" value="<?= $year ?>"><input type="hidden" name="month" value="<?= $month ?>">
-    <label class="!mb-0">กำหนดส่ง: วันที่</label><input type="number" name="due_day" min="1" max="28" value="<?= report_due_day() ?>" class="w-20 !py-1"><span>ของเดือนถัดไป</span><button class="btn btn-sm btn-outline">บันทึก</button></form>
+    <label class="!mb-0">กำหนดส่ง: วันที่</label><input type="number" name="due_day" min="1" max="28" value="<?= report_due_day() ?>" class="w-20 ctl-sm"><span>ของเดือนถัดไป</span><button class="btn btn-sm btn-outline">บันทึก</button></form>
   <?php endif; ?>
 </div>
 <?php endif; ?>

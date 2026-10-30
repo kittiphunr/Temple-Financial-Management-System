@@ -131,9 +131,9 @@ require __DIR__ . '/../includes/header.php';
       <div><button class="btn btn-sm">บันทึก<?= e(unit_subdistrict()) ?>ที่ดูแล</button></div></form>
     <div class="mt-3 flex flex-wrap gap-4">
       <form method="post" class="flex items-center gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="set_email"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <input type="email" name="email" placeholder="<?= $r['email'] ? 'เปลี่ยนอีเมล' : 'อีเมล' ?>" maxlength="190" required class="w-52 !py-1 text-sm"><button class="btn btn-sm btn-outline">บันทึกอีเมล</button></form>
+        <input type="email" name="email" placeholder="<?= $r['email'] ? 'เปลี่ยนอีเมล' : 'อีเมล' ?>" maxlength="190" required class="w-52 ctl-sm"><button class="btn btn-sm btn-outline">บันทึกอีเมล</button></form>
       <form method="post" class="flex items-center gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="reset"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <input type="password" name="password" placeholder="รหัสผ่านใหม่ (10+ ตัว)" minlength="10" class="w-48 !py-1 text-sm" autocomplete="new-password"><button class="btn btn-sm btn-outline">เปลี่ยนรหัส</button></form>
+        <input type="password" name="password" placeholder="รหัสผ่านใหม่ (10+ ตัว)" minlength="10" class="w-48 ctl-sm" autocomplete="new-password"><button class="btn btn-sm btn-outline">เปลี่ยนรหัส</button></form>
     </div>
   </details>
 </div>

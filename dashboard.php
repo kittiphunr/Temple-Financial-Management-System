@@ -65,7 +65,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
         <option value="<?= $y ?>" <?= $y === $year ? 'selected' : '' ?>>ปี พ.ศ. <?= $y ?></option>
       <?php endfor; ?>
     </select>
-    <button type="button" class="btn btn-outline btn-sm" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
+    <button type="button" class="btn btn-outline" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
   </form>
 </div>
 
