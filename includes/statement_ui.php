@@ -28,7 +28,7 @@ function stmt_context(PDO $pdo, int $templeId): array
         $p = $st->fetch();
         return $p ? trim(trim((string)$p['title']) . $p['first_name'] . ' ' . $p['last_name']) : '';   // นาย/พระครู ติดชื่อ ตามแบบเอกสาร
     };
-    return ['t' => $t, 'district' => (string)$d->fetchColumn(), 'province' => $CONFIG['province_name'] ?? 'แพร่', 'steward' => $who('steward'), 'abbot' => $who('abbot')];
+    return ['t' => $t, 'district' => (string)$d->fetchColumn(), 'province' => province_name(), 'steward' => $who('steward'), 'abbot' => $who('abbot')];
 }
 
 function stmt_place(array $c): string

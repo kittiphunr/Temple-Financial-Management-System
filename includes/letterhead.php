@@ -10,7 +10,7 @@
 function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, string $subtitle = '', bool $printOnly = false, bool $centered = false, string $rightHtml = ''): string
 {
     global $CONFIG;
-    $province = $CONFIG['province_name'] ?? 'แพร่';
+    $province = province_name();
     $logoId = null;
     $taxLine = '';
     $warn = '';

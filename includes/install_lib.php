@@ -72,6 +72,7 @@ function install_requirements(): array
         ['เขียนไฟล์ตั้งค่า config.local.php ได้', $cfgWritable, $cfgWritable ? 'เขียนได้' : 'เขียนไม่ได้ — ให้สิทธิ์เขียนโฟลเดอร์โปรเจกต์ให้ผู้ใช้เว็บเซิร์ฟเวอร์ชั่วคราว', true],
         ['เขียนโฟลเดอร์ storage/ ได้', is_dir($storage) && is_writable($storage), is_writable($storage) ? 'เขียนได้' : 'เขียนไม่ได้ — chmod โฟลเดอร์ storage/', true],
         ['ส่วนขยาย sodium (เข้ารหัสเลขบัตรประชาชนของบุคลากรวัด)', extension_loaded('sodium'), extension_loaded('sodium') ? 'พร้อมใช้งาน' : 'ไม่พบ — ติดตั้ง php-sodium (มากับ PHP 7.2+ ส่วนใหญ่)', true],
+        ['ส่วนขยาย zip (นำเข้าทะเบียนวัดจากไฟล์ Excel .xlsx)', extension_loaded('zip'), extension_loaded('zip') ? 'พร้อมใช้งาน' : 'ไม่พบ — นำเข้า Excel ไม่ได้ (ใช้ CSV แทนได้ หรือติดตั้ง php-zip)', false],
         ['ส่วนขยาย gd (ย่อและแปลงรูปโลโก้/รูปถ่าย)', extension_loaded('gd'), extension_loaded('gd') ? 'พร้อมใช้งาน' : 'ไม่พบ — อัปโหลดโลโก้/รูปถ่ายจะใช้ไม่ได้ (ติดตั้ง php-gd)', false],
         ['ทะเบียนวัด data/temples_phrae.csv', is_file($root . '/data/temples_phrae.csv'), is_file($root . '/data/temples_phrae.csv') ? 'พบไฟล์ (381 วัด)' : 'ไม่พบไฟล์ — จะติดตั้งโดยไม่มีรายชื่อวัด', false],
         ['ส่วนขยาย openssl (ส่งอีเมลแบบเข้ารหัส TLS/SSL)', extension_loaded('openssl'), extension_loaded('openssl') ? 'พร้อมใช้งาน' : 'ไม่พบ — SMTP แบบเข้ารหัสจะใช้ไม่ได้', false],

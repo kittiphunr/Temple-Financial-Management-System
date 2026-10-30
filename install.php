@@ -426,6 +426,7 @@ switch ($step) {
           <?= field('ยืนยันรหัสผ่าน', 'admin_pass2', '', 'password', ($hasPw ? '' : 'required ') . 'autocomplete="new-password"') ?>
           <div class="grid gap-2 rounded-xl bg-gold-50 p-3 text-sm sm:col-span-2">
             <label class="!mb-0 !text-stone-800"><input type="checkbox" name="import_temples" value="1" <?= $f['import_temples'] ? 'checked' : '' ?>> นำเข้าทะเบียนวัดจังหวัดแพร่ 381 วัด (จัดกลุ่มตามอำเภอ)</label>
+            <p class="ml-6 mt-1 text-xs text-stone-500">ใช้ระบบกับจังหวัดอื่น: ติ๊กออก แล้วนำเข้าไฟล์ Excel ทะเบียนวัดของจังหวัดนั้น (จาก binfo.onab.go.th) ที่ จัดการระบบ → นำเข้าวัด หลังติดตั้ง — ระบบสร้างอำเภอและตั้งชื่อจังหวัดให้เอง</p>
             <label class="!mb-0 !text-stone-800"><input type="checkbox" name="make_accounts" value="1" <?= $f['make_accounts'] ? 'checked' : '' ?>> สร้างบัญชีแอดมินประจำวัดให้ทุกวัดอัตโนมัติ (1 วัด = 1 บัญชี พร้อมรหัสผ่านเริ่มต้นสุ่ม)</label>
           </div>
           <div class="flex gap-2 sm:col-span-2"><a class="btn btn-outline" href="install.php?step=2">← กลับ</a><button class="btn">ต่อไป →</button></div>

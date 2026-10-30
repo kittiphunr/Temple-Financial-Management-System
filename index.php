@@ -21,7 +21,7 @@ $features = [
   <div class="relative">
     <img class="mx-auto h-28 w-28 drop-shadow" src="<?= BASE ?>assets/img/logo.svg" alt="ตราสัญลักษณ์">
     <h1 class="mt-3 text-3xl font-bold text-brand-700 sm:text-5xl"><?= e($CONFIG['app_name']) ?></h1>
-    <p class="mt-1 text-lg sm:text-xl"><?= e($CONFIG['app_sub']) ?></p>
+    <p class="mt-1 text-lg sm:text-xl"><?= e(app_subtitle()) ?></p>
     <div class="mx-auto mt-5 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-1 rounded-full bg-white/80 px-6 py-2.5 font-semibold">
       <span>จัดเก็บข้อมูลบัญชี</span><span class="text-gold-500">•</span><span>ตรวจสอบได้</span><span class="text-gold-500">•</span><span>พิมพ์และส่งออกเอกสารได้</span>
     </div>

@@ -189,7 +189,7 @@ _IGNORED = {'.git', 'node_modules', 'tests', 'config.local.php', 'installed.lock
 
 
 def _ignore(_dir, names):
-    return [n for n in names if n in _IGNORED or n.startswith('temple_accounts_')]
+    return [n for n in names if n in _IGNORED or n.startswith('temple_accounts_') or n.startswith('import_')]
 
 
 class App:

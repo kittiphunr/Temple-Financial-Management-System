@@ -149,7 +149,7 @@ $box = fn(string $role, string $n) => '<div class="rc-sig"><div class="rc-sig-li
   <div class="rc-row rc-daterow"><span class="rc-gap"></span>วันที่ <?= $fill((string)$rd, 'w-day') ?> เดือน <?= $fill(TH_MONTHS[$rm], 'w-mon') ?> พ.ศ. <?= $fill((string)($ry + 543), 'w-yr') ?></div>
   <div class="rc-row">ชื่อ/Name <?= $fill($firstName) ?> ฉายา/นามสกุล/Surname <?= $fill($lastName) ?></div>
   <div class="rc-row">ที่อยู่/Address <?= $fill((string)$r['donor_address']) ?></div>
-  <div class="rc-line">ได้มีศรัทธาเลื่อมใส บริจาคทรัพย์เข้า<?= e($t['name']) ?><?= $t['subdistrict'] ? ' ตำบล' . e($t['subdistrict']) : '' ?> อำเภอ<?= e($district) ?> จังหวัด<?= e($CONFIG['province_name'] ?? 'แพร่') ?></div>
+  <div class="rc-line">ได้มีศรัทธาเลื่อมใส บริจาคทรัพย์เข้า<?= e($t['name']) ?><?= $t['subdistrict'] ? ' ตำบล' . e($t['subdistrict']) : '' ?> อำเภอ<?= e($district) ?> จังหวัด<?= e(province_name()) ?></div>
   <div class="rc-row">เป็นจำนวนเงิน <?= $fill(money($r['amount']), 'w-amt') ?> บาท ( <?= $fill(thai_baht_text($r['amount'])) ?> )</div>
   <div class="rc-row">มีวัตถุประสงค์เพื่อ <?= $fill((string)($r['purpose'] ?: $r['category'])) ?></div>
   <p class="rc-bless">ด้วยพุทธานุภาพ ธรรมานุภาพและสังฆานุภาพแห่งคุณพระรัตนตรัยและอานิสงส์แห่งทานบริจาคนี้ จงดลบันดาลให้ท่านจงปราศจากสรรพโรคาพาธภัยพิบัติอุปัทวันตรายและเจริญยิ่งด้วยอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติ ประสบสิ่งอันพึงปรารถนาทุกทิพาราตรีกาล เทอญ</p>
