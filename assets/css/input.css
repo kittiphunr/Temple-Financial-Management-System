@@ -126,8 +126,8 @@
   .receipt-font .print\:hidden { font-family: 'Sarabun', sans-serif; font-size: .95rem; line-height: 1.4rem; }
   /* ใบอนุโมทนาตามแบบฟอร์ม: ช่องกรอกเป็นเส้นประใต้ข้อความ จัดสมมาตรกึ่งกลางกระดาษ */
   .rc-page { display: flex; flex-direction: column; justify-content: space-between; gap: .35rem; }
-  .rc-head { @apply grid grid-cols-[5.5rem_1fr_5.5rem] items-center gap-3 pb-1; }
-  .rc-logo { @apply h-[5.5rem] w-[5.5rem] object-contain; }
+  .rc-head { @apply grid grid-cols-[8rem_1fr_8rem] items-center gap-3 pb-1; }
+  .rc-logo { @apply h-[8rem] w-[8rem] object-contain; }
   .rc-head .text-xl { @apply text-brand-900; }
   .rc-row { @apply flex items-end gap-2 whitespace-nowrap; }
   .rc-titlerow { @apply justify-between; }
@@ -145,19 +145,19 @@
   .rc-bless { @apply my-0 px-[3%] text-center; }
   .rc-sign { @apply grid grid-cols-[1fr_auto_1fr] items-end gap-5 px-[4%]; }
   .rc-sig { @apply text-center; }
-  .rc-sig-line { @apply mb-1 mt-6 border-b border-dotted border-stone-500; }
+  .rc-sig-line { @apply mb-1 mt-14 border-b border-dotted border-stone-500; }   /* เว้นที่ว่างเหนือเส้นสำหรับเซ็นชื่อด้วยลายมือ */
   .rc-stamp { @apply flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-stone-400 text-center text-stone-500; font-size: 1.4rem; line-height: 1.8rem; }
   .rc-foot { @apply text-center; }
 }
 @media print {
   @page receipt { size: B5 landscape; margin: 8mm; }
-  .receipt-font { page: receipt; font-size: 26px; line-height: 1.3; }
-  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 21px; line-height: 1.25; }
+  .receipt-font { page: receipt; font-size: 25px; line-height: 1.25; }
+  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 20px; line-height: 1.2; }
   .receipt-font .text-xl { font-size: 38px; line-height: 1.15; }
   .rc-page { height: 157mm; overflow: hidden; }
   .rc-title { font-size: 40px; line-height: 1.1; }
-  .rc-logo { height: 4.2rem; width: 4.2rem; }
-  .rc-head { grid-template-columns: 4.2rem 1fr 4.2rem; }
-  .rc-sig-line { margin-top: 1rem; }
-  .rc-stamp { height: 4.8rem; width: 4.8rem; font-size: 16px; line-height: 1.15; }
+  .rc-logo { height: 6.4rem; width: 6.4rem; }
+  .rc-head { grid-template-columns: 6.4rem 1fr 6.4rem; }
+  .rc-sig-line { margin-top: 2.6rem; }
+  .rc-stamp { height: 4.6rem; width: 4.6rem; font-size: 16px; line-height: 1.15; }
 }
