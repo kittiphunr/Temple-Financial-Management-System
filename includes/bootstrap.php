@@ -264,6 +264,7 @@ require_once __DIR__ . '/letterhead.php';
 require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/about.php';
 require_once __DIR__ . '/ledger.php';
+require_once __DIR__ . '/ledger_ui.php';
 
 // ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน: ทุกหน้า (ยกเว้นหน้าเปลี่ยนรหัสผ่านและออกจากระบบ) ถูกส่งไปหน้าเปลี่ยนรหัสผ่าน
 if (!empty($_SESSION['user']['must_change'])

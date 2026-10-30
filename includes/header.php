@@ -80,7 +80,7 @@ $items .= $u
 <?php endif; ?>
 <?php
 // แจ้งเตือนแอดมินวัด: ต้องใส่โลโก้วัดเพื่อใช้ในเอกสาร (แสดงทุกหน้าจนกว่าจะใส่) และควรกรอกข้อมูลเจ้าอาวาส
-if ($u && $role === 'temple' && !$forced && !in_array($cur, ['profile.php', 'account.php'], true)):
+if ($u && $role === 'temple' && !$forced && !in_array($cur, ['profile.php', 'account.php', 'accounts.php'], true)):
     $chk = temple_checklist(db(), (int)$u['temple_id']);
     if (!$chk['logo']): ?>
   <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 print:hidden" role="alert">
@@ -92,6 +92,12 @@ if ($u && $role === 'temple' && !$forced && !in_array($cur, ['profile.php', 'acc
   <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-950 print:hidden">
     <span>ยังไม่ได้กรอกข้อมูลเจ้าอาวาสและบุคลากรของวัด</span>
     <a class="btn btn-outline btn-sm" href="<?= BASE ?>people.php">กรอกข้อมูลบุคลากร →</a>
+  </div>
+    <?php endif;
+    if (!$chk['cash_opening']): ?>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-950 print:hidden">
+    <span>ยังไม่ได้ตั้ง <strong>ยอดยกมาเงินสด</strong> และรายละเอียดบัญชีธนาคารของวัด — ใช้ออกรายงานแบบที่ 1–3 ประจำเดือน</span>
+    <a class="btn btn-outline btn-sm" href="<?= BASE ?>profile.php#accounts">กรอกบัญชีของวัด →</a>
   </div>
     <?php endif;
 endif; ?>

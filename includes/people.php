@@ -109,14 +109,17 @@ function sync_abbot_name(PDO $pdo, int $templeId): void
     $pdo->prepare('UPDATE temples SET abbot = ? WHERE id = ?')->execute([$p ? person_full_name($p, false) : null, $templeId]);
 }
 
-/** รายการที่วัดควรกรอกให้ครบ (ใช้แสดงแบนเนอร์เตือนแอดมินวัด) */
+/** รายการที่วัดควรกรอกให้ครบ (ใช้แสดงแบนเนอร์เตือนแอดมินวัด และรายการตรวจในหน้าข้อมูลวัด) */
 function temple_checklist(PDO $pdo, int $templeId): array
 {
-    $st = $pdo->prepare("SELECT t.logo_media_id IS NOT NULL AS has_logo,
+    $st = $pdo->prepare("SELECT t.logo_media_id IS NOT NULL AS has_logo, COALESCE(t.tax_id, '') <> '' AS has_tax, COALESCE(t.phone, '') <> '' AS has_phone,
         (SELECT COUNT(*) FROM temple_people p WHERE p.temple_id = t.id AND p.is_active = 1 AND p.position = 'abbot') AS abbots,
-        (SELECT COUNT(*) FROM temple_people p WHERE p.temple_id = t.id AND p.is_active = 1 AND p.position = 'steward') AS stewards
+        (SELECT COUNT(*) FROM temple_people p WHERE p.temple_id = t.id AND p.is_active = 1 AND p.position = 'steward') AS stewards,
+        (SELECT COUNT(*) FROM accounts a WHERE a.temple_id = t.id AND a.cash_flag = 1 AND a.opening_date IS NOT NULL) AS cash_open,
+        (SELECT COUNT(*) FROM accounts a WHERE a.temple_id = t.id AND a.kind = 'bank' AND a.is_active = 1) AS banks
         FROM temples t WHERE t.id = ?");
     $st->execute([$templeId]);
-    $r = $st->fetch() ?: ['has_logo' => 1, 'abbots' => 1, 'stewards' => 1];
-    return ['logo' => (bool)$r['has_logo'], 'abbot' => (int)$r['abbots'] > 0, 'steward' => (int)$r['stewards'] > 0];
+    $r = $st->fetch() ?: ['has_logo' => 1, 'has_tax' => 1, 'has_phone' => 1, 'abbots' => 1, 'stewards' => 1, 'cash_open' => 1, 'banks' => 1];
+    return ['logo' => (bool)$r['has_logo'], 'abbot' => (int)$r['abbots'] > 0, 'steward' => (int)$r['stewards'] > 0,
+        'tax_id' => (bool)$r['has_tax'], 'phone' => (bool)$r['has_phone'], 'cash_opening' => (int)$r['cash_open'] > 0, 'bank' => (int)$r['banks'] > 0];
 }

@@ -79,6 +79,10 @@ require __DIR__ . '/includes/header.php';
         [$check['logo'], 'โลโก้วัด', 'จำเป็นสำหรับการออกเอกสาร — ใส่ด้านล่าง', '#logo'],
         [$check['abbot'], 'ข้อมูลเจ้าอาวาส', 'ชื่อ เลขบัตรประชาชน ที่อยู่ภูมิลำเนาเดิม เบอร์โทร รูปถ่าย', $peopleUrl],
         [$check['steward'], 'ข้อมูลไวยาวัจกร', 'ผู้มีหน้าที่บริหารวัด (เพิ่มได้หลายท่าน)', $peopleUrl],
+        [$check['phone'], 'โทรศัพท์และที่อยู่วัด', 'ใช้เป็นหัวเอกสารอนุโมทนาบัตรและรายงาน — กรอกด้านล่าง', '#contact'],
+        [$check['tax_id'], 'เลขประจำตัวผู้เสียภาษีของวัด', 'พิมพ์ในอนุโมทนาบัตร (ถ้ามี) — กรอกด้านล่าง', '#contact'],
+        [$check['cash_opening'], 'ยอดยกมาเงินสด/เช็ค', 'ใช้ออกรายงานแบบที่ 1 และ 3 — กรอกที่ "บัญชีของวัด" ด้านล่าง', '#accounts'],
+        [$check['bank'], 'บัญชีเงินฝากธนาคาร', 'ธนาคาร สาขา เลขที่บัญชี ยอดยกมา (ถ้าวัดมีบัญชีธนาคาร)', '#accounts'],
     ] as [$ok, $label, $hint, $href]): ?>
       <li class="flex items-start gap-2">
         <span class="mt-0.5 font-bold <?= $ok ? 'text-emerald-600' : 'text-amber-600' ?>"><?= $ok ? '✓' : '○' ?></span>
@@ -125,7 +129,7 @@ require __DIR__ . '/includes/header.php';
   </section>
 </div>
 
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section id="contact" class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <h3>ที่อยู่และการติดต่อ</h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <?= csrf_field() ?><input type="hidden" name="action" value="save_profile">
@@ -134,5 +138,14 @@ require __DIR__ . '/includes/header.php';
     <?php endforeach; ?>
     <div class="col-span-full"><button class="btn">บันทึก</button></div>
   </form>
+</section>
+
+<section id="accounts" class="mt-6">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h3 class="!my-0">บัญชีของวัด: เงินสด และเงินฝากธนาคาร</h3>
+    <a class="btn btn-outline btn-sm" href="accounts.php<?= $u['role'] === 'admin' ? '?temple=' . $tid : '' ?>">โอน/นำฝาก/ถอนระหว่างบัญชี →</a>
+  </div>
+  <p class="my-2 text-sm text-stone-600">กรอกรายละเอียดบัญชีของวัด (ธนาคาร สาขา เลขที่บัญชี ยอดยกมา) เพื่อใช้บันทึกรายรับ-รายจ่ายแยกตามบัญชี และออกรายงานประจำเดือนแบบที่ 1–3 ได้ตรงตามแบบของคณะสงฆ์ · <a href="statements.php<?= $u['role'] === 'admin' ? '?temple=' . $tid : '' ?>">ดูรายงานแบบที่ 1–3</a></p>
+  <?= ledger_accounts_panel($pdo, $t, true, 'profile') ?>
 </section>
 <?php require __DIR__ . '/includes/footer.php'; ?>
