@@ -125,6 +125,7 @@ require __DIR__ . '/includes/header.php';
   <a class="btn btn-outline" href="receipts.php?temple=<?= $tid ?>">รายการทั้งหมด</a>
 </div>
 
+<?php ob_start(); ?>
 <article class="receipt-font relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
   <?php if ($void): ?><div class="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/20 -rotate-12">ยกเลิก</div><?php endif; ?>
   <?= letterhead($pdo, $tid, 0, 'อนุโมทนาบัตร') ?>
@@ -148,6 +149,7 @@ require __DIR__ . '/includes/header.php';
   </div>
   <?php if ($void): ?><p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">ยกเลิกเมื่อ <?= e(th_date(substr((string)$r['voided_at'], 0, 10))) ?> — <?= e($r['void_reason']) ?></p><?php endif; ?>
 </article>
+<?= thai_digits_html((string)ob_get_clean()) ?>   <?php /* เอกสารอนุโมทนาบัตรใช้เลขไทยทั้งฉบับ (ส่วนปุ่ม/ฟอร์มรอบนอกยังเป็นเลขอารบิก) */ ?>
 
 <?php if (!$void && people_can_edit($tid)): ?>
 <form method="post" class="mx-auto mt-4 flex max-w-3xl flex-wrap items-end gap-2 print:hidden" data-confirm="ยืนยันยกเลิกอนุโมทนาบัตรใบนี้? (เลขที่จะไม่ถูกนำกลับมาใช้)">

@@ -41,6 +41,9 @@ def _run(R, smtp, q, app):
     bad = {k: baht(k) for k, v in cases.items() if baht(k) != v}
     check('R1 แปลงจำนวนเงินเป็นตัวอักษรไทยถูกต้อง (เอ็ด/ยี่/ล้าน/สตางค์)', not bad, str(bad))
 
+    th = app.php('-r', "require 'includes/receipts.php'; echo thai_digits_html('<a href=\"x.php?id=12\" data-n=\"3\">ที่ 12/2569 &#039;7&#039; &amp; 0.50</a>');").stdout
+    check('R1b แปลงเลขไทยเฉพาะข้อความ: ไม่แตะแอตทริบิวต์/เอนทิตี (&#039;) ของ HTML', th == '<a href="x.php?id=12" data-n="3">ที่ ๑๒/๒๕๖๙ &#039;๗&#039; &amp; ๐.๕๐</a>', th)
+
     by_dist = {}
     for c in creds:
         by_dist.setdefault(c[1], []).append(c)
@@ -87,7 +90,7 @@ def _run(R, smtp, q, app):
     c, _, b = ta.req(f'/receipt.php?id={rid}')
     year = date.today().year + 543
     check('R6 หน้าอนุโมทนาบัตรแสดงชื่อ จำนวนเงิน ตัวอักษร เลขที่ และช่องลงนาม',
-          c == 200 and 'นายสมชาย ใจบุญ' in b and '1,250.50' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
+          c == 200 and 'นายสมชาย ใจบุญ' in b and '๑,๒๕๐.๕๐' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
     check('R6b อนุโมทนาบัตรใช้ฟอนต์ Charmonman จาก Google Fonts (โหลดเฉพาะหน้านี้) และฟอนต์ระบบสำรองเป็น Sarabun', 'family=Charmonman' in b and 'receipt-font' in b and 'family=Charmonman' not in ta.req('/receipts.php')[2])
     c, loc, b = ta.post('/receipt.php', form, f'/receipt.php?txn={x1}')
     check('R7 รายการเดียวออกซ้ำไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '1')
@@ -150,7 +153,7 @@ def _run(R, smtp, q, app):
     check('S1 เลขผู้เสียภาษีไม่ครบ 13 หลักถูกปฏิเสธ', q(f"SELECT COALESCE(tax_id,'') FROM temples WHERE id={ida}") == '')
     ta.post('/profile.php', {'action': 'save_profile', 'phone': '', 'tax_id': '0-9940-00123-45-6'}, '/profile.php')
     c, _, b = ta.req(f'/receipt.php?id={r3}')
-    check('S2 บันทึกเลขผู้เสียภาษีแล้วแสดงในใบ', '0994000123456' in b)
+    check('S2 บันทึกเลขผู้เสียภาษีแล้วแสดงในใบ (เลขไทย)', '๐๙๙๔๐๐๐๑๒๓๔๕๖' in b)
     adm.post('/admin/categories.php', {'action': 'toggle_donation', 'id': plain}, '/admin/categories.php')
     check('S3 แอดมินหลักกำหนดหมวดเป็นหมวดรับบริจาคได้', q(f"SELECT is_donation FROM categories WHERE id={plain}") == '1')
     ta.post('/profile.php', {'action': 'x'}, '/profile.php')
