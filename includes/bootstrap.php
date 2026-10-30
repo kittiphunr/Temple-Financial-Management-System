@@ -93,8 +93,9 @@ function th_date_short(?string $ymd): string
  * ส่งค่ามาเป็น {name}_d, {name}_m, {name}_y (ปี พ.ศ.) — แปลงกลับเป็น Y-m-d ด้วย date_be_parse()
  * @param string|null $iso วันที่ตั้งต้น (Y-m-d ค.ศ.) ถ้าไม่ระบุใช้วันนี้
  */
-function date_be_field(string $name, ?string $iso = null, int $yearsBack = 10, int $yearsAhead = 1): string
+function date_be_field(string $name, ?string $iso = null, int $yearsBack = 10, int $yearsAhead = 1, bool $allowEmpty = false): string
 {
+    $blank = $allowEmpty && !($iso && preg_match('/^\d{4}-\d{2}-\d{2}/', $iso));
     $iso = $iso && preg_match('/^\d{4}-\d{2}-\d{2}/', $iso) ? substr($iso, 0, 10) : date('Y-m-d');
     [$sy, $sm, $sd] = array_map('intval', explode('-', $iso));
     $sy += 543;
@@ -103,10 +104,13 @@ function date_be_field(string $name, ?string $iso = null, int $yearsBack = 10, i
         $years[] = $sy;
         rsort($years);
     }
-    $sel = function (string $suffix, string $label, array $opts, int $cur, string $cls) use ($name): string {
-        $h = '<select name="' . e($name . '_' . $suffix) . '" aria-label="' . e($label) . '" required class="' . $cls . '">';
+    $sel = function (string $suffix, string $label, array $opts, int $cur, string $cls) use ($name, $allowEmpty, $blank): string {
+        $h = '<select name="' . e($name . '_' . $suffix) . '" aria-label="' . e($label) . '"' . ($allowEmpty ? '' : ' required') . ' class="' . $cls . '">';
+        if ($allowEmpty) {
+            $h .= '<option value=""' . ($blank ? ' selected' : '') . '>-</option>';
+        }
         foreach ($opts as $v => $text) {
-            $h .= '<option value="' . (int)$v . '"' . ((int)$v === $cur ? ' selected' : '') . '>' . e((string)$text) . '</option>';
+            $h .= '<option value="' . (int)$v . '"' . (!$blank && (int)$v === $cur ? ' selected' : '') . '>' . e((string)$text) . '</option>';
         }
         return $h . '</select>';
     };
@@ -271,6 +275,7 @@ require_once __DIR__ . '/attachments.php';
 require_once __DIR__ . '/reconcile.php';
 require_once __DIR__ . '/budget.php';
 require_once __DIR__ . '/funds.php';
+require_once __DIR__ . '/assets.php';
 require_once __DIR__ . '/letterhead.php';
 require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/about.php';

@@ -16,7 +16,9 @@ if ($m['kind'] === 'photo') {
     $p = db()->prepare('SELECT temple_id FROM temple_people WHERE photo_media_id = ?');
     $p->execute([$id]);
     $person = $p->fetch();
-    if (!$person || !people_can_view((int)$person['temple_id'])) {
+    // รูปทรัพย์สินใช้ชนิด photo เหมือนกัน: ถ้าไม่ใช่รูปบุคคล ให้ตรวจสิทธิ์ตามวัดเจ้าของทรัพย์สิน
+    $allowed = $person ? people_can_view((int)$person['temple_id']) : asset_photo_can_view(db(), $id);
+    if (!$allowed) {
         http_response_code(403);
         exit('ไม่มีสิทธิ์ดูรูปนี้');
     }

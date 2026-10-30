@@ -93,6 +93,25 @@
   });
 })();
 
+/* ช่อง "ทรัพย์สินที่ซื้อ/ซ่อม" ในฟอร์มรายจ่าย: แสดงทรัพย์สินของวัดที่เลือก (data-asset-map = {รหัสวัด: [[รหัสทรัพย์สิน, ชื่อ], ...]}) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-asset-map]').forEach(function (sel) {
+    var form = sel.form, temple = form && form.elements[sel.getAttribute('data-temple-select')], map;
+    try { map = JSON.parse(sel.getAttribute('data-asset-map')); } catch (e) { return; }
+    if (!temple) return;
+    function render(keep) {
+      var want = keep || '0';
+      sel.innerHTML = '';
+      sel.add(new Option('ไม่เกี่ยวกับทรัพย์สิน', '0'));
+      (map[temple.value] || []).forEach(function (a) { sel.add(new Option(a[1], a[0])); });
+      sel.value = Array.prototype.some.call(sel.options, function (o) { return o.value === want; }) ? want : '0';
+    }
+    temple.addEventListener('change', function () { render('0'); });
+    render(sel.getAttribute('data-selected'));
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

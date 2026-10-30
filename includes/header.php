@@ -30,6 +30,9 @@ if (!$u) {
     if ($role !== 'temple' && report_available()) {
         $items .= nav_item('report_status.php', 'ติดตามรายงาน', $cur === 'report_status.php');
     }
+    if (asset_available()) {
+        $items .= nav_item('assets.php', 'ทรัพย์สิน', $cur === 'assets.php');
+    }
     if (fund_available()) {
         $items .= nav_item('funds.php', 'กองทุน/โครงการ', $cur === 'funds.php');
     }
