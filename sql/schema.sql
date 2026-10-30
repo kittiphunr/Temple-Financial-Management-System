@@ -193,10 +193,28 @@ CREATE TABLE IF NOT EXISTS monthly_reports (
   income_total DECIMAL(14,2) NOT NULL DEFAULT 0,
   expense_total DECIMAL(14,2) NOT NULL DEFAULT 0,
   note VARCHAR(255) NULL,
+  closed_at DATETIME NULL COMMENT 'ปิดงวดแล้ว (ล็อกการแก้ไขรายการของเดือนนี้) NULL = ยังเปิดอยู่',
+  closed_by INT UNSIGNED NULL,
   UNIQUE KEY uq_report (temple_id, report_year, report_month),
   KEY idx_report_period (report_year, report_month),
   CONSTRAINT fk_report_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
-  CONSTRAINT fk_report_user FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_report_user FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_report_closer FOREIGN KEY (closed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ประวัติการปิด/เปิดงวด (เปิดงวดต้องระบุเหตุผล)
+CREATE TABLE IF NOT EXISTS month_close_events (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  report_year SMALLINT UNSIGNED NOT NULL,
+  report_month TINYINT UNSIGNED NOT NULL,
+  action ENUM('close','reopen') NOT NULL,
+  reason VARCHAR(255) NULL,
+  by_user INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  KEY idx_close_temple (temple_id, report_year, report_month),
+  CONSTRAINT fk_close_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_close_user FOREIGN KEY (by_user) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- อีเมลเตือนวัดที่ยังไม่ส่งรายงาน (เตือนได้เดือนละครั้งต่อวัด)

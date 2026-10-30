@@ -25,6 +25,23 @@ if ($canSubmit && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 
     redirect('statements.php?' . http_build_query(['temple' => $tid, 'year' => $year, 'month' => $month, 'form' => $form]));
 }
 
+$canClose = $canSubmit && month_close_available();                                  // แอดมินวัด/แอดมินหลัก/แอดมินอำเภอปิดงวดได้
+$canReopen = $canClose && in_array($u['role'], ['admin', 'district'], true);         // เปิดงวด: แอดมินหลัก/แอดมินอำเภอเท่านั้น (ต้องระบุเหตุผล)
+if ($canClose && $_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['close_month', 'reopen_month'], true)) {
+    csrf_check();
+    if ($_POST['action'] === 'close_month') {
+        [$ok, $msg] = report_close($pdo, $tid, $year, $month, (int)$u['id']);
+        $ok && audit('month_close', 'temple', $tid, "$year/$month");
+    } elseif ($canReopen) {
+        [$ok, $msg] = report_reopen($pdo, $tid, $year, $month, (int)$u['id'], (string)($_POST['reason'] ?? ''));
+        $ok && audit('month_reopen', 'temple', $tid, "$year/$month " . mb_substr(trim((string)($_POST['reason'] ?? '')), 0, 100));
+    } else {
+        [$ok, $msg] = [false, 'เฉพาะแอดมินหลักหรือแอดมินอำเภอเท่านั้นที่เปิดงวดได้'];
+    }
+    flash($msg, $ok ? 'ok' : 'err');
+    redirect('statements.php?' . http_build_query(['temple' => $tid, 'year' => $year, 'month' => $month, 'form' => $form]));
+}
+
 $pageTitle = 'รายงานแบบที่ 1–3 ประจำเดือน';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -66,11 +83,33 @@ if (!$temple) {
             . ($rep ? '<span class="text-sm text-stone-600">ส่งเมื่อ ' . e(th_datetime($rep['submitted_at'])) . ' โดย ' . e((string)($rep['by_name'] ?? '-')) . ($rep['revision'] > 1 ? ' (ครั้งที่ ' . (int)$rep['revision'] . ')' : '') . '</span>' : '')
             . ($state === 'changed' ? '<div class="mt-1 text-sm text-amber-900">หลังส่งแล้วมีการแก้ไขรายการเดือนนี้ (ตอนส่ง ' . (int)$rep['txn_count'] . ' รายการ ตอนนี้ ' . $now['count'] . ' รายการ) — ตรวจแล้วส่งรายงานใหม่</div>' : '')
             . '</div>';
-        if ($canSubmit && $state !== 'future') {
+        $closed = $rep && !empty($rep['closed_at']);
+        $evs = $closed || ($rep && month_close_available()) ? report_close_events($pdo, $tid, $year, $month) : [];
+        if ($closed) {
+            echo '<div class="basis-full text-sm"><span class="badge badge-ok">🔒 ปิดงวดแล้ว</span> <span class="text-stone-600">' . e(th_datetime($rep['closed_at'])) . ' — แก้ไข/เพิ่ม/ลบรายการของเดือนนี้ไม่ได้</span></div>';
+        }
+        if ($canSubmit && $state !== 'future' && !$closed) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="' . e($rep ? 'ส่งรายงานเดือนนี้ใหม่?' : ($now['count'] === 0 ? 'เดือนนี้ไม่มีรายการ ยืนยันส่งรายงาน (ไม่มีรายการ)?' : 'ยืนยันส่งรายงานประจำเดือนนี้?')) . '">'
                 . csrf_field() . '<input type="hidden" name="action" value="submit_report"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
                 . '<input name="note" maxlength="255" placeholder="หมายเหตุ (ถ้ามี)" class="w-56 !py-1 text-sm">'
                 . '<button class="btn btn-sm">' . ($rep ? 'ส่งรายงานใหม่' : 'ส่งรายงานประจำเดือน') . '</button></form>';
+        }
+        if ($canClose && !$closed && $state === 'ok') {
+            echo '<form method="post" data-confirm="ปิดงวดเดือนนี้? หลังปิดแล้วแก้ไข/เพิ่ม/ลบรายการของเดือนนี้ไม่ได้ จนกว่าแอดมินหลักหรือแอดมินอำเภอจะเปิดงวด">' . csrf_field()
+                . '<input type="hidden" name="action" value="close_month"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
+                . '<button class="btn btn-sm btn-outline">🔒 ปิดงวดเดือนนี้</button></form>';
+        }
+        if ($canReopen && $closed) {
+            echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="เปิดงวดเดือนนี้ให้แก้ไขรายการได้?">' . csrf_field()
+                . '<input type="hidden" name="action" value="reopen_month"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
+                . '<input name="reason" required minlength="5" maxlength="255" placeholder="เหตุผลที่เปิดงวด (จำเป็น)" class="w-64 !py-1 text-sm"><button class="btn btn-sm btn-danger">เปิดงวด</button></form>';
+        }
+        if ($evs) {
+            echo '<details class="basis-full text-sm"><summary class="cursor-pointer text-stone-600">ประวัติปิด/เปิดงวด (' . count($evs) . ')</summary><ul class="mt-1 grid gap-0.5">';
+            foreach ($evs as $ev) {
+                echo '<li>' . ($ev['action'] === 'close' ? 'ปิดงวด' : 'เปิดงวด') . ' · ' . e(th_datetime($ev['created_at'])) . ' · ' . e((string)($ev['full_name'] ?? '-')) . ($ev['reason'] ? ' · เหตุผล: ' . e($ev['reason']) : '') . '</li>';
+            }
+            echo '</ul></details>';
         }
         echo '</div>';
     }

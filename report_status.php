@@ -16,7 +16,7 @@ $month = $month >= 1 && $month <= 12 ? $month : (int)date('n');
 $year = max(be_year() - 8, min(be_year() + 1, $year));
 $canRemind = in_array($u['role'], ['admin', 'district'], true);
 $fDist = in_array($u['role'], ['admin', 'province'], true) ? (int)($_GET['district'] ?? $_POST['district'] ?? 0) : 0;
-$fStatus = in_array($_GET['status'] ?? $_POST['status'] ?? 'all', ['all', 'sent', 'unsent', 'late', 'changed'], true) ? ($_GET['status'] ?? $_POST['status'] ?? 'all') : 'all';
+$fStatus = in_array($_GET['status'] ?? $_POST['status'] ?? 'all', ['all', 'sent', 'unsent', 'late', 'changed', 'closed'], true) ? ($_GET['status'] ?? $_POST['status'] ?? 'all') : 'all';
 $fQ = trim((string)($_GET['q'] ?? $_POST['q'] ?? ''));
 $filters = ['district' => $fDist, 'status' => $fStatus, 'q' => $fQ];
 $self = 'report_status.php?' . http_build_query(['year' => $year, 'month' => $month, 'district' => $fDist, 'status' => $fStatus, 'q' => $fQ]);
@@ -54,10 +54,10 @@ if (($_GET['export'] ?? '') === 'csv') {
     header('Content-Disposition: attachment; filename="report-status-' . $year . '-' . sprintf('%02d', $month) . '.csv"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
-    fputcsv($out, [unit_district(), unit_subdistrict(), 'วัด', 'สถานะ', 'วันที่ส่ง', 'ผู้ส่ง', 'ครั้งที่ส่ง', 'รายการ', 'รายรับ', 'รายจ่าย', 'เตือนทางอีเมลแล้ว']);
+    fputcsv($out, [unit_district(), unit_subdistrict(), 'วัด', 'สถานะ', 'วันที่ส่ง', 'ผู้ส่ง', 'ครั้งที่ส่ง', 'รายการ', 'รายรับ', 'รายจ่าย', 'เตือนทางอีเมลแล้ว', 'ปิดงวดเมื่อ']);
     foreach ($rows as $r) {
         fputcsv($out, [$r['district'], $r['subdistrict'], $r['name'], REPORT_STATE_LABEL[$r['state']][0], $r['submitted_at'] ?? '', $r['by_name'] ?? '', $r['revision'] ?? '',
-            $r['n_count'], $r['n_income'], $r['n_expense'], $r['reminded_at'] ? 'ใช่' : '']);
+            $r['n_count'], $r['n_income'], $r['n_expense'], $r['reminded_at'] ? 'ใช่' : '', $r['closed_at'] ?? '']);
     }
     audit('export', 'report_status', null, "$year/$month");
     exit;
@@ -84,7 +84,7 @@ require __DIR__ . '/includes/header.php';
     <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= (int)$d['id'] === $fDist ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
   <?php endif; ?>
   <div><label>สถานะ</label><select name="status">
-    <?php foreach (['all' => 'ทุกสถานะ', 'sent' => 'ส่งแล้ว', 'unsent' => 'ยังไม่ส่ง', 'late' => 'เกินกำหนด', 'changed' => 'แก้ไขหลังส่ง'] as $k => $v): ?><option value="<?= $k ?>" <?= $k === $fStatus ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select></div>
+    <?php foreach (['all' => 'ทุกสถานะ', 'sent' => 'ส่งแล้ว', 'unsent' => 'ยังไม่ส่ง', 'late' => 'เกินกำหนด', 'changed' => 'แก้ไขหลังส่ง'] + (month_close_available() ? ['closed' => 'ปิดงวดแล้ว'] : []) as $k => $v): ?><option value="<?= $k ?>" <?= $k === $fStatus ? 'selected' : '' ?>><?= $v ?></option><?php endforeach; ?></select></div>
   <div><label>ชื่อวัด</label><input name="q" value="<?= e($fQ) ?>" class="w-48"></div>
   <button class="btn">แสดง</button>
 </form>
@@ -95,6 +95,7 @@ require __DIR__ . '/includes/header.php';
   <div class="rounded-2xl border border-stone-200 bg-white p-4"><div class="text-sm text-stone-600">ยังไม่ส่ง</div><div class="text-3xl font-bold"><?= $sum['unsent'] ?> <span class="text-base font-semibold">วัด</span></div></div>
   <div class="rounded-2xl border border-red-200 bg-red-50 p-4"><div class="text-sm text-red-900">เกินกำหนด</div><div class="text-3xl font-bold text-red-800"><?= $sum['late'] ?> <span class="text-base font-semibold">วัด</span></div></div>
   <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm text-amber-900">แก้ไขหลังส่ง</div><div class="text-3xl font-bold text-amber-800"><?= $sum['changed'] ?> <span class="text-base font-semibold">วัด</span></div></div>
+  <?php if (month_close_available()): ?><div class="rounded-2xl border border-stone-200 bg-stone-50 p-4"><div class="text-sm text-stone-700">🔒 ปิดงวดแล้ว</div><div class="text-3xl font-bold text-stone-800"><?= $sum['closed'] ?> <span class="text-base font-semibold">วัด</span></div></div><?php endif; ?>
 </div>
 
 <?php if ($canRemind || $u['role'] === 'admin'): ?>
@@ -120,7 +121,7 @@ require __DIR__ . '/includes/header.php';
   <tr>
     <td><?= e($r['district']) ?></td>
     <td class="font-semibold"><?= e($r['name']) ?><?php if ($r['subdistrict']): ?><div class="text-xs font-normal text-stone-500"><?= e(abbr_subdistrict()) ?><?= e($r['subdistrict']) ?></div><?php endif; ?></td>
-    <td><span class="badge <?= $cls ?>"><?= e($lab) ?></span><?php if ((int)($r['revision'] ?? 0) > 1): ?><div class="text-xs text-stone-500">ส่งครั้งที่ <?= (int)$r['revision'] ?></div><?php endif; ?></td>
+    <td><span class="badge <?= $cls ?>"><?= e($lab) ?></span><?php if (!empty($r['closed_at'])): ?> <span class="badge badge-mute" title="ปิดงวดเมื่อ <?= e(th_datetime($r['closed_at'])) ?>">🔒 ปิดงวด</span><?php endif; ?><?php if ((int)($r['revision'] ?? 0) > 1): ?><div class="text-xs text-stone-500">ส่งครั้งที่ <?= (int)$r['revision'] ?></div><?php endif; ?></td>
     <td class="whitespace-nowrap text-sm"><?= $r['submitted_at'] ? e(th_datetime($r['submitted_at'])) . '<div class="text-xs text-stone-500">' . e((string)$r['by_name']) . '</div>' : '—' ?></td>
     <td class="text-right"><?= (int)$r['n_count'] ?><?php if ($r['state'] === 'changed'): ?><div class="text-xs text-amber-800">ตอนส่ง <?= (int)$r['r_count'] ?></div><?php endif; ?></td>
     <td class="text-right"><?= money($r['n_income']) ?></td>

@@ -120,6 +120,7 @@ function ledger_transfer(PDO $pdo, int $templeId, int $fromId, int $toId, string
     if (!$from || !$to || !$from['is_active'] || !$to['is_active']) return [null, 'ไม่พบบัญชีต้นทางหรือปลายทาง'];
     if ($fromId === $toId) return [null, 'บัญชีต้นทางและปลายทางต้องไม่ใช่บัญชีเดียวกัน'];
     if ($amount <= 0 || $amount > 999999999999) return [null, 'จำนวนเงินต้องมากกว่า 0'];
+    if (($lock = period_lock_error($pdo, $templeId, $date)) !== '') return [null, $lock];
     $cat = fn(string $type) => (int)$pdo->query("SELECT id FROM categories WHERE type = '$type' AND is_transfer = 1 ORDER BY id LIMIT 1")->fetchColumn();
     $cOut = $cat('expense');
     $cIn = $cat('income');
