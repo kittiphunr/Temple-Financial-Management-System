@@ -11,6 +11,7 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
     global $CONFIG;
     $province = $CONFIG['province_name'] ?? 'แพร่';
     $logoId = null;
+    $taxLine = '';
     $warn = '';
     if ($templeId && ($t = temple_row($templeId))) {
         $d = $pdo->prepare('SELECT name FROM districts WHERE id = ?');
@@ -28,6 +29,7 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
         ]);
         $line2 = implode(' ', $addr) . ($t['phone'] ? ' · โทร ' . $t['phone'] : '');
         $line3 = 'สังกัดคณะสงฆ์อำเภอ' . $dn;
+        $taxLine = $t['tax_id'] ? 'หมายเลขประจำตัวผู้เสียภาษี ' . substr($t['tax_id'], 0, 3) . '-' . substr($t['tax_id'], 3, 1) . '-' . substr($t['tax_id'], 4, 8) . '-' . substr($t['tax_id'], 12, 1) : '';
         $logoId = $t['logo_media_id'] ? (int)$t['logo_media_id'] : null;
         if (!$logoId) {
             $link = people_can_edit($templeId)
@@ -53,8 +55,9 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
             . '<img class="rc-logo" src="' . e($img) . '" alt="โลโก้">'
             . '<div class="text-center"><div class="text-xl font-bold text-brand-800">' . e($name) . '</div>'
             . ($line2 !== '' ? '<div class="text-sm text-stone-700">' . e($line2) . '</div>' : '')
+            . ($taxLine !== '' ? '<div class="text-sm text-stone-700">' . e($taxLine) . '</div>' : '')
             . ($line3 !== '' ? '<div class="text-sm text-stone-700">' . e($line3) . '</div>' : '') . '</div><div class="rc-logo" aria-hidden="true"></div></div>'
-            . '<div class="rc-title">' . e($title) . '</div>';
+            . ($title !== '' ? '<div class="rc-title">' . e($title) . '</div>' : '');
     }
     $h = $warn . '<div class="' . ($printOnly ? 'hidden print:block' : '') . ' mb-4">'
         . '<div class="flex items-center gap-4 border-b-2 border-gold-500 pb-3">'

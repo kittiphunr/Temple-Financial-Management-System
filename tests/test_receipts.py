@@ -91,7 +91,7 @@ def _run(R, smtp, q, app):
     c, _, b = ta.req(f'/receipt.php?id={rid}')
     year = date.today().year + 543
     check('R6 หน้าอนุโมทนาบัตรแสดงชื่อ จำนวนเงิน ตัวอักษร เลขที่ และช่องลงนาม',
-          c == 200 and 'นายสมชาย ใจบุญ' in b and '๑,๒๕๐.๕๐' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
+          c == 200 and 'นายสมชาย' in b and 'ใจบุญ' in b and 'ใบอนุโมทนา' in b and 'ชื่อ/Name' in b and 'ฉายา/นามสกุล/Surname' in b and 'ที่อยู่/Address' in b and 'มีวัตถุประสงค์เพื่อ' in b and 'ด้วยพุทธานุภาพ ธรรมานุภาพ' in b and 'เทอญ' in b and '๑,๒๕๐.๕๐' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
     css = Client(base).raw('/assets/css/tailwind.css')[2].decode('utf-8', 'ignore')
     fc, _, fb = Client(base).raw('/assets/fonts/JS-Chanok-Normal.ttf')
     check('R6b อนุโมทนาบัตรใช้ฟอนต์ JS Chanok จากไฟล์ในระบบ (ไม่โหลดจากภายนอก): @font-face + ไฟล์ .ttf เปิดได้',

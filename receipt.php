@@ -124,26 +124,35 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <?php ob_start(); ?>
+<?php
+$dn = $pdo->prepare('SELECT name FROM districts WHERE id = ?');
+$dn->execute([$t['district_id']]);
+$district = (string)$dn->fetchColumn();
+$nm = trim($r['donor_name']);
+$cut = mb_strrpos($nm, ' ');
+[$firstName, $lastName] = $cut !== false ? [mb_substr($nm, 0, $cut), mb_substr($nm, $cut + 1)] : [$nm, ''];
+$fill = fn(string $v, string $cls = '') => '<span class="rc-fill ' . $cls . '">' . ($v !== '' ? e($v) : '&nbsp;') . '</span>';
+[$ry, $rm, $rd] = array_map('intval', explode('-', $r['receipt_date']));
+$box = fn(string $role, string $n) => '<div class="rc-sig"><div class="rc-sig-line"></div><div class="text-sm">('
+    . ($n !== '' ? e($n) : str_repeat('&hellip;', 10)) . ')</div><div class="text-sm">' . e($role) . '</div></div>';
+?>
 <article class="receipt-font rc-page relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
   <?php if ($void): ?><div class="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/20 -rotate-12">ยกเลิก</div><?php endif; ?>
-  <?= letterhead($pdo, $tid, 0, 'อนุโมทนาบัตร', '', false, true) ?>
-  <div class="rc-meta"><div>เล่มที่ <?= e($r['book_no']) ?> เลขที่ <?= (int)$r['receipt_no'] ?>/<?= (int)$r['receipt_year'] ?></div><div>วันที่ <?= e(th_date($r['receipt_date'])) ?></div></div>
-  <div class="rc-body">
-    <p>ขออนุโมทนาบุญแก่ <strong><?= e($r['donor_name']) ?></strong><?= $r['donor_address'] ? ' ที่อยู่ ' . e($r['donor_address']) : '' ?></p>
-    <p>ได้บริจาคทรัพย์ (<?= e($r['category']) ?>) จำนวน <strong><?= money($r['amount']) ?> บาท</strong> (<?= e(thai_baht_text($r['amount'])) ?>)
-      <?= $r['purpose'] ? ' เพื่อ ' . e($r['purpose']) : ' เพื่อถวาย' . e($t['name']) ?> เมื่อวันที่ <?= e(th_date($r['txn_date'])) ?></p>
-    <p>ขออนุโมทนาในกุศลเจตนา ขอให้ผลบุญนี้จงเป็นปัจจัยอำนวยให้ท่านและครอบครัวเจริญด้วยจตุรพิธพรชัย คือ อายุ วรรณะ สุขะ พละ ตลอดกาลนาน เทอญ</p>
-  </div>
-  <?php
-  $box = fn(string $role, string $n) => '<div class="rc-sig"><div class="rc-sig-line"></div><div class="text-sm">('
-      . ($n !== '' ? e($n) : str_repeat('&hellip;', 10)) . ')</div><div class="text-sm font-semibold">' . e($role) . '</div></div>';
-  ?>
+  <?= letterhead($pdo, $tid, 0, '', '', false, true) ?>
+  <div class="rc-row rc-titlerow"><div class="rc-cell">เล่มที่ <?= $fill($r['book_no']) ?></div><div class="rc-title">ใบอนุโมทนา</div><div class="rc-cell">เลขที่ <?= $fill((int)$r['receipt_no'] . '/' . (int)$r['receipt_year']) ?></div></div>
+  <div class="rc-row rc-daterow"><span class="rc-gap"></span>วันที่ <?= $fill((string)$rd, 'w-day') ?> เดือน <?= $fill(TH_MONTHS[$rm], 'w-mon') ?> พ.ศ. <?= $fill((string)($ry + 543), 'w-yr') ?></div>
+  <div class="rc-row">ชื่อ/Name <?= $fill($firstName) ?> ฉายา/นามสกุล/Surname <?= $fill($lastName) ?></div>
+  <div class="rc-row">ที่อยู่/Address <?= $fill((string)$r['donor_address']) ?></div>
+  <div class="rc-line">ได้มีศรัทธาเลื่อมใส บริจาคทรัพย์เข้า<?= e($t['name']) ?><?= $t['subdistrict'] ? ' ตำบล' . e($t['subdistrict']) : '' ?> อำเภอ<?= e($district) ?> จังหวัด<?= e($CONFIG['province_name'] ?? 'แพร่') ?></div>
+  <div class="rc-row">เป็นจำนวนเงิน <?= $fill(money($r['amount']), 'w-amt') ?> บาท ( <?= $fill(thai_baht_text($r['amount'])) ?> )</div>
+  <div class="rc-row">มีวัตถุประสงค์เพื่อ <?= $fill((string)($r['purpose'] ?: $r['category'])) ?></div>
+  <p class="rc-bless">ด้วยพุทธานุภาพ ธรรมานุภาพและสังฆานุภาพแห่งคุณพระรัตนตรัยและอานิสงส์แห่งทานบริจาคนี้ จงดลบันดาลให้ท่านจงปราศจากสรรพโรคาพาธภัยพิบัติอุปัทวันตรายและเจริญยิ่งด้วยอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติ ประสบสิ่งอันพึงปรารถนาทุกทิพาราตรีกาล เทอญ</p>
   <div class="rc-sign">
     <?= $box($r['receiver_position'] ?: 'ผู้รับเงิน', (string)$r['receiver_name']) ?>
     <div class="rc-stamp">ตราประทับ<br>วัด</div>
-    <?= $box('เจ้าอาวาส ' . $t['name'], (string)$r['abbot_name']) ?>
+    <?= $box('เจ้าอาวาส' . $t['name'], (string)$r['abbot_name']) ?>
   </div>
-  <div class="rc-foot text-xs text-stone-500"><?= $t['tax_id'] ? 'เลขประจำตัวผู้เสียภาษีของวัด ' . e($t['tax_id']) . ' · ' : '' ?>ต้องมีลายมือชื่อและตราประทับของวัดจึงจะสมบูรณ์</div>
+  <div class="rc-foot text-xs text-stone-500 print:hidden">ต้องมีลายมือชื่อและตราประทับของวัดจึงจะสมบูรณ์</div>
   <?php if ($void): ?><p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">ยกเลิกเมื่อ <?= e(th_date(substr((string)$r['voided_at'], 0, 10))) ?> — <?= e($r['void_reason']) ?></p><?php endif; ?>
 </article>
 <?= thai_digits_html((string)ob_get_clean()) ?>   <?php /* เอกสารอนุโมทนาบัตรใช้เลขไทยทั้งฉบับ (ส่วนปุ่ม/ฟอร์มรอบนอกยังเป็นเลขอารบิก) */ ?>
