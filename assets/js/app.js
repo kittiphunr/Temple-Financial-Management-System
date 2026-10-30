@@ -112,6 +112,20 @@
   });
 })();
 
+/* หน้าออกอนุโมทนาบัตร: เลือกผู้บริจาคจากทะเบียนแล้วเติมชื่อ/ที่อยู่ (data-donor-pick) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-donor-pick]').forEach(function (sel) {
+    var form = sel.form;
+    sel.addEventListener('change', function () {
+      var o = sel.options[sel.selectedIndex];
+      if (!form || !o || sel.value === '0') return;
+      if (form.elements.donor_name) form.elements.donor_name.value = o.getAttribute('data-name') || '';
+      if (form.elements.donor_address) form.elements.donor_address.value = o.getAttribute('data-address') || '';
+    });
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

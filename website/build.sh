@@ -8,6 +8,6 @@ D="$ROOT/website/downloads"; mkdir -p "$D"; rm -f "$D"/tfms-*.zip "$D"/tfms-*.sh
 cp "$Z" "$D/"; F="$(basename "$Z")"
 SHA="$(sha256sum "$D/$F" | cut -d' ' -f1)"; echo "$SHA  $F" > "$D/$F.sha256"
 cat > "$D/release.json" <<J
-{"version":"$(tr -d '[:space:]' < "$ROOT/VERSION")","file":"$F","size":$(stat -c%s "$D/$F"),"sha256":"$SHA","date":"$(date +%Y-%m-%d)"}
+{"version":"$(tr -d '[:space:]' < "$ROOT/VERSION")","build":$(php -r 'echo json_decode(file_get_contents($argv[1]), true)["build"];' "$ROOT/deploy/dist/tfms/version.json"),"commit":"$(php -r 'echo json_decode(file_get_contents($argv[1]), true)["commit"];' "$ROOT/deploy/dist/tfms/version.json")","file":"$F","size":$(stat -c%s "$D/$F"),"sha256":"$SHA","date":"$(date +%Y-%m-%d)"}
 J
 echo "ok: $D/$F"

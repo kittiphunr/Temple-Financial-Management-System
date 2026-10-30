@@ -201,10 +201,32 @@ CREATE TABLE IF NOT EXISTS transactions (
 ) ENGINE=InnoDB;
 
 -- อนุโมทนาบัตร (ใบอนุโมทนาบัตรสำหรับรายรับประเภทบริจาค) — เก็บสำเนาข้อมูลตอนออก ไม่ลบ ยกเลิกได้โดยระบุเหตุผล
+-- ทะเบียนผู้บริจาค (ไม่บังคับ) เก็บเฉพาะผู้ที่ให้ความยินยอมตาม PDPA ที่อยู่/เบอร์โทรเข้ารหัส
+
+CREATE TABLE IF NOT EXISTS donors (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  address_enc VARBINARY(2000) NULL COMMENT 'ที่อยู่ เข้ารหัสด้วยกุญแจระบบ',
+  phone_enc VARBINARY(300) NULL COMMENT 'เบอร์โทร เข้ารหัสด้วยกุญแจระบบ',
+  note VARCHAR(255) NULL,
+  consent_at DATETIME NOT NULL COMMENT 'วันเวลาที่บันทึกว่าผู้บริจาคให้ความยินยอม',
+  consent_channel VARCHAR(40) NOT NULL COMMENT 'ช่องทางที่ได้รับความยินยอม เช่น เป็นลายลักษณ์อักษร ด้วยวาจา',
+  consent_by INT UNSIGNED NULL,
+  withdrawn_at DATETIME NULL COMMENT 'ถอนความยินยอมแล้ว ข้อมูลส่วนบุคคลถูกลบ',
+  withdrawn_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  KEY idx_donor_temple (temple_id, name),
+  CONSTRAINT fk_donor_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_donor_consent_user FOREIGN KEY (consent_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_donor_withdraw_user FOREIGN KEY (withdrawn_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS donation_receipts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   temple_id INT UNSIGNED NOT NULL,
   transaction_id INT UNSIGNED NOT NULL,
+  donor_id INT UNSIGNED NULL COMMENT 'ผู้บริจาคในทะเบียน (ถ้ามี) ชื่อ/ที่อยู่บนใบยังเก็บสำเนาไว้ตามหลักฐานทางบัญชี',
   receipt_year SMALLINT UNSIGNED NOT NULL COMMENT 'ปี พ.ศ. ที่ออก (เลขที่รันใหม่ทุกปี)',
   verify_code CHAR(16) NULL COMMENT 'รหัสสุ่มสำหรับตรวจสอบใบผ่าน QR code (verify.php)',
   book_no VARCHAR(20) NOT NULL DEFAULT '1',
@@ -225,8 +247,10 @@ CREATE TABLE IF NOT EXISTS donation_receipts (
   UNIQUE KEY uq_receipt_no (temple_id, receipt_year, receipt_no),
   UNIQUE KEY uq_receipt_verify (verify_code),
   KEY idx_receipt_txn (transaction_id),
+  KEY idx_receipt_donor (donor_id),
   CONSTRAINT fk_receipt_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_receipt_txn FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+  CONSTRAINT fk_receipt_donor FOREIGN KEY (donor_id) REFERENCES donors(id) ON DELETE SET NULL,
   CONSTRAINT fk_receipt_user FOREIGN KEY (issued_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 

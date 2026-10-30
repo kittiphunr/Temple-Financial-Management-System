@@ -66,6 +66,16 @@ def _run(R, q, app):
           'JS Chanok' in tpl and 'GPL v2' in tpl and 'assets/fonts/GPL-License-JS.pdf' in tpl and Client(base).raw('/assets/fonts/GPL-License-JS.pdf')[0] == 200)
     check('U11 หน้าสาธารณะ (ก่อนเข้าสู่ระบบ) ก็มีหน้าต่างเกี่ยวกับ', 'id="about-template"' in Client(base).req('/')[2] or 'id="about-template"' in Client(base).req('/login.php')[2])
 
+    ver = (app.dir / 'VERSION').read_text().strip()
+    check('U12 หน้าต่างเกี่ยวกับแสดงเวอร์ชันจากไฟล์ VERSION (รันจากซอร์ส = dev)', re.fullmatch(r'\d+\.\d+\.\d+', ver) is not None and f'เวอร์ชัน {ver} (dev)' in tpl, ver)
+    (app.dir / 'version.json').write_text('{"version":"%s","build":123,"commit":"abc1234","built_at":"2026-10-30"}' % ver)
+    _, _, b2 = Client(base).req('/login.php')
+    check('U13 มี version.json จากการบิวล์ → แสดงหมายเลขบิวล์และคอมมิต', f'เวอร์ชัน {ver} (บิวล์ 123 · abc1234)' in b2 and 'สร้างเมื่อ 2026-10-30' in b2)
+    (app.dir / 'version.json').write_text('{"version":"<script>","build":"x","commit":"<b>"}')
+    _, _, b3 = Client(base).req('/login.php')
+    check('U14 version.json ผิดรูปแบบ/แฝงโค้ดถูกเมินเฉย (ใช้ค่าจาก VERSION)', f'เวอร์ชัน {ver}' in b3 and '<script>' not in re.search(r'<template id="about-template">(.*?)</template>', b3, re.S).group(1))
+    (app.dir / 'version.json').unlink()
+
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================
     today = date.today()
     be = today.year + 543

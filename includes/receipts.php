@@ -141,6 +141,11 @@ function receipt_issue(PDO $pdo, int $txnId, array $in, ?int $userId): array
         return [null, 'รายการนี้ไม่ใช่รายรับประเภทรับบริจาค จึงออกอนุโมทนาบัตรไม่ได้'];
     }
     $templeId = (int)$x['temple_id'];
+    // เลือกผู้บริจาคจากทะเบียนแล้วเว้นชื่อ/ที่อยู่ไว้ → ใช้ข้อมูลจากทะเบียน
+    if (donor_available() && (int)($in['donor_id'] ?? 0) > 0 && ($pd = donor_get($pdo, (int)$in['donor_id'], $templeId)) && !$pd['withdrawn_at']) {
+        if (trim($in['donor_name'] ?? '') === '') $in['donor_name'] = $pd['name'];
+        if (trim($in['donor_address'] ?? '') === '') $in['donor_address'] = $pd['address'];
+    }
     $donor = trim($in['donor_name'] ?? '');
     $addr = trim($in['donor_address'] ?? '');
     $purpose = trim($in['purpose'] ?? '');
@@ -157,6 +162,13 @@ function receipt_issue(PDO $pdo, int $txnId, array $in, ?int $userId): array
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date) || $date > date('Y-m-d')) $errs[] = 'วันที่ออกไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ. ห้ามเป็นวันในอนาคต)';
     if ($errs) {
         return [null, implode(', ', $errs)];
+    }
+    $donorId = null;
+    if (donor_available()) {
+        [$donorId, $derr] = donor_for_receipt($pdo, $templeId, $in, $userId);
+        if ($derr !== '') {
+            return [null, $derr];
+        }
     }
     $abbot = $pdo->prepare("SELECT title, first_name, last_name FROM temple_people WHERE temple_id = ? AND position = 'abbot' AND is_active = 1 ORDER BY id LIMIT 1");
     $abbot->execute([$templeId]);
@@ -175,10 +187,11 @@ function receipt_issue(PDO $pdo, int $txnId, array $in, ?int $userId): array
         $n = $pdo->prepare('SELECT COALESCE(MAX(receipt_no), 0) + 1 FROM donation_receipts WHERE temple_id = ? AND receipt_year = ?');
         $n->execute([$templeId, $year]);
         $no = (int)$n->fetchColumn();
+        $dcol = donor_available() ? ', donor_id' : '';
         $pdo->prepare('INSERT INTO donation_receipts (temple_id, transaction_id, receipt_year, book_no, receipt_no, receipt_date, donor_name, donor_address,
-            purpose, amount, receiver_name, receiver_position, abbot_name, issued_by, verify_code) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$templeId, $txnId, $year, $book, $no, $date, $donor, $addr ?: null, $purpose ?: null, $x['amount'],
-                $rname ?: null, $rpos ?: null, $a ? person_full_name($a, false) : null, $userId, receipt_new_code()]);
+            purpose, amount, receiver_name, receiver_position, abbot_name, issued_by, verify_code' . $dcol . ') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?' . ($dcol ? ',?' : '') . ')')
+            ->execute(array_merge([$templeId, $txnId, $year, $book, $no, $date, $donor, $addr ?: null, $purpose ?: null, $x['amount'],
+                $rname ?: null, $rpos ?: null, $a ? person_full_name($a, false) : null, $userId, receipt_new_code()], $dcol ? [$donorId] : []));
         return [(int)$pdo->lastInsertId(), ''];
     } finally {
         $pdo->query('SELECT RELEASE_LOCK(' . $pdo->quote($lock) . ')');

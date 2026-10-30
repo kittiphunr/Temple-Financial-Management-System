@@ -96,6 +96,18 @@ if (isset($_GET['txn'])) {
 <?php if ($canIssue): ?>
 <form method="post" class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 [&_input]:w-full">
   <?= csrf_field() ?><input type="hidden" name="action" value="issue"><input type="hidden" name="txn" value="<?= $txnId ?>">
+  <?php if (donor_available() && donor_can_manage($tid)): $dch = donor_choices($pdo, $tid); ?>
+  <div class="col-span-full rounded-xl bg-gold-50 p-3 text-sm">
+    <label>เลือกผู้บริจาคจากทะเบียน (ไม่บังคับ — เติมชื่อและที่อยู่ให้อัตโนมัติ)</label>
+    <select name="donor_id" class="w-full" data-donor-pick><option value="0">— ไม่เลือก / ผู้บริจาคใหม่ —</option>
+      <?php foreach ($dch as $d): ?><option value="<?= (int)$d['id'] ?>" data-name="<?= e($d['name']) ?>" data-address="<?= e($d['address']) ?>"><?= e($d['name']) ?></option><?php endforeach; ?></select>
+    <details class="mt-2"><summary class="cursor-pointer text-brand-700">บันทึกผู้บริจาคใหม่ลงทะเบียน (ต้องได้รับความยินยอม PDPA)</summary>
+      <label class="mt-2 flex items-start gap-2"><input type="checkbox" name="save_donor" value="1" class="mt-1"><span>บันทึกผู้บริจาครายนี้ลงทะเบียนผู้บริจาคของวัด เพื่อใช้ซ้ำในครั้งถัดไป</span></label>
+      <label class="flex items-start gap-2"><input type="checkbox" name="donor_consent" value="1" class="mt-1"><span>ผู้บริจาคได้รับแจ้งว่าวัดเก็บชื่อและที่อยู่เพื่อออกอนุโมทนาบัตรและติดต่อเรื่องการบริจาค (ที่อยู่เก็บแบบเข้ารหัส ถอนความยินยอมได้ทุกเมื่อ) และให้ความยินยอมแล้ว</span></label>
+      <input type="hidden" name="donor_channel" value="at_receipt">
+    </details>
+  </div>
+  <?php endif; ?>
   <div class="col-span-full"><label>ชื่อผู้บริจาค *</label><input name="donor_name" required maxlength="200"></div>
   <div class="col-span-full"><label>ที่อยู่ผู้บริจาค</label><input name="donor_address" maxlength="500"></div>
   <div class="col-span-full"><label>เพื่อ (วัตถุประสงค์)</label><input name="purpose" maxlength="255" value="<?= e(($fundName ?? '') !== '' ? $fundName : ($x['description'] ?? '')) ?>"></div>

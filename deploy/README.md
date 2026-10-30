@@ -4,7 +4,7 @@
 
 | ไฟล์ | หน้าที่ |
 |---|---|
-| `build.sh` | สร้างชุดติดตั้ง → `deploy/dist/tfms/` และ `deploy/dist/tfms-<วันที่>.zip` (+ `.sha256`) |
+| `build.sh` | สร้างชุดติดตั้ง → `deploy/dist/tfms/` และ `deploy/dist/tfms-<เวอร์ชัน>-b<บิวล์>.zip` (+ `.sha256`) |
 | `nginx.conf.example` | ตัวอย่าง Nginx + PHP-FPM + HTTPS (ปิดทางเว็บของ `storage/ includes/ sql/ data/`) |
 | `apache.conf.example` | ตัวอย่าง Apache + HTTPS |
 | `php.ini.recommended` | ค่า PHP ที่แนะนำ (อัปโหลดรูป ซ่อน error คุกกี้ปลอดภัย) |

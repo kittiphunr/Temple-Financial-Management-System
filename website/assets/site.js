@@ -19,7 +19,7 @@
 
   function fmt(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB'; }
   fetch('downloads/release.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (m) {
-    document.querySelectorAll('[data-ver]').forEach(function (e) { e.textContent = 'v' + m.version; });
+    document.querySelectorAll('[data-ver]').forEach(function (e) { e.textContent = 'v' + m.version + (m.build ? ' (บิวล์ ' + m.build + ')' : ''); });
     document.querySelector('[data-file]').textContent = m.file;
     document.querySelector('[data-size]').textContent = fmt(m.size);
     document.querySelector('[data-date]').textContent = m.date;
