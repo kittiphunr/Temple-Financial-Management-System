@@ -30,6 +30,9 @@ if (!$u) {
     if ($role !== 'temple' && report_available()) {
         $items .= nav_item('report_status.php', 'ติดตามรายงาน', $cur === 'report_status.php');
     }
+    if (budget_available()) {
+        $items .= nav_item('budget.php', 'งบประมาณ', $cur === 'budget.php');
+    }
     if (!in_array($role, ['province', 'subdistrict'], true)) {
         $items .= nav_item('receipts.php', 'อนุโมทนาบัตร', in_array($cur, ['receipts.php', 'receipt.php'], true));
     }

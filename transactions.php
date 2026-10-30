@@ -83,7 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']]);
             audit('create', 'transaction', (int)$pdo->lastInsertId(), "$type $amount");
         }
-        flash("บันทึก$label เรียบร้อย");
+        $bw = $type === 'expense' ? budget_warning($pdo, $templeId, $catId, $date) : '';
+        flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — ⚠️ $bw" : ''));
         redirect("transactions.php?type=$type");
     }
 }
