@@ -114,15 +114,18 @@ CREATE TABLE IF NOT EXISTS accounts (
   cash_flag TINYINT NULL COMMENT '1 = บัญชีเงินสด (unique ต่อวัด) · NULL = บัญชีธนาคาร',
   name VARCHAR(150) NOT NULL COMMENT 'ชื่อบัญชี',
   bank_name VARCHAR(100) NULL,
+  bank_code VARCHAR(16) NULL COMMENT 'รหัสธนาคารในรายชื่อ (data/thai_banks.json) NULL = พิมพ์ชื่อเอง',
   branch VARCHAR(100) NULL,
   account_no VARCHAR(30) NULL,
+  bookbank_media_id INT UNSIGNED NULL COMMENT 'ภาพหน้าบุ๊คแบงก์',
   opening_balance DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'ยอดยกมา ณ วันเริ่มบัญชี (ก่อนรายการของวันนั้น)',
   opening_date DATE NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_cash (temple_id, cash_flag),
   KEY idx_account_temple (temple_id),
-  CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
+  CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_account_bookbank FOREIGN KEY (bookbank_media_id) REFERENCES media(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ทะเบียนทรัพย์สินของวัด (ที่ดิน อาคาร ครุภัณฑ์ ยานพาหนะ) ผูกกับรายจ่ายซื้อ/ซ่อมได้

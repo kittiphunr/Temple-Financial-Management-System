@@ -167,6 +167,35 @@
   });
 })();
 
+/* ตัวเลือกธนาคารพร้อมโลโก้ (data-bank-picker): ค้นหา · เลือกแล้วอัปเดตป้ายและปิดเมนู · กรณี "อื่น ๆ" โฟกัสช่องพิมพ์ชื่อ */
+(function () {
+  'use strict';
+  document.querySelectorAll('[data-bank-picker]').forEach(function (box) {
+    var det = box.querySelector('details'), label = box.querySelector('[data-bank-label]'), search = box.querySelector('[data-bank-search]'),
+        other = box.querySelector('[data-bank-other]'), opts = box.querySelectorAll('[data-bank-opt]');
+    function sync() {
+      var chk = box.querySelector('input[name=bank_code]:checked');
+      if (!chk) return;
+      var o = chk.closest('[data-bank-opt]');
+      label.innerHTML = chk.value === '' ? '<span class="text-stone-500">อื่น ๆ — พิมพ์ชื่อด้านล่าง</span>' : o.querySelector('img').outerHTML + '<span class="truncate">' + o.querySelector('span.min-w-0').innerHTML + '</span>';
+      if (other) other.required = chk.value === '';
+    }
+    box.addEventListener('change', function (e) {
+      if (e.target.name !== 'bank_code') return;
+      sync(); det.open = false;
+      if (e.target.value === '' && other) other.focus();
+    });
+    if (other) other.addEventListener('input', function () { var r = box.querySelector('input[name=bank_code][value=""]'); if (r && other.value) { r.checked = true; sync(); } });
+    if (search) search.addEventListener('input', function () {
+      var q = search.value.trim().toLowerCase();
+      opts.forEach(function (o) { o.style.display = !q || o.getAttribute('data-q').indexOf(q) >= 0 ? '' : 'none'; });
+    });
+    document.addEventListener('click', function (e) { if (det.open && !box.contains(e.target)) det.open = false; });
+    det.addEventListener('keydown', function (e) { if (e.key === 'Escape') { det.open = false; det.querySelector('summary').focus(); } });
+    sync();
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

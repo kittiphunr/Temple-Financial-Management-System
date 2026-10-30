@@ -29,6 +29,7 @@ SHOW TABLES LIKE 'settings';                              -- มี = ทำ 8 �
 | 9 | `2026_subdistrict_role.sql` | บทบาทเจ้าคณะตำบล (ดูข้อมูลวัดในตำบลที่ดูแลได้อย่างเดียว) และตาราง `user_subdistricts` — ไม่นับในโควตาผู้ใช้ระดับจังหวัด/อำเภอ |
 | 10 | `2026_monthly_reports.sql` | ติดตามการส่งรายงานประจำเดือน (ตาราง `monthly_reports`, `report_reminders`) — ไม่รันก็ใช้ระบบเดิมได้ แต่หน้า ติดตามรายงาน และปุ่มส่งรายงานจะใช้ไม่ได้ |
 | 17 | `2026_donors.sql` | ทะเบียนผู้บริจาค (ตาราง `donors` และคอลัมน์ `donation_receipts.donor_id`) — ไม่รันก็ใช้ระบบเดิมได้ (ไม่มีเมนูผู้บริจาคและตัวเลือกในหน้าออกอนุโมทนาบัตร) |
+| 18 | `2026_bank_book.sql` | โลโก้/รหัสธนาคารและภาพหน้าบุ๊คแบงก์ของบัญชีเงินฝาก (คอลัมน์ `accounts.bank_code`, `accounts.bookbank_media_id`) — ไม่รันก็ใช้ระบบเดิมได้ (ไม่มีโลโก้และช่องแนบภาพ) |
 | 16 | `2026_assets.sql` | ทะเบียนทรัพย์สิน (ตาราง `assets` และคอลัมน์ `transactions.asset_id`/`asset_kind`) — ไม่รันก็ใช้ระบบเดิมได้ (ไม่มีเมนูทรัพย์สินและช่องผูกทรัพย์สิน) |
 | 15 | `2026_funds.sql` | กองทุน/โครงการ (ตาราง `funds` และคอลัมน์ `transactions.fund_id`) — ไม่รันก็ใช้ระบบเดิมได้ (ไม่มีช่องกองทุนและเมนูกองทุน) งบประจำปี (`annual.php`) ไม่ต้องใช้ migration |
 | 14 | `2026_budget.sql` | งบประมาณประจำปีรายหมวด (ตาราง `budgets`) — ไม่รันก็ใช้ระบบเดิมได้ (ไม่มีเมนูงบประมาณ) |
@@ -60,7 +61,7 @@ SHOW TABLES LIKE 'settings';                              -- มี = ทำ 8 �
 
 ```bash
 DB=ชื่อฐานข้อมูลของคุณ
-for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements 2026_receipt_verify 2026_settings 2026_subdistrict_role 2026_monthly_reports 2026_month_close 2026_attachments 2026_bank_reconcile 2026_budget 2026_funds 2026_assets 2026_donors; do
+for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements 2026_receipt_verify 2026_settings 2026_subdistrict_role 2026_monthly_reports 2026_month_close 2026_attachments 2026_bank_reconcile 2026_budget 2026_funds 2026_assets 2026_donors 2026_bank_book; do
   sed "s/USE tfms_phrae;/USE $DB;/" sql/migrations/$f.sql | mysql -u USER -p || break
 done
 ```

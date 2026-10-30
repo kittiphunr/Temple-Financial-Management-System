@@ -16,6 +16,9 @@
   }
   :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select) { min-height: var(--ctl-h); }
   textarea { min-height: calc(var(--ctl-h) * 2); }
+  /* กล่องที่ทำหน้าที่เหมือนช่องกรอก (เช่น ตัวเลือกธนาคารพร้อมโลโก้) ใช้ความสูง/ขอบมนมาตรฐานเดียวกัน */
+  .ctl-box { @apply rounded-xl border border-stone-300 bg-white px-3.5 py-2; min-height: var(--ctl-h); }
+  details[open] > .ctl-box { @apply border-gold-500 ring-2 ring-gold-200; }
   /* ช่องกรอก/ตัวเลือกขนาดกะทัดรัด (ฟอร์มในแถวตาราง) วางคู่ปุ่มเล็ก: สูงและขอบมนเท่าปุ่มเล็ก */
   input[type='file'].ctl-sm { height: var(--ctl-h-sm); padding: 0.125rem; border-radius: 0.5rem; }
   :is(input, select).ctl-sm { min-height: var(--ctl-h-sm); padding-block: 0.25rem; font-size: 0.875rem; border-radius: 0.5rem; }

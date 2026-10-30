@@ -26,8 +26,8 @@ rsync -a --prune-empty-dirs \
   --include='/admin/' --include='/admin/*.php' \
   --include='/includes/' --include='/includes/*.php' \
   --include='/assets/' --include='/assets/css/' --include='/assets/css/tailwind.css' --include='/assets/img/' --include='/assets/img/*' \
-  --include='/assets/js/' --include='/assets/js/*.js' --include='/assets/vendor/' --include='/assets/vendor/*' --include='/assets/fonts/' --include='/assets/fonts/*' \
-  --include='/data/' --include='/data/temples_phrae.csv' --include='/data/temples_template.csv' --include='/data/thai_geo.json' --include='/data/thai_geo.LICENSE' --include='/data/credits.json' \
+  --include='/assets/js/' --include='/assets/js/*.js' --include='/assets/vendor/' --include='/assets/vendor/*' --include='/assets/fonts/' --include='/assets/fonts/*' --include='/assets/banks/' --include='/assets/banks/*' \
+  --include='/data/' --include='/data/temples_phrae.csv' --include='/data/temples_template.csv' --include='/data/thai_geo.json' --include='/data/thai_geo.LICENSE' --include='/data/credits.json' --include='/data/thai_banks.json' \
   --include='/sql/' --include='/sql/*.sql' --include='/sql/migrations/' --include='/sql/migrations/*.sql' \
   --exclude='*' ./ "$OUT/"
 cp README.md UPGRADE.md LICENSE CREDITS.md "$OUT/" 2>/dev/null || true
@@ -50,7 +50,7 @@ for bad in config.local.php storage/app.key storage/installed.lock tests tools n
   [ -e "$OUT/$bad" ] && { echo "พบไฟล์ที่ไม่ควรอยู่ในชุดติดตั้ง: $bad" >&2; fail=1; }
 done
 ls "$OUT"/storage/*.csv "$OUT"/storage/*.log >/dev/null 2>&1 && { echo "พบไฟล์ข้อมูลใน storage/" >&2; fail=1; }
-[ -s "$OUT/assets/vendor/feather-sprite.svg" ] && [ -s "$OUT/assets/vendor/feather.LICENSE" ] && [ -s "$OUT/assets/vendor/sweetalert2.all.min.js" ] && [ -s "$OUT/assets/js/app.js" ] && [ -s "$OUT/assets/fonts/JS-Chanok-Normal.ttf" ] && [ -s "$OUT/assets/fonts/GPL-License-JS.pdf" ] && [ -s "$OUT/data/thai_geo.json" ] || { echo "ไม่พบ assets/vendor/sweetalert2.all.min.js หรือ assets/js/app.js" >&2; fail=1; }
+[ -s "$OUT/assets/banks/KBANK.png" ] && [ -s "$OUT/data/thai_banks.json" ] && [ -s "$OUT/assets/vendor/feather-sprite.svg" ] && [ -s "$OUT/assets/vendor/feather.LICENSE" ] && [ -s "$OUT/assets/vendor/sweetalert2.all.min.js" ] && [ -s "$OUT/assets/js/app.js" ] && [ -s "$OUT/assets/fonts/JS-Chanok-Normal.ttf" ] && [ -s "$OUT/assets/fonts/GPL-License-JS.pdf" ] && [ -s "$OUT/data/thai_geo.json" ] || { echo "ไม่พบ assets/vendor/sweetalert2.all.min.js หรือ assets/js/app.js" >&2; fail=1; }
 [ -s "$OUT/assets/css/tailwind.css" ] || { echo "ไม่พบ assets/css/tailwind.css (รัน npm run build:css ก่อน)" >&2; fail=1; }
 [ "$fail" = 0 ] || { echo "สร้างชุดติดตั้งไม่สำเร็จ" >&2; exit 1; }
 

@@ -93,7 +93,7 @@ function image_ext(string $mime): string
  * บันทึกรูปจาก $_FILES[...] ลงตาราง media
  * @return array{0:?int,1:string} [media id, ข้อความผิดพลาด] — ไม่ได้เลือกไฟล์ = [null, '']
  */
-function media_save_upload(PDO $pdo, ?array $file, string $kind, ?int $userId): array
+function media_save_upload(PDO $pdo, ?array $file, string $kind, ?int $userId, ?string $profile = null): array
 {
     if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return [null, ''];
@@ -107,7 +107,7 @@ function media_save_upload(PDO $pdo, ?array $file, string $kind, ?int $userId): 
     if ($file['size'] > MEDIA_MAX_BYTES) {
         return [null, 'ไฟล์ภาพใหญ่เกินไป (ไม่เกิน 2 MB)'];
     }
-    [$data, $mime, $err] = image_process((string)file_get_contents($file['tmp_name']), $kind);
+    [$data, $mime, $err] = image_process((string)file_get_contents($file['tmp_name']), $profile ?? $kind);
     if ($data === null) {
         return [null, $err];
     }

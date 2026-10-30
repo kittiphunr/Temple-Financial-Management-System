@@ -24,8 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $money = fn(string $k) => round((float)str_replace(',', '', $_POST[$k] ?? '0'), 2);
     $txt = fn(string $k, int $max) => mb_substr(trim($_POST[$k] ?? ''), 0, $max);
 
+    // บัญชีธนาคารซ้ำ (ธนาคารและเลขที่บัญชีเดียวกันในวัดเดียวกัน) — เพิ่มได้หลายบัญชี แต่ไม่ควรซ้ำกัน
+    $dupBank = function (string $bank, string $no, int $exceptId = 0) use ($pdo, $tid): bool {
+        $st = $pdo->prepare("SELECT 1 FROM accounts WHERE temple_id = ? AND kind = 'bank' AND account_no = ? AND LOWER(bank_name) = LOWER(?) AND id <> ?");
+        $st->execute([$tid, $no, $bank, $exceptId]);
+        return (bool)$st->fetchColumn();
+    };
+
     if ($act === 'add_bank') {
-        $bank = $txt('bank_name', 100);
+        [$bankCode, $bank] = bank_from_input($_POST);
         $no = preg_replace('/[^0-9-]/', '', $_POST['account_no'] ?? '');
         $open = date_be_parse($_POST, 'opening_date');
         $bal = $money('opening_balance');
@@ -37,23 +44,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('วันที่เริ่มบัญชีหรือยอดยกมาไม่ถูกต้อง', 'err');
         } elseif (temple_has_closed_month($pdo, $tid)) {
             flash('วัดนี้มีเดือนที่ปิดงวดแล้ว เพิ่มบัญชีใหม่ที่มียอดยกมาไม่ได้ (กระทบยอดคงเหลือของงวดที่ปิด) — ให้แอดมินเปิดงวดก่อน', 'err');
+        } elseif ($dupBank($bank, $no)) {
+            flash('มีบัญชีธนาคารนี้ (ธนาคารและเลขที่บัญชีเดียวกัน) ในวัดแล้ว', 'err');
         } else {
-            $pdo->prepare("INSERT INTO accounts (temple_id, kind, name, bank_name, branch, account_no, opening_balance, opening_date) VALUES (?, 'bank', ?, ?, ?, ?, ?, ?)")
-                ->execute([$tid, $txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $bal, $open]);
-            audit('create', 'account', (int)$pdo->lastInsertId());
-            flash('เพิ่มบัญชีธนาคารแล้ว');
+            $cols = bank_book_available() ? ', bank_code' : '';
+            $pdo->prepare("INSERT INTO accounts (temple_id, kind, name, bank_name, branch, account_no, opening_balance, opening_date$cols) VALUES (?, 'bank', ?, ?, ?, ?, ?, ?" . ($cols ? ', ?' : '') . ')')
+                ->execute(array_merge([$tid, $txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $bal, $open], $cols ? [$bankCode] : []));
+            $newId = (int)$pdo->lastInsertId();
+            audit('create', 'account', $newId);
+            // แนบภาพหน้าบุ๊คแบงก์พร้อมกันตอนเพิ่มบัญชี (ไม่บังคับ)
+            if (bank_book_available() && !empty($_FILES['bookbank']['name'])) {
+                [$mid, $merr] = media_save_upload($pdo, $_FILES['bookbank'], 'photo', (int)$u['id'], 'evidence');
+                if ($mid) {
+                    $pdo->prepare('UPDATE accounts SET bookbank_media_id = ? WHERE id = ?')->execute([$mid, $newId]);
+                }
+                flash($merr === '' ? 'เพิ่มบัญชีธนาคารแล้ว' : 'เพิ่มบัญชีธนาคารแล้ว แต่แนบภาพหน้าบุ๊คแบงก์ไม่สำเร็จ: ' . $merr, $merr === '' ? 'ok' : 'err');
+            } else {
+                flash('เพิ่มบัญชีธนาคารแล้ว');
+            }
         }
     } elseif ($act === 'edit_bank' && $acc && $acc['kind'] === 'bank') {
-        $bank = $txt('bank_name', 100);
+        [$bankCode, $bank] = bank_from_input($_POST);
         $no = preg_replace('/[^0-9-]/', '', $_POST['account_no'] ?? '');
         if ($bank === '' || $no === '') {
             flash('กรุณาระบุธนาคารและเลขที่บัญชี', 'err');
+        } elseif ($dupBank($bank, $no, $aid)) {
+            flash('มีบัญชีธนาคารนี้ (ธนาคารและเลขที่บัญชีเดียวกัน) ในวัดแล้ว', 'err');
         } else {
-            $pdo->prepare('UPDATE accounts SET name = ?, bank_name = ?, branch = ?, account_no = ? WHERE id = ?')
-                ->execute([$txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $aid]);
+            $pdo->prepare('UPDATE accounts SET name = ?, bank_name = ?, branch = ?, account_no = ?' . (bank_book_available() ? ', bank_code = ?' : '') . ' WHERE id = ?')
+                ->execute(array_merge([$txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no], bank_book_available() ? [$bankCode] : [], [$aid]));
             audit('update', 'account', $aid);
             flash('บันทึกข้อมูลบัญชีแล้ว');
         }
+    } elseif ($act === 'bookbank_upload' && $acc && $acc['kind'] === 'bank' && bank_book_available()) {
+        [$mid, $merr] = media_save_upload($pdo, $_FILES['bookbank'] ?? null, 'photo', (int)$u['id'], 'evidence');
+        if ($merr !== '') {
+            flash($merr, 'err');
+        } elseif (!$mid) {
+            flash('กรุณาเลือกไฟล์ภาพหน้าบุ๊คแบงก์', 'err');
+        } else {
+            $pdo->prepare('UPDATE accounts SET bookbank_media_id = ? WHERE id = ?')->execute([$mid, $aid]);
+            if (!empty($acc['bookbank_media_id'])) {
+                media_delete($pdo, (int)$acc['bookbank_media_id']);   // ลบภาพเดิมที่ถูกแทนที่
+            }
+            audit('bookbank_upload', 'account', $aid);
+            flash('แนบภาพหน้าบุ๊คแบงก์แล้ว');
+        }
+    } elseif ($act === 'bookbank_remove' && $acc && !empty($acc['bookbank_media_id']) && bank_book_available()) {
+        $pdo->prepare('UPDATE accounts SET bookbank_media_id = NULL WHERE id = ?')->execute([$aid]);
+        media_delete($pdo, (int)$acc['bookbank_media_id']);
+        audit('bookbank_remove', 'account', $aid);
+        flash('ลบภาพหน้าบุ๊คแบงก์แล้ว');
     } elseif ($act === 'set_opening' && $acc) {
         $open = date_be_parse($_POST, 'opening_date');
         $bal = $money('opening_balance');

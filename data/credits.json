@@ -48,6 +48,37 @@
     ]
   },
   {
+    "id": "thai-banks-logo",
+    "name": "thai-banks-logo (โลโก้ธนาคารไทย)",
+    "use": "โลโก้ธนาคาร 19 แห่งและรายชื่อธนาคารในตัวเลือกธนาคารของบัญชีเงินฝาก (ไฟล์ PNG ต้นฉบับไม่แก้ไข) โลโก้เป็นของธนาคารเจ้าของแต่ละแห่ง ใช้เพื่อระบุธนาคารเท่านั้น",
+    "author": "fasterv410 (ผู้เขียนตาม package.json) · ที่เก็บ casperstack/thai-banks-logo",
+    "license": "ISC ตามที่ระบุในช่อง license ของ package.json ของโปรเจคต้นทาง (ที่เก็บต้นทางไม่มีไฟล์ LICENSE จึงแนบ package.json เป็นหลักฐาน)",
+    "url": "https://github.com/casperstack/thai-banks-logo",
+    "license_file": "assets/banks/thai-banks-logo.package.json",
+    "files": [
+      "assets/banks/BAAC.png",
+      "assets/banks/BAY.png",
+      "assets/banks/BBL.png",
+      "assets/banks/CIMB.png",
+      "assets/banks/CITI.png",
+      "assets/banks/GHB.png",
+      "assets/banks/GSB.png",
+      "assets/banks/HSBC.png",
+      "assets/banks/IBANK.png",
+      "assets/banks/ICBC.png",
+      "assets/banks/KBANK.png",
+      "assets/banks/KKP.png",
+      "assets/banks/KTB.png",
+      "assets/banks/LHB.png",
+      "assets/banks/SCB.png",
+      "assets/banks/TCRB.png",
+      "assets/banks/TISCO.png",
+      "assets/banks/TTB.png",
+      "assets/banks/UOB.png",
+      "data/thai_banks.json"
+    ]
+  },
+  {
     "id": "tailwindcss",
     "name": "Tailwind CSS 3.4.17",
     "use": "จัดรูปแบบหน้าเว็บ (ไฟล์ CSS ที่คอมไพล์แล้ว assets/css/tailwind.css)",
