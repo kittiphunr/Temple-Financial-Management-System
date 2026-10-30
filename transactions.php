@@ -33,14 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'save') {
         $templeId = (int)($_POST['temple_id'] ?? 0);
         $catId = (int)($_POST['category_id'] ?? 0);
-        $date = $_POST['txn_date'] ?? '';
+        $date = date_be_parse($_POST, 'txn_date');
         $amount = round((float)str_replace(',', '', $_POST['amount'] ?? '0'), 2);
         $errs = [];
         if (!can_access_temple($templeId)) $errs[] = 'ไม่มีสิทธิ์บันทึกข้อมูลของวัดนี้';
         $cs = $pdo->prepare('SELECT COUNT(*) FROM categories WHERE id = ? AND type = ? AND is_active = 1');
         $cs->execute([$catId, $type]);
         if (!$cs->fetchColumn()) $errs[] = 'หมวดไม่ถูกต้อง';
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date)) $errs[] = 'วันที่ไม่ถูกต้อง';
+        if ($date === null) $errs[] = 'วันที่ไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ.)';
         if ($amount <= 0 || $amount > 999999999999) $errs[] = 'จำนวนเงินต้องมากกว่า 0';
 
         if ($errs) {
@@ -132,7 +132,7 @@ function temple_options(array $groups, int $sel): string
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
     <div><label>วัด</label><select name="temple_id" required><?= temple_options($groups, (int)($edit['temple_id'] ?? ($u['temple_id'] ?? 0))) ?></select></div>
-    <div><label>วันที่</label><input type="date" name="txn_date" required value="<?= e($edit['txn_date'] ?? date('Y-m-d')) ?>"></div>
+    <div><label>วันที่</label><?= date_be_field('txn_date', $edit['txn_date'] ?? null) ?></div>
     <div><label>หมวด</label><select name="category_id" required>
       <?php foreach ($cats as $c): ?><option value="<?= (int)$c['id'] ?>" <?= ($edit['category_id'] ?? 0) == $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
     </select></div>

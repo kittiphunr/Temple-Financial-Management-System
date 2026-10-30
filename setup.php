@@ -39,7 +39,7 @@ echo 'สร้างบัญชีวัดอัตโนมัติ ' . cou
 if ($created) {
     $dir = __DIR__ . '/storage';
     is_dir($dir) || mkdir($dir, 0750, true);
-    $file = $dir . '/temple_accounts_' . date('Ymd_His') . '.csv';
+    $file = $dir . '/temple_accounts_' . ((int)date('Y') + 543) . date('md_His') . '.csv';
     $fh = fopen($file, 'w');
     write_credentials_csv($fh, $created);
     fclose($fh);

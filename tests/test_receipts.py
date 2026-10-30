@@ -1,7 +1,7 @@
 """ชุดที่ 4: อนุโมทนาบัตร (ใบอนุโมทนาบัตรสำหรับรายรับประเภทบริจาค) + ตราคณะสงฆ์จังหวัดแพร่เป็นโลโก้ระบบ"""
 from datetime import date, timedelta
 
-from support import App, Client, FakeSMTP, age_otps, notice, parse_creds_csv
+from support import App, Client, FakeSMTP, age_otps, be_date, notice, parse_creds_csv
 
 STAFF_PW = 'DistrictPass123'
 
@@ -63,7 +63,7 @@ def _run(R, smtp, q, app):
     check('C1 หมวดรับบริจาคเริ่มต้นถูกกำหนดจาก seed (3 หมวด)', q("SELECT COUNT(*) FROM categories WHERE is_donation=1") == '3')
 
     def add_income(cl, temple, cat, amount='1250.50', desc='ทำบุญ'):
-        cl.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': temple, 'txn_date': date.today().isoformat(),
+        cl.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': temple, **be_date('txn_date', date.today()),
                                                   'category_id': cat, 'amount': amount, 'doc_no': '', 'description': desc}, '/transactions.php?type=income')
         return q(f"SELECT MAX(id) FROM transactions WHERE temple_id={temple}")
     x1 = add_income(ta, ida, donate)
@@ -74,12 +74,12 @@ def _run(R, smtp, q, app):
     check('T1 รายการหมวดบริจาคมีปุ่ม "อนุโมทนาบัตร" แต่หมวดอื่นไม่มี', f'receipt.php?txn={x1}' in b and f'receipt.php?txn={x2}' not in b)
 
     form = {'action': 'issue', 'txn': x1, 'donor_name': 'นายสมชาย ใจบุญ', 'donor_address': '1 ถ.ยันตรกิจโกศล อ.เมือง จ.แพร่', 'purpose': 'สร้างศาลา',
-            'book_no': '1', 'receipt_date': date.today().isoformat(), 'receiver_name': 'นายไวยา วัจกร', 'receiver_position': 'ไวยาวัจกร'}
+            'book_no': '1', **be_date('receipt_date', date.today()), 'receiver_name': 'นายไวยา วัจกร', 'receiver_position': 'ไวยาวัจกร'}
     c, loc, b = ta.post('/receipt.php', {**form, 'txn': x2}, f'/receipt.php?txn={x1}')
     check('R2 หมวดที่ไม่ใช่รับบริจาคออกอนุโมทนาบัตรไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '0', notice(b))
     c, loc, b = ta.post('/receipt.php', {**form, 'donor_name': ''}, f'/receipt.php?txn={x1}')
     check('R3 ไม่กรอกชื่อผู้บริจาคไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '0')
-    c, loc, b = ta.post('/receipt.php', {**form, 'receipt_date': (date.today() + timedelta(days=3)).isoformat()}, f'/receipt.php?txn={x1}')
+    c, loc, b = ta.post('/receipt.php', {**form, **be_date('receipt_date', date.today() + timedelta(days=3))}, f'/receipt.php?txn={x1}')
     check('R4 วันที่ออกเป็นอนาคตไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '0')
     c, loc, b = ta.post('/receipt.php', form, f'/receipt.php?txn={x1}')
     check('R5 ออกอนุโมทนาบัตรสำเร็จ ได้เลขที่ 1', q("SELECT receipt_no FROM donation_receipts") == '1' and loc and 'receipt.php?id=' in loc, notice(b))
@@ -96,7 +96,7 @@ def _run(R, smtp, q, app):
     # ---- ผูกกับรายการบัญชี ----
     c, _, b = ta.post('/transactions.php?type=income', {'action': 'delete', 'id': x1}, '/transactions.php?type=income')
     check('T2 ลบรายการที่ออกอนุโมทนาบัตรแล้วไม่ได้', q(f"SELECT is_deleted FROM transactions WHERE id={x1}") == '0')
-    ta.post('/transactions.php?type=income', {'action': 'save', 'id': x1, 'temple_id': ida, 'txn_date': date.today().isoformat(), 'category_id': donate,
+    ta.post('/transactions.php?type=income', {'action': 'save', 'id': x1, 'temple_id': ida, **be_date('txn_date', date.today()), 'category_id': donate,
                                               'amount': '9999', 'doc_no': '', 'description': 'x'}, f'/transactions.php?type=income&edit={x1}')
     check('T3 แก้จำนวนเงินรายการที่ออกอนุโมทนาบัตรแล้วไม่ได้', q(f"SELECT amount FROM transactions WHERE id={x1}") == '1250.50')
 

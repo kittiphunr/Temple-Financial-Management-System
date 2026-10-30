@@ -69,6 +69,67 @@ function th_date(?string $ymd): string
     return $d . ' ' . TH_MONTHS[$m] . ' ' . ($y + 543);
 }
 
+/** "30 ตุลาคม 2569 13:45 น." จากเวลาค.ศ. ในฐานข้อมูล (Y-m-d H:i[:s]) */
+function th_datetime(?string $dt): string
+{
+    if (!$dt) {
+        return '';
+    }
+    return th_date($dt) . (strlen($dt) >= 16 ? ' ' . substr($dt, 11, 5) . ' น.' : '');
+}
+
+/** "30/10/2569" (สำหรับส่งออก CSV) */
+function th_date_short(?string $ymd): string
+{
+    if (!$ymd) {
+        return '';
+    }
+    [$y, $m, $d] = array_map('intval', explode('-', substr($ymd, 0, 10)));
+    return sprintf('%02d/%02d/%04d', $d, $m, $y + 543);
+}
+
+/**
+ * ช่องกรอกวันที่แบบ พ.ศ. (วัน / เดือน / ปี พ.ศ.) แทน <input type="date"> ซึ่งแสดงปีตามภาษาของเบราว์เซอร์ (มักเป็น ค.ศ.)
+ * ส่งค่ามาเป็น {name}_d, {name}_m, {name}_y (ปี พ.ศ.) — แปลงกลับเป็น Y-m-d ด้วย date_be_parse()
+ * @param string|null $iso วันที่ตั้งต้น (Y-m-d ค.ศ.) ถ้าไม่ระบุใช้วันนี้
+ */
+function date_be_field(string $name, ?string $iso = null, int $yearsBack = 10, int $yearsAhead = 1): string
+{
+    $iso = $iso && preg_match('/^\d{4}-\d{2}-\d{2}/', $iso) ? substr($iso, 0, 10) : date('Y-m-d');
+    [$sy, $sm, $sd] = array_map('intval', explode('-', $iso));
+    $sy += 543;
+    $years = range(be_year() + $yearsAhead, be_year() - $yearsBack);
+    if (!in_array($sy, $years, true)) {
+        $years[] = $sy;
+        rsort($years);
+    }
+    $sel = function (string $suffix, string $label, array $opts, int $cur, string $cls) use ($name): string {
+        $h = '<select name="' . e($name . '_' . $suffix) . '" aria-label="' . e($label) . '" required class="' . $cls . '">';
+        foreach ($opts as $v => $text) {
+            $h .= '<option value="' . (int)$v . '"' . ((int)$v === $cur ? ' selected' : '') . '>' . e((string)$text) . '</option>';
+        }
+        return $h . '</select>';
+    };
+    $days = array_combine(range(1, 31), range(1, 31));
+    $months = array_slice(TH_MONTHS, 1, null, true);
+    $yearOpts = array_combine($years, $years);
+    return '<span class="grid grid-cols-[4.5rem_1fr_6rem] gap-1">'
+        . $sel('d', 'วันที่', $days, $sd, 'w-full') . $sel('m', 'เดือน', $months, $sm, 'w-full') . $sel('y', 'ปี พ.ศ.', $yearOpts, $sy, 'w-full') . '</span>';
+}
+
+/** อ่านช่องวันที่ พ.ศ. จาก $src (เช่น $_POST) แล้วคืน Y-m-d (ค.ศ.) หรือ null ถ้าไม่ครบ/ไม่มีวันนั้นจริง/ปีไม่ใช่ พ.ศ. ที่สมเหตุสมผล */
+function date_be_parse(array $src, string $name): ?string
+{
+    $d = $src[$name . '_d'] ?? null;
+    $m = $src[$name . '_m'] ?? null;
+    $y = $src[$name . '_y'] ?? null;
+    if (!is_scalar($d) || !is_scalar($m) || !is_scalar($y) || !ctype_digit((string)$d) || !ctype_digit((string)$m) || !ctype_digit((string)$y)) {
+        return null;
+    }
+    [$d, $m, $y] = [(int)$d, (int)$m, (int)$y - 543];
+    return ($y >= 1900 && $y <= 2200 && checkdate($m, $d, $y)) ? sprintf('%04d-%02d-%02d', $y, $m, $d) : null;
+}
+
 // ---------- CSRF ----------
 function csrf_token(): string
 {

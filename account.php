@@ -81,7 +81,7 @@ require __DIR__ . '/includes/header.php';
       <dt class="text-stone-500">อีเมลยืนยันตัวตน</dt><dd><?= $me['email'] ? e(mask_email($me['email'])) : '<span class="text-red-700">ยังไม่ได้ลงทะเบียน</span>' ?>
         <?= $me['role'] === 'admin' ? ' <a class="text-sm underline" href="staff_email.php">เปลี่ยน</a>' : '' ?></dd>
       <?php endif; ?>
-      <dt class="text-stone-500">เข้าสู่ระบบล่าสุด</dt><dd><?= $me['last_login_at'] ? e(th_date($me['last_login_at'])) . ' ' . e(substr($me['last_login_at'], 11, 5)) . ' น.' : '-' ?></dd>
+      <dt class="text-stone-500">เข้าสู่ระบบล่าสุด</dt><dd><?= $me['last_login_at'] ? e(th_datetime($me['last_login_at'])) : '-' ?></dd>
     </dl>
     <?php if ($me['role'] === 'temple'): ?>
     <p class="mt-4 rounded-lg bg-gold-50 p-3 text-sm text-stone-700">

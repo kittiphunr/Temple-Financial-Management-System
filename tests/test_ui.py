@@ -2,8 +2,9 @@
 ทดสอบฝั่งเซิร์ฟเวอร์ (HTML ที่ส่งออก + ไฟล์ที่ต้องโหลด) — พฤติกรรมในเบราว์เซอร์ตรวจด้วยตา"""
 import glob
 import re
+from datetime import date
 
-from support import App, Client, notice
+from support import App, Client, be_date, notice
 
 
 def run(db, R):
@@ -37,7 +38,7 @@ def _run(R, q, app):
           'data-swal="err"' in b and 'ไม่ถูกต้อง' in notice(b))
     adm = Client(base)
     adm.post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
-    adm.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': '1', 'txn_date': '2026-01-05', 'category_id': '1',
+    adm.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': '1', **be_date('txn_date', date(2026, 1, 5)), 'category_id': '1',
                                                 'amount': '100', 'doc_no': '', 'description': 'x'}, '/transactions.php?type=income')
     _, _, b = adm.req('/transactions.php?type=income')
     check('U4 ข้อความสำเร็จ (flash) แสดงเป็น data-swal="ok" ในหน้าถัดไป', 'data-swal="ok"' in b and 'บันทึก' in notice(b))
@@ -61,3 +62,36 @@ def _run(R, q, app):
     check('U9b หัวหน้าต่างเป็นชื่อระบบและตราคณะสงฆ์จังหวัดแพร่ (ไม่ใช่ชื่อหน่วยงานของผู้พัฒนา)', 'เกี่ยวกับ ระบบบัญชีรายรับ-รายจ่ายวัด' in tpl and 'assets/img/logo.svg' in tpl and 'เกี่ยวกับ มหาวิทยาลัย' not in tpl)
     check('U10 ลิงก์ภายนอกเปิดแท็บใหม่แบบปลอดภัย (noopener noreferrer)', len(re.findall(r'target="_blank" rel="noopener noreferrer"', tpl)) == 2)
     check('U11 หน้าสาธารณะ (ก่อนเข้าสู่ระบบ) ก็มีหน้าต่างเกี่ยวกับ', 'id="about-template"' in Client(base).req('/')[2] or 'id="about-template"' in Client(base).req('/login.php')[2])
+
+    # ================= วันที่ทุกจุดเป็น พ.ศ. =================
+    today = date.today()
+    be = today.year + 543
+    _, _, b = adm.req('/transactions.php?type=income')
+    years = [int(x) for x in re.findall(r'<option value="(\d{4})"', re.search(r'name="txn_date_y".*?</select>', b, re.S).group(0))]
+    check('D1 ช่องปีของฟอร์มรายการบัญชีเป็น พ.ศ. ทั้งหมด (ไม่มี ค.ศ.) และเลือกปีปัจจุบันเป็นค่าเริ่มต้น',
+          years and min(years) > 2500 and be in years and f'<option value="{be}" selected>' in b, str(years))
+    check('D2 ไม่มี <input type="date"> (แสดงปีตามเบราว์เซอร์/ค.ศ.) เหลือในโค้ดหน้าเว็บ', not [f for f in glob.glob(str(app.dir / '*.php')) + glob.glob(str(app.dir / 'admin' / '*.php'))
+                                                                              if 'type="date"' in open(f, encoding='utf-8').read()])
+    save = lambda **kw: adm.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': '1', 'category_id': '1', 'amount': '77', 'doc_no': '', 'description': 'วันที่', **kw}, '/transactions.php?type=income')
+    n0 = q("SELECT COUNT(*) FROM transactions")
+    save(**{'txn_date_d': '31', 'txn_date_m': '2', 'txn_date_y': str(be)})
+    save(**{'txn_date_d': '5', 'txn_date_m': '1', 'txn_date_y': '2026'})
+    save(**{'txn_date_d': '5', 'txn_date_m': '1'})
+    save(**{'txn_date_d': 'x', 'txn_date_m': '1', 'txn_date_y': str(be)})
+    check('D3 วันที่ไม่ถูกต้องถูกปฏิเสธ: 31 กุมภาพันธ์, ปี ค.ศ. (2026) ที่ใส่ผิดช่อง, ไม่ครบ, ไม่ใช่ตัวเลข', q("SELECT COUNT(*) FROM transactions") == n0)
+    save(**{'txn_date_d': '5', 'txn_date_m': '1', 'txn_date_y': '2569'})
+    check('D4 ปี พ.ศ. 2569 ถูกแปลงเก็บเป็น ค.ศ. 2026 ในฐานข้อมูล', q("SELECT txn_date FROM transactions WHERE description='วันที่' ORDER BY id DESC LIMIT 1") == '2026-01-05')
+    c, _, b = adm.req('/transactions.php?type=income&year=2569')
+    check('D5 รายการแสดงวันที่เป็น พ.ศ. (5 มกราคม 2569) และไม่มีวันที่ ค.ศ. รูปแบบ 2026-01-05 หลุดในหน้า', '5 มกราคม 2569' in b and not re.search(r'\b20[0-4]\d-\d\d-\d\d', b))
+    rid = q("SELECT id FROM transactions WHERE description='วันที่' ORDER BY id DESC LIMIT 1")
+    _, _, b = adm.req(f'/transactions.php?type=income&year=2569&edit={rid}')
+    check('D6 แก้ไขรายการ: ฟอร์มแสดงวัน/เดือน/ปี พ.ศ. ของรายการเดิม', '<option value="5" selected>' in b and '<option value="1" selected>' in b and '<option value="2569" selected>' in b)
+    c, h, body = adm.raw('/reports.php?export=csv&year=2569')
+    check('D7 ส่งออก CSV: คอลัมน์วันที่เป็น พ.ศ. (05/01/2569)', '05/01/2569' in body.decode('utf-8-sig') and '2026-01-05' not in body.decode('utf-8-sig'))
+    _, _, b = adm.req('/admin/audit.php')
+    check('D8 ประวัติการใช้งานแสดงเวลาเป็น พ.ศ. (ไม่ใช่ 2026-xx-xx)', f' {be} ' in b and not re.search(r'\b20[0-4]\d-\d\d-\d\d \d\d:\d\d', b))
+    for page in ('/dashboard.php', '/reports.php', '/receipts.php', '/account.php', '/admin/temple_accounts.php', '/temples.php'):
+        _, _, b = adm.req(page)
+        check(f'D9 {page} ไม่มีวันที่ ค.ศ. หลุดในหน้า', not re.search(r'\b20[0-4]\d-\d\d-\d\d', b))
+    _, _, b = adm.req(f'/receipt.php?txn={q("SELECT id FROM transactions ORDER BY id LIMIT 1")}')
+    check('D10 ฟอร์มวันที่ออกอนุโมทนาบัตรเป็นช่อง พ.ศ. (วัน/เดือน/ปี)', 'name="receipt_date_y"' in b and 'type="date"' not in b)

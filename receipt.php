@@ -94,7 +94,7 @@ if (isset($_GET['txn'])) {
   <div class="col-span-full"><label>ที่อยู่ผู้บริจาค</label><input name="donor_address" maxlength="500"></div>
   <div class="col-span-full"><label>เพื่อ (วัตถุประสงค์)</label><input name="purpose" maxlength="255" value="<?= e($x['description'] ?? '') ?>"></div>
   <div><label>เล่มที่</label><input name="book_no" maxlength="20" required value="<?= e($book) ?>"></div>
-  <div><label>วันที่ออก</label><input type="date" name="receipt_date" required max="<?= date('Y-m-d') ?>" value="<?= date('Y-m-d') ?>"></div>
+  <div><label>วันที่ออก</label><?= date_be_field('receipt_date', null, 3, 0) ?></div>
   <div><label>ผู้รับเงิน (ชื่อ)</label><input name="receiver_name" maxlength="200" value="<?= e($rc ? person_full_name($rc, false) : '') ?>"></div>
   <div><label>ตำแหน่งผู้รับเงิน</label><input name="receiver_position" maxlength="100" value="<?= e($rc ? PERSON_POSITIONS[$rc['position']] : '') ?>"></div>
   <p class="col-span-full text-sm text-stone-600">เลขที่ออกให้อัตโนมัติเรียงต่อเนื่องในแต่ละปี พ.ศ. · ชื่อเจ้าอาวาสดึงจากข้อมูลบุคลากร · พิมพ์แล้วให้เจ้าอาวาสหรือผู้ที่วัดมอบหมายลงลายมือชื่อและประทับตราวัด</p>

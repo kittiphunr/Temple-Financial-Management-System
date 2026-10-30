@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 otp_invalidate_all($pdo, (int)$row['id']);
                 audit('password_reset', 'user', (int)$row['id']);
                 send_mail(user_mail_address($row), 'รหัสผ่านของคุณถูกเปลี่ยนแล้ว',
-                    "รหัสผ่านของบัญชี {$row['username']} ถูกเปลี่ยนผ่านระบบกู้รหัสผ่านเมื่อ " . date('d/m/Y H:i') . "\nหากคุณไม่ได้ดำเนินการ กรุณาแจ้งผู้ดูแลระบบทันที\n");
+                    "รหัสผ่านของบัญชี {$row['username']} ถูกเปลี่ยนผ่านระบบกู้รหัสผ่านเมื่อ " . th_datetime(date('Y-m-d H:i:s')) . "\nหากคุณไม่ได้ดำเนินการ กรุณาแจ้งผู้ดูแลระบบทันที\n");
                 unset($_SESSION['pending_reset'], $_SESSION['login_fail']);
                 flash('ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว เข้าสู่ระบบด้วยรหัสผ่านใหม่ได้เลย');
                 redirect('login.php');
