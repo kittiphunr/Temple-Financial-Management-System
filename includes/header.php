@@ -16,6 +16,7 @@ function nav_item(string $href, string $label, bool $active): string
 $forced = !empty($u['must_change']);
 $items = $forced ? '' : nav_item('index.php', 'หน้าแรก', $cur === 'index.php' && !$inAdmin);
 if ($u && !$forced) {
+    $items .= nav_item('dashboard.php', 'แดชบอร์ด', $cur === 'dashboard.php');
     $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
     $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     $items .= nav_item('reports.php', 'รายงาน', $cur === 'reports.php');

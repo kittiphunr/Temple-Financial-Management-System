@@ -5,6 +5,8 @@
 
 ## ความสามารถ
 - บันทึก/แก้ไข/ลบ (soft delete) รายรับและรายจ่าย แยกหมวด ผูกกับวัด
+- **แดชบอร์ดรายอำเภอ** (`dashboard.php`): การ์ดสถิติ รายรับรวม/รายจ่ายรวม/ยอดคงเหลือ/จำนวนวัด, กราฟรายเดือน, หมวดสูงสุด, ตารางวัดในอำเภอ (บอกวัดที่ยังไม่บันทึกบัญชี)
+  แอดมินหลักเลือกอำเภอหรือทั้งจังหวัดได้ เจ้าหน้าที่อำเภอเห็นเฉพาะอำเภอตน แอดมินวัดเห็นเฉพาะวัดตน
 - สรุปภาพรวมรายปี (พ.ศ.) รายเดือน รายหมวด รายวัด จัดกลุ่มตามอำเภอ
 - พิมพ์รายงาน / บันทึกเป็น PDF ผ่านเบราว์เซอร์ และส่งออก CSV (เปิดด้วย Excel ได้)
 - บทบาทผู้ใช้: `admin` (ทุกวัด), `district` (เฉพาะอำเภอ), `temple` (เฉพาะวัดตนเอง)
@@ -113,10 +115,10 @@ npm run build:css      # หรือ npm run watch:css ระหว่างพ
 ## โครงสร้าง
 ```
 install.php (ตัวช่วยติดตั้ง)  setup.php (ติดตั้งผ่าน CLI)
-index.php  login.php  logout.php  temples.php  transactions.php  reports.php
+index.php  dashboard.php  login.php  logout.php  temples.php  transactions.php  reports.php
 admin/     index, temples, temple_accounts, import, users, categories, audit
 login.php  login_verify.php (2FA)  account.php (เปลี่ยนรหัสผ่านของตนเอง)
-includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, mailer, stats, header, footer
+includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, mailer, stats, dashboard_ui, header, footer
 storage/   ไฟล์ที่ห้ามเข้าถึงจากเว็บ (รหัสผ่านเริ่มต้น, mail.log)
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
 sql/       schema.sql, seed.sql, migrations/      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)

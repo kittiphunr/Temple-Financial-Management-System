@@ -3,6 +3,7 @@
 หมายเหตุ: หลังติดตั้ง จะล้างธง must_change_password ของบัญชีวัดทั้งหมดก่อน เพื่อให้ชุดนี้ทดสอบการใช้งานปกติได้ทันที
 ส่วน "บังคับเปลี่ยนรหัสผ่านครั้งแรก" ทดสอบในชุดที่ 2 (test_install.py)
 """
+import datetime
 import re
 
 from support import Client, FakeSMTP, App, age_otps, hash_password, notice, parse_creds_csv
@@ -219,14 +220,62 @@ def _run(db, R, smtp, name, q, app):
     c, _, b = adm.req('/admin/users.php')
     check('K6 หน้า ผู้ใช้งาน ไม่มีตัวเลือกบทบาทวัด/ไม่แสดงบัญชีวัด', 'temple_id' not in b and 'wat0354' not in b)
 
-    # ---------- L: บทบาทอื่น และการตรวจว่าติดตั้งแล้ว ----------
-    n = len(smtp.messages)
-    Client(base).post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
-    check('L1 แอดมินหลักไม่ถูกบังคับ 2FA (ไม่ส่งอีเมล)', len(smtp.messages) == n)
+    # ---------- L0: เตรียมเจ้าหน้าที่อำเภอเด่นชัย ----------
     q("INSERT INTO users (username,password_hash,full_name,role,district_id) "
       f"SELECT 'dist1','{hash_password(app, 'DistPass12345')}','เจ้าหน้าที่','district',id FROM districts WHERE name='เด่นชัย'")
     d = Client(base)
     c, loc, _ = d.post('/login.php', {'username': 'dist1', 'password': 'DistPass12345'})
+
+    # ---------- M: แดชบอร์ดรายอำเภอ ----------
+    today = datetime.date.today()
+    be = today.year + 543
+    d_denchai = q("SELECT id FROM districts WHERE name='เด่นชัย'")
+    d_mueang = q("SELECT id FROM districts WHERE name='เมืองแพร่'")
+    temple_dc = q(f"SELECT id FROM temples WHERE district_id={d_denchai} ORDER BY id LIMIT 1")
+    own_tid = tid_of(creds[0][0])   # วัดของแอดมินวัดที่ล็อกอินอยู่ (t3) — อยู่ในเมืองแพร่
+    inc_cat = q("SELECT id FROM categories WHERE type='income' ORDER BY id LIMIT 1")
+    exp_cat = q("SELECT id FROM categories WHERE type='expense' ORDER BY id LIMIT 1")
+
+    def add_txn(kind, temple, amount):
+        adm.post(f'/transactions.php?type={kind}', {'action': 'save', 'id': '0', 'temple_id': temple, 'txn_date': today.isoformat(),
+                                                    'category_id': inc_cat if kind == 'income' else exp_cat, 'amount': amount,
+                                                    'doc_no': '', 'description': 'ทดสอบแดชบอร์ด'}, f'/transactions.php?type={kind}')
+
+    add_txn('income', temple_dc, '1500.50')
+    add_txn('expense', temple_dc, '400.25')
+    add_txn('income', own_tid, '700.00')
+    check('M0 บันทึกรายการทดสอบครบ 3 รายการ', q("SELECT COUNT(*) FROM transactions WHERE description='ทดสอบแดชบอร์ด'") == '3')
+
+    c, _, b = Client(base).req('/dashboard.php')
+    check('M1 ผู้เยี่ยมชมที่ยังไม่ล็อกอินเปิดแดชบอร์ดไม่ได้', c == 302)
+    c, _, b = adm.req(f'/dashboard.php?district={d_denchai}&year={be}')
+    check('M2 แดชบอร์ดอำเภอเด่นชัย: การ์ดสถิติ รายรับ/รายจ่าย/คงเหลือ/จำนวนวัด ถูกต้อง',
+          c == 200 and 'แดชบอร์ดอำเภอเด่นชัย' in b and '1,500.50' in b and '400.25' in b and '1,100.25' in b
+          and 'ในสังกัดอำเภอเด่นชัย' in b and re.search(r'จำนวนวัดในระบบ</span><span[^>]*>31 ', b) is not None)
+    check('M3 แดชบอร์ดอำเภอเด่นชัย ไม่รวมข้อมูลของอำเภออื่น (700.00 ของเมืองแพร่)', '700.00' not in b)
+    check('M3b มีกราฟรายเดือน (SVG) และตารางวัดในอำเภอพร้อมสถานะ "ยังไม่มีรายการ"', '<svg viewBox' in b and 'ยังไม่มีรายการ' in b and 'บันทึกบัญชีแล้ว <strong>1</strong> จาก 31 วัด' in b)
+    c, _, b = adm.req(f'/dashboard.php?district={d_mueang}&year={be}')
+    check('M4 แดชบอร์ดอำเภอเมืองแพร่: เห็นเฉพาะ 700.00 ไม่เห็นยอดของเด่นชัย', '700.00' in b and '1,500.50' not in b and '95 ' in b)
+    c, _, b = adm.req(f'/dashboard.php?year={be}')
+    check('M5 มุมมองทั้งจังหวัด รวมทุกอำเภอ (2,200.50) + ตารางเปรียบเทียบ 8 อำเภอ',
+          'แดชบอร์ดทั้งจังหวัดแพร่' in b and '2,200.50' in b and 'เปรียบเทียบรายอำเภอ' in b and b.count('dashboard.php?district=') >= 8 and 'ในสังกัดจังหวัดแพร่' in b)
+    c, _, b = adm.req(f'/dashboard.php?district={d_denchai}&year={be - 1}')
+    check('M6 เปลี่ยนปี → ไม่มีรายการของปีนี้', c == 200 and '1,500.50' not in b and 'ยังไม่มีรายการบัญชีในปีที่เลือก' in b)
+    c, _, b = adm.req('/dashboard.php?district=9999&year=abc')
+    check('M7 อำเภอ/ปีที่ไม่ถูกต้อง → ใช้ค่าเริ่มต้น (ทั้งจังหวัด) ไม่ error', c == 200 and 'แดชบอร์ดทั้งจังหวัดแพร่' in b)
+    c, _, b = d.req(f'/dashboard.php?district={d_mueang}&year={be}')
+    check('M8 เจ้าหน้าที่อำเภอเด่นชัยขอดูอำเภออื่น → ถูกบังคับให้เห็นเฉพาะอำเภอตนเอง',
+          c == 200 and 'แดชบอร์ดอำเภอเด่นชัย' in b and '1,500.50' in b and '700.00' not in b and 'aria-label="เลือกอำเภอ"' not in b)
+    c, _, b = t3.req(f'/dashboard.php?district={d_denchai}&year={be}')
+    check('M9 แอดมินวัดเห็นเฉพาะข้อมูลวัดของตนเอง (ไม่เห็นอำเภออื่น/วัดอื่นในอำเภอเดียวกัน)',
+          c == 200 and 'เฉพาะวัดของท่าน' in b and '700.00' in b and '1,500.50' not in b and 'aria-label="เลือกอำเภอ"' not in b)
+    c, _, b = adm.req(f'/index.php?year={be}')
+    check('M10 หน้าแรกใช้การ์ดสถิติแบบเดียวกัน และลิงก์อำเภอไปแดชบอร์ด', 'ยอดคงเหลือ' in b and f'dashboard.php?year={be}&amp;district={d_denchai}' in b)
+
+    # ---------- L: บทบาทอื่น และการตรวจว่าติดตั้งแล้ว ----------
+    n = len(smtp.messages)
+    Client(base).post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
+    check('L1 แอดมินหลักไม่ถูกบังคับ 2FA (ไม่ส่งอีเมล)', len(smtp.messages) == n)
     check('L1b เจ้าหน้าที่อำเภอเข้าด้วยรหัสผ่านอย่างเดียว ไม่ถูกบังคับเปลี่ยนรหัส', loc == 'index.php' and d.req('/transactions.php?type=income')[0] == 200)
 
     probe = '$c=require "config.php"; require "includes/install_lib.php"; var_dump(is_installed($c));'

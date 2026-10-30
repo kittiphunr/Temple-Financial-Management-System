@@ -178,7 +178,7 @@ def _run(db, R, smtp, wiz, full, app):
     check('F3 ยืนยันอีเมลผ่าน → สร้าง session', c == 302)
     c, loc, _ = t.req('/index.php')
     check('F3b หน้าแรกถูกเด้งไป account.php (ต้องเปลี่ยนรหัสก่อน)', c == 302 and loc == 'account.php', f'{c} {loc}')
-    for path in ['/transactions.php?type=income', '/reports.php', '/reports.php?export=csv', '/temples.php', '/admin/index.php',
+    for path in ['/dashboard.php', '/transactions.php?type=income', '/reports.php', '/reports.php?export=csv', '/temples.php', '/admin/index.php',
                  '/admin/temple_accounts.php?download=email_template', '/login_verify.php']:
         c, loc, _ = t.req(path)
         # ทุกหน้า (รวมหน้าใน admin/ ที่เส้นทางเป็น ../account.php) ต้องถูกเด้งไปหน้าเปลี่ยนรหัสผ่านทันที
