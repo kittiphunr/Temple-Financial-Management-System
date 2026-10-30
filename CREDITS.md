@@ -22,6 +22,6 @@
 | [Tailwind CSS 3.4.17](https://tailwindcss.com/) | จัดรูปแบบหน้าเว็บ (ไฟล์ CSS ที่คอมไพล์แล้ว assets/css/tailwind.css) | Tailwind Labs, Inc. | MIT |
 | [ฟอนต์ Sarabun](https://fonts.google.com/specimen/Sarabun) | ตัวอักษรหน้าเว็บ (โหลดจาก Google Fonts ตอนใช้งาน ไม่ได้ฝังในระบบ) | Cadson Demak | SIL Open Font License 1.1 |
 | [thai-province-data](https://github.com/kongvut/thai-province-data) | ฐานข้อมูลจังหวัด/อำเภอ/ตำบล สำหรับตัวติดตั้งและการสร้างผู้ใช้อัตโนมัติ (data/thai_geo.json) | Kongvut Sangkla | MIT ([ไฟล์สัญญาอนุญาต](data/thai_geo.LICENSE)) |
-| [ทะเบียนวัด จังหวัดแพร่ (binfo.onab.go.th)](https://binfo.onab.go.th/Temple/Temple-List-view.aspx) | ข้อมูลตั้งต้นของวัด 381 วัด (data/temples_phrae.csv) และรูปแบบไฟล์ Excel ที่นำเข้าได้ | สำนักงานพระพุทธศาสนาแห่งชาติ | ไม่ได้ระบุสัญญาอนุญาตของข้อมูล — ใช้เป็นข้อมูลอ้างอิงจากเว็บไซต์ทางการและให้เครดิตแหล่งที่มา |
+| [ทะเบียนวัดแพร่ 381 วัด (binfo.onab.go.th)](https://binfo.onab.go.th/Temple/Temple-List-view.aspx) | ข้อมูลตั้งต้นของวัด 381 วัด (data/temples_phrae.csv) และรูปแบบไฟล์ Excel ที่นำเข้าได้ | สำนักงานพระพุทธศาสนาแห่งชาติ | ไม่ได้ระบุสัญญาอนุญาตของข้อมูล — ใช้เป็นข้อมูลอ้างอิงจากเว็บไซต์ทางการและให้เครดิตแหล่งที่มา |
 
 _ไฟล์นี้สร้างจาก `data/credits.json` ด้วย `tools/sync_credits.py` — แก้ที่ต้นทาง ไม่แก้ที่นี่_

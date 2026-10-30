@@ -328,7 +328,7 @@ def _provinces(db, R):
         check('P10 สร้างบัญชีแอดมินวัด 4 บัญชี', q("SELECT COUNT(*) FROM users WHERE role='temple'") == '4')
         check('P11 ไฟล์ชั่วคราวถูกลบหลังติดตั้ง', not [f for f in os.listdir(os.path.join(app.dir, 'storage')) if f.startswith('install_temples_')])
         c, _, b = Client(app.serve()).req('/index.php')
-        check('P12 หน้าแรกแสดงข้อความของจังหวัดน่าน', c == 200 and 'จังหวัดน่าน' in b and 'จังหวัดแพร่' not in b, b[:0])
+        check('P12 หน้าแรกแสดงข้อความของจังหวัดน่าน', c == 200 and 'จังหวัดน่าน' in b and 'จังหวัดแพร่' not in b, re.sub(r'<[^>]+>', ' ', b[max(0, b.find('จังหวัดแพร่') - 80):b.find('จังหวัดแพร่') + 40]) if 'จังหวัดแพร่' in b else 'ไม่พบ จังหวัดน่าน')
         check('P12a เจ้าคณะตำบลได้ตำบลของตนเอง (เมืองน่าน ในเวียง = tambon550101) และทุกตำบลมีผู้ดูแล', q("SELECT COUNT(*) FROM users WHERE username='tambon550101'") == '1'
               and int(q("SELECT COUNT(*) FROM (SELECT district_id, subdistrict FROM user_subdistricts GROUP BY district_id, subdistrict) x")) >= ns)
         check('P12b ค่า province_name ถูกเขียนใน config.local.php', "'province_name' => 'น่าน'" in open(os.path.join(app.dir, 'config.local.php'), encoding='utf8').read())
