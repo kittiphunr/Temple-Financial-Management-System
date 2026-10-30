@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($created) {
             $_SESSION['new_staff_creds'] = array_merge($_SESSION['new_staff_creds'] ?? [], $created);
             audit('provision_staff', 'user', null, count($created) . ' accounts');
-            flash('สร้างบัญชีผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลแล้ว ' . count($created) . ' บัญชี — ดาวน์โหลดรหัสผ่านเริ่มต้นได้ครั้งเดียว');
+            flash('สร้างบัญชีผู้ใช้ระดับจังหวัด/' . unit_district() . '/' . unit_subdistrict() . 'แล้ว ' . count($created) . ' บัญชี — ดาวน์โหลดรหัสผ่านเริ่มต้นได้ครั้งเดียว');
         } else {
             flash('ทุกตำแหน่งมีผู้ใช้ครบแล้ว ไม่มีบัญชีที่ต้องสร้างเพิ่ม');
         }
@@ -87,18 +87,18 @@ $pageTitle = 'ผู้ใช้งาน';
 require __DIR__ . '/../includes/header.php';
 ?>
 <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
-  <h2 class="!my-0">ผู้ใช้ระดับจังหวัดและอำเภอ</h2>
+  <h2 class="!my-0">ผู้ใช้ระดับจังหวัดและ<?= e(unit_district()) ?></h2>
   <span class="rounded-full border px-4 py-1.5 text-sm font-semibold <?= $used > $cap ? 'border-red-300 bg-red-50 text-red-800' : 'border-stone-300 bg-white' ?>">ใช้ไป <?= $used ?> จาก <?= $cap ?> คน</span>
 </div>
-<p class="mb-4 text-sm text-stone-600">โควตา = แอดมินประจำอำเภอ (อำเภอละ 1 คน) + แอดมินหลัก 1 คน + ผู้ใช้เจ้าคณะจังหวัด 1 คน = จำนวนอำเภอ + 2
+<p class="mb-4 text-sm text-stone-600">โควตา = แอดมินประจำ<?= e(unit_district()) ?> (<?= e(unit_district()) ?>ละ 1 คน) + แอดมินหลัก 1 คน + ผู้ใช้เจ้าคณะจังหวัด 1 คน = จำนวน<?= e(unit_district()) ?> + 2
   บัญชีแอดมินประจำวัดไม่นับ — จัดการที่ <a class="font-semibold" href="temple_accounts.php">บัญชีวัด</a></p>
 
 <div class="mb-4 rounded-2xl border border-gold-500 bg-gold-50 p-4">
   <h3>สร้างบัญชีให้ครบทุกตำแหน่งอัตโนมัติ</h3>
-  <p class="mb-3 text-sm text-stone-700">สร้างผู้ใช้ในตำแหน่งที่ยังว่างจากทะเบียนวัดที่นำเข้า: <strong>เจ้าคณะจังหวัด</strong> 1 · <strong>แอดมินประจำอำเภอ</strong> อำเภอละ 1 ·
-    <strong>เจ้าคณะตำบล</strong> ตำบลละ 1 (ดูอย่างเดียว ไม่นับโควตา) พร้อมรหัสผ่านเริ่มต้นแบบสุ่ม ตำแหน่งที่มีผู้ใช้อยู่แล้วจะไม่ถูกแตะต้อง
+  <p class="mb-3 text-sm text-stone-700">สร้างผู้ใช้ในตำแหน่งที่ยังว่างจากทะเบียนวัดที่นำเข้า: <strong>เจ้าคณะจังหวัด</strong> 1 · <strong>แอดมินประจำ<?= e(unit_district()) ?></strong> <?= e(unit_district()) ?>ละ 1 ·
+    <strong>เจ้าคณะ<?= e(unit_subdistrict()) ?></strong> <?= e(unit_subdistrict()) ?>ละ 1 (ดูอย่างเดียว ไม่นับโควตา) พร้อมรหัสผ่านเริ่มต้นแบบสุ่ม ตำแหน่งที่มีผู้ใช้อยู่แล้วจะไม่ถูกแตะต้อง
     ผู้ใช้ต้องตั้งรหัสผ่านใหม่ตอนเข้าครั้งแรก และต้องลงอีเมลของแต่ละบัญชีก่อนจึงจะเข้าสู่ระบบได้</p>
-  <form method="post" class="flex flex-wrap items-center gap-2" data-confirm="สร้างบัญชีผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลที่ยังว่างทั้งหมด?"><?= csrf_field() ?><input type="hidden" name="action" value="provision_staff">
+  <form method="post" class="flex flex-wrap items-center gap-2" data-confirm="สร้างบัญชีผู้ใช้ระดับจังหวัด/<?= e(unit_district()) ?>/<?= e(unit_subdistrict()) ?>ที่ยังว่างทั้งหมด?"><?= csrf_field() ?><input type="hidden" name="action" value="provision_staff">
     <button class="btn">สร้างบัญชีที่ยังว่างทั้งหมด</button>
     <?php if (!empty($_SESSION['new_staff_creds'])): ?><a class="btn btn-outline" href="?download=staff_creds">⇩ ดาวน์โหลดรหัสผ่านเริ่มต้น (<?= count($_SESSION['new_staff_creds']) ?> บัญชี)</a><?php endif; ?>
   </form>
@@ -113,7 +113,7 @@ require __DIR__ . '/../includes/header.php';
       <select id="slot" name="slot" class="w-full" required><?php foreach ($vacant as $s): ?><option value="<?= e($s['key']) ?>"><?= e($s['label']) ?></option><?php endforeach; ?></select></div>
     <div><label for="username">ชื่อผู้ใช้</label><input id="username" name="username" required class="w-full" autocomplete="off"></div>
     <div><label for="full_name">ชื่อ-นามสกุล</label><input id="full_name" name="full_name" required class="w-full"></div>
-    <div class="sm:col-span-2"><label for="email">อีเมล (รับรหัสยืนยันตัวตนและกู้รหัสผ่าน<?= staff_2fa_enabled() ? ' — จำเป็นสำหรับอำเภอ/เจ้าคณะจังหวัด' : '' ?>)</label><input id="email" type="email" name="email" maxlength="190" class="w-full" autocomplete="off"></div>
+    <div class="sm:col-span-2"><label for="email">อีเมล (รับรหัสยืนยันตัวตนและกู้รหัสผ่าน<?= staff_2fa_enabled() ? ' — จำเป็นสำหรับ' . unit_district() . '/เจ้าคณะจังหวัด' : '' ?>)</label><input id="email" type="email" name="email" maxlength="190" class="w-full" autocomplete="off"></div>
     <div class="sm:col-span-2"><label for="password">รหัสผ่าน (อย่างน้อย 10 ตัว มีตัวอักษรและตัวเลข)</label><input id="password" type="password" name="password" minlength="10" required class="w-full" autocomplete="new-password"></div>
     <div class="flex items-end"><button class="btn">สร้างผู้ใช้</button></div>
   </form>

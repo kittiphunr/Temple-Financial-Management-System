@@ -25,11 +25,10 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
             $t['village'] ? 'บ้าน' . preg_replace('/^บ้าน/u', '', $t['village']) : null,
             $t['soi'] ? 'ซอย' . $t['soi'] : null,
             $t['road'] ? 'ถนน' . $t['road'] : null,
-            $t['subdistrict'] ? 'ต.' . $t['subdistrict'] : null,
-            'อ.' . $dn, 'จ.' . $province, $t['postcode'],
+            address_tail($t['subdistrict'] ?: null, $dn), $t['postcode'],
         ]);
         $line2 = implode(' ', $addr) . ($t['phone'] ? ' · โทร ' . $t['phone'] : '');
-        $line3 = 'สังกัดคณะสงฆ์อำเภอ' . $dn;
+        $line3 = 'สังกัดคณะสงฆ์' . unit_district() . $dn;
         $taxLine = $t['tax_id'] ? 'หมายเลขประจำตัวผู้เสียภาษี ' . substr($t['tax_id'], 0, 3) . '-' . substr($t['tax_id'], 3, 1) . '-' . substr($t['tax_id'], 4, 8) . '-' . substr($t['tax_id'], 12, 1) : '';
         $logoId = $t['logo_media_id'] ? (int)$t['logo_media_id'] : null;
         if (!$logoId) {
@@ -41,12 +40,12 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
         $d = $pdo->prepare('SELECT name, logo_media_id FROM districts WHERE id = ?');
         $d->execute([$districtId]);
         $row = $d->fetch() ?: ['name' => '', 'logo_media_id' => null];
-        $name = 'คณะสงฆ์อำเภอ' . $row['name'];
-        $line2 = 'จังหวัด' . $province;
+        $name = 'คณะสงฆ์' . unit_district() . $row['name'];
+        $line2 = province_phrase();
         $line3 = '';
         $logoId = $row['logo_media_id'] ? (int)$row['logo_media_id'] : null;
     } else {
-        $name = 'คณะสงฆ์จังหวัด' . $province;
+        $name = 'คณะสงฆ์' . province_phrase();
         $line2 = $line3 = '';
     }
     $img = $logoId ? media_url($logoId) : BASE . 'assets/img/logo.svg';

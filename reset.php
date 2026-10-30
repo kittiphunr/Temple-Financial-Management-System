@@ -61,7 +61,7 @@ require __DIR__ . '/includes/header.php';
 <div class="mx-auto my-10 max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
   <h2>ตั้งรหัสผ่านใหม่</h2>
   <p class="mb-4 text-sm text-stone-600">กรอกรหัส 8 หลักที่ส่งไปทางอีเมล (ใช้ได้ครั้งเดียว หมดอายุใน <?= OTP_PURPOSES['reset']['ttl'] / 60 ?> นาที) แล้วตั้งรหัสผ่านใหม่
-    — บัญชีวัดอย่างน้อย 8 ตัว, แอดมินหลัก/อำเภอ/เจ้าคณะจังหวัดอย่างน้อย 10 ตัวและมีทั้งตัวอักษรกับตัวเลข</p>
+    — บัญชีวัดอย่างน้อย 8 ตัว, แอดมินหลัก/<?= e(unit_district()) ?>/เจ้าคณะจังหวัดอย่างน้อย 10 ตัวและมีทั้งตัวอักษรกับตัวเลข</p>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?>
     <div><label for="code">รหัส 8 หลักจากอีเมล</label><input id="code" name="code" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="one-time-code" required autofocus class="w-full text-center text-xl tracking-[0.3em]"></div>

@@ -82,7 +82,7 @@ function page(string $title, int $step, string $body, int $status = 200): never
   <div class="mb-6 text-center">
     <img class="mx-auto h-20 w-20" src="assets/img/logo.svg" alt="">
     <h1 class="mt-2 text-2xl font-bold text-brand-700">ตัวช่วยติดตั้งระบบบัญชีรายรับ-รายจ่ายวัด</h1>
-    <p class="text-stone-600"><?= !empty($_SESSION['inst']['site']['province']) ? 'สำหรับคณะสงฆ์จังหวัด' . h($_SESSION['inst']['site']['province']) : 'สำหรับคณะสงฆ์ระดับจังหวัด' ?></p>
+    <p class="text-stone-600"><?= !empty($_SESSION['inst']['site']['province']) ? 'สำหรับคณะสงฆ์' . h(province_phrase_of($_SESSION['inst']['site']['province'])) : 'สำหรับคณะสงฆ์ระดับจังหวัด' ?></p>
   </div>
   <?php if ($step >= 1 && $step <= 5): ?>
   <ol class="mb-6 flex items-start justify-between gap-1 text-center text-xs sm:text-sm">
@@ -129,7 +129,7 @@ if (is_installed($CONFIG)) {
         <h2 class="mb-2 text-2xl font-bold text-emerald-700">✓ ติดตั้งเสร็จเรียบร้อย</h2>
         <p class="mb-4 text-stone-700">ระบบพร้อมใช้งานแล้ว เข้าสู่ระบบด้วยชื่อผู้ใช้ <strong class="font-mono"><?= h($done['admin']) ?></strong> และรหัสผ่านที่คุณตั้งไว้</p>
         <ul class="mb-4 grid gap-1 text-sm text-stone-700">
-          <li>• จังหวัดที่ดูแล: <strong><?= h($done['province'] ?? 'แพร่') ?></strong> (<?= (int)($done['districts'] ?? 0) ?> อำเภอ)</li>
+          <li>• จังหวัดที่ดูแล: <strong><?= h($done['province'] ?? 'แพร่') ?></strong> (<?= (int)($done['districts'] ?? 0) ?> <?= ($done['province'] ?? '') === 'กรุงเทพมหานคร' ? 'เขต' : 'อำเภอ' ?>)</li>
           <li>• นำเข้าทะเบียนวัด: <strong><?= (int)$done['temples'] ?></strong> วัด</li>
           <li>• สร้างบัญชีแอดมินประจำวัด: <strong><?= (int)$done['accounts'] ?></strong> บัญชี (1 วัด = 1 บัญชี)</li>
         </ul>
@@ -156,7 +156,7 @@ if (is_installed($CONFIG)) {
             <li><strong>นำเข้าทะเบียนวัด</strong> ที่ จัดการระบบ → นำเข้ารายชื่อวัด (ไฟล์ Excel จาก binfo.onab.go.th) — ระบบจะสร้างอำเภอ วัด และบัญชีแอดมินวัดให้</li>
             <?php endif; ?>
             <?php if (($done['province'] ?? 'แพร่') !== 'แพร่'): ?>
-            <li>เปลี่ยนตราระบบ <code>assets/img/logo.svg</code> (ยังเป็นตราจังหวัดแพร่) เป็นของจังหวัด<?= h($done['province']) ?></li>
+            <li>เปลี่ยนตราระบบ <code>assets/img/logo.svg</code> (ยังเป็นตราจังหวัดแพร่) เป็นของ<?= h(province_phrase_of($done['province'])) ?></li>
             <?php endif; ?>
             <li>เข้าสู่ระบบ → จัดการระบบ → <strong>บัญชีวัด</strong> แล้วลงอีเมลของแต่ละวัด (วัดที่ยังไม่มีอีเมลจะเข้าสู่ระบบไม่ได้)</li>
             <li>แจกชื่อผู้ใช้/รหัสผ่านเริ่มต้นให้วัด</li>
@@ -442,6 +442,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $creds = provision_temple_accounts($pdo);
             }
 
+            $CONFIG['province_name'] = $site['province'];   // คำเรียก เขต/แขวง ของกรุงเทพฯ ในชื่อบัญชีและไฟล์ CSV
             $staffCreds = [];
             if (!empty($site['make_staff'])) {
                 $staffCreds = staff_provision_all($pdo, true, true, true, $geoProv);
@@ -572,13 +573,15 @@ switch ($step) {
         (function () {
           var geo = <?= json_encode(thai_geo_counts(), JSON_UNESCAPED_UNICODE) ?>, hint = document.getElementById('geo_hint');
           var sel = document.getElementById('f_province'), sub = document.getElementById('f_site_sub');
-          var last = 'สำหรับคณะสงฆ์จังหวัด' + sel.value;
+          var phrase = function (v) { return v === 'กรุงเทพมหานคร' ? v : 'จังหวัด' + v; };
+          var last = 'สำหรับคณะสงฆ์' + phrase(sel.value);
           sel.addEventListener('change', function () {
-            var next = 'สำหรับคณะสงฆ์จังหวัด' + sel.value;
+            var next = 'สำหรับคณะสงฆ์' + phrase(sel.value);
             if (sub.value === last || sub.value === '') sub.value = next;
             last = next;
             var g = geo[sel.value];
-            hint.textContent = g ? 'จังหวัด' + sel.value + ': ' + g.d + ' อำเภอ ' + g.s + ' ตำบล → จะสร้างผู้ใช้ 1 + ' + g.d + ' + ' + g.s + ' = ' + (1 + g.d + g.s) + ' บัญชี (ไม่นับแอดมินหลักและบัญชีวัด)' : '';
+            var bkk = sel.value === 'กรุงเทพมหานคร', wd = bkk ? 'เขต' : 'อำเภอ', ws = bkk ? 'แขวง' : 'ตำบล';
+            hint.textContent = g ? phrase(sel.value) + ': ' + g.d + ' ' + wd + ' ' + g.s + ' ' + ws + ' → จะสร้างผู้ใช้ 1 + ' + g.d + ' + ' + g.s + ' = ' + (1 + g.d + g.s) + ' บัญชี (ไม่นับแอดมินหลักและบัญชีวัด)' : '';
             var b = document.querySelector('input[name=temple_source][value=builtin]');
             if (b) { b.disabled = sel.value !== 'แพร่'; if (b.disabled && b.checked) document.querySelector('input[name=temple_source][value=file]').checked = true; }
           });
@@ -637,7 +640,7 @@ switch ($step) {
           <dt class="text-stone-500">ชื่อระบบ</dt><dd><?= h($site['site_name']) ?></dd>
           <dt class="text-stone-500">แอดมินหลัก</dt><dd class="font-mono"><?= h($site['admin_user']) ?> <span class="font-sans text-stone-500">(<?= h($site['admin_name']) ?>)</span></dd>
           <dt class="text-stone-500">ทะเบียนวัด</dt><dd><?php if ($site['temple_source'] === 'builtin'): ?>ใช้ทะเบียนที่มากับชุด (381 วัด)<?php elseif ($site['temple_source'] === 'file' && !empty($site['stage'])): ?>นำเข้าจากไฟล์ <?= h($site['stage']['name']) ?> (<?= (int)$site['stage']['count'] ?> วัด <?= (int)$site['stage']['districts'] ?> อำเภอ)<?php else: ?>ยังไม่นำเข้า (ไปนำเข้าที่ จัดการระบบ → นำเข้ารายชื่อวัด)<?php endif; ?></dd>
-          <dt class="text-stone-500">ผู้ใช้จังหวัด/อำเภอ/ตำบล</dt><dd><?php $gc = thai_geo_counts()[$site['province']] ?? null; ?><?= !empty($site['make_staff']) ? 'สร้างอัตโนมัติจากฐานข้อมูลจังหวัด' . ($gc ? ' (' . $gc['d'] . ' อำเภอ ' . $gc['s'] . ' ตำบล)' : '') : 'ไม่สร้าง (สร้างภายหลังได้ในหน้าจัดการระบบ)' ?></dd>
+          <dt class="text-stone-500">ผู้ใช้จังหวัด/อำเภอ/ตำบล</dt><dd><?php $gc = thai_geo_counts()[$site['province']] ?? null; ?><?= !empty($site['make_staff']) ? 'สร้างอัตโนมัติจากฐานข้อมูลจังหวัด' . ($gc ? ' (' . $gc['d'] . ' ' . ($site['province'] === 'กรุงเทพมหานคร' ? 'เขต ' : 'อำเภอ ') . $gc['s'] . ($site['province'] === 'กรุงเทพมหานคร' ? ' แขวง)' : ' ตำบล)') : '') : 'ไม่สร้าง (สร้างภายหลังได้ในหน้าจัดการระบบ)' ?></dd>
           <dt class="text-stone-500">บัญชีวัด</dt><dd><?= $site['make_accounts'] ? 'สร้างอัตโนมัติ 1 วัด 1 บัญชี' : 'ไม่สร้าง (สร้างภายหลังได้ในหน้าจัดการระบบ)' ?></dd>
           <dt class="text-stone-500">อีเมล</dt><dd><?= h(['smtp' => 'SMTP', 'mail' => 'mail()', 'log' => 'เขียนลงไฟล์ (ทดสอบ)'][$mail['mail_driver']]) ?><?= $mail['mail_driver'] === 'smtp' ? ' — ' . ($mail['smtp_host'] !== '' ? h($mail['smtp_host']) : '<span class="text-red-700">ยังไม่ได้ตั้งค่า (วัดจะเข้าสู่ระบบไม่ได้จนกว่าจะตั้งค่า)</span>') : '' ?></dd>
         </dl>

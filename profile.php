@@ -70,7 +70,7 @@ $peopleUrl = 'people.php?temple=' . $tid;
 $pageTitle = 'ข้อมูลวัด';
 require __DIR__ . '/includes/header.php';
 ?>
-<h2><?= e($t['name']) ?> <span class="text-lg font-semibold text-stone-600">อำเภอ<?= e($districtName) ?></span></h2>
+<h2><?= e($t['name']) ?> <span class="text-lg font-semibold text-stone-600"><?= e(unit_district()) ?><?= e($districtName) ?></span></h2>
 
 <div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <h3>สิ่งที่ควรกรอกให้ครบ</h3>
@@ -120,7 +120,7 @@ require __DIR__ . '/includes/header.php';
     <h3>ข้อมูลทะเบียนวัด <span class="badge">แก้ไขไม่ได้</span></h3>
     <dl class="grid grid-cols-[8rem_1fr] gap-y-1.5 text-sm">
       <dt class="text-stone-500">รหัสวัด</dt><dd class="font-mono"><?= e($t['temple_code'] ?? '-') ?></dd>
-      <dt class="text-stone-500">ตำบล</dt><dd><?= e($t['subdistrict'] ?? '-') ?></dd>
+      <dt class="text-stone-500"><?= e(unit_subdistrict()) ?></dt><dd><?= e($t['subdistrict'] ?? '-') ?></dd>
       <dt class="text-stone-500">ประเภท / นิกาย</dt><dd><?= e(trim(($t['temple_type'] ?? '') . ' / ' . ($t['sect'] ?? ''), ' /') ?: '-') ?></dd>
       <dt class="text-stone-500">ปีที่ตั้งวัด</dt><dd><?= $t['founded_be'] ? 'พ.ศ. ' . (int)$t['founded_be'] : '-' ?></dd>
       <dt class="text-stone-500">อีเมลวัด</dt><dd><?= $t['email'] ? e($u['role'] === 'admin' ? $t['email'] : mask_email($t['email'])) : '<span class="text-red-700">ยังไม่ได้ลงทะเบียน</span>' ?></dd>

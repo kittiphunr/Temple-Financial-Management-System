@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newProvince = trim((string)($_POST['province'] ?? ''));
         if (isset($_POST['set_province']) && $newProvince !== '' && mb_strlen($newProvince) <= 60) {
             setting_set('province_name', $newProvince);
-            setting_set('app_sub', 'สำหรับคณะสงฆ์จังหวัด' . $newProvince);
+            setting_set('app_sub', 'สำหรับคณะสงฆ์' . province_phrase_of($newProvince));
         }
         if (isset($_POST['prune_districts'])) {
             $pruned = districts_prune_empty($pdo);
@@ -123,11 +123,11 @@ require __DIR__ . '/../includes/header.php';
 <?php if ($result): ?>
   <div class="mb-4 rounded-lg px-4 py-2.5 bg-emerald-50 text-emerald-900">
     นำเข้าสำเร็จ: วัดใหม่ <strong><?= (int)$result['inserted'] ?></strong> วัด · อัปเดต <strong><?= (int)$result['updated'] ?></strong> วัด
-    <?php if ($result['districts_created']): ?> · สร้างอำเภอใหม่ <?= count($result['districts_created']) ?> อำเภอ (<?= e(implode(', ', $result['districts_created'])) ?>)<?php endif; ?>
-    <?php if ($result['pruned']): ?> · ลบอำเภอที่ไม่มีวัด <?= count($result['pruned']) ?> อำเภอ (<?= e(implode(', ', $result['pruned'])) ?>)<?php endif; ?>
+    <?php if ($result['districts_created']): ?> · สร้าง<?= e(unit_district()) ?>ใหม่ <?= count($result['districts_created']) ?> <?= e(unit_district()) ?> (<?= e(implode(', ', $result['districts_created'])) ?>)<?php endif; ?>
+    <?php if ($result['pruned']): ?> · ลบ<?= e(unit_district()) ?>ที่ไม่มีวัด <?= count($result['pruned']) ?> <?= e(unit_district()) ?> (<?= e(implode(', ', $result['pruned'])) ?>)<?php endif; ?>
     <?php if ($result['emails']): ?> · ลงอีเมลวัด <?= (int)$result['emails'] ?> วัด<?php endif; ?>
     <?php if ($result['accounts']): ?><br>สร้างบัญชีแอดมินวัดใหม่ <?= (int)$result['accounts'] ?> บัญชี — <a class="font-semibold underline" href="temple_accounts.php">ไปดาวน์โหลดรหัสผ่านเริ่มต้นที่หน้า บัญชีวัด</a> (ดาวน์โหลดได้ครั้งเดียว)<?php endif; ?>
-    <br><span class="text-sm">ขั้นต่อไป: <a class="underline" href="districts.php">ใส่โลโก้อำเภอ</a> · <a class="underline" href="users.php">สร้างแอดมินอำเภอ/เจ้าคณะจังหวัด (โควตาคิดจากจำนวนอำเภอ + 2)</a> · <a class="underline" href="temple_accounts.php">ลงอีเมลวัด</a></span>
+    <br><span class="text-sm">ขั้นต่อไป: <a class="underline" href="districts.php">ใส่โลโก้<?= e(unit_district()) ?></a> · <a class="underline" href="users.php">สร้างแอดมิน<?= e(unit_district()) ?>/เจ้าคณะจังหวัด (โควตาคิดจากจำนวน<?= e(unit_district()) ?> + 2)</a> · <a class="underline" href="temple_accounts.php">ลงอีเมลวัด</a></span>
   </div>
   <?php if ($result['bad']): ?><div class="mb-4 rounded-lg px-4 py-2.5 bg-red-50 text-red-900">ข้ามรายการ <?= count($result['bad']) ?> รายการ:<br><?= e(implode(' | ', array_slice($result['bad'], 0, 20))) ?></div><?php endif; ?>
 <?php endif; ?>
@@ -148,18 +148,18 @@ require __DIR__ . '/../includes/header.php';
     <?php if ($provinceDiffers): ?><span class="badge">ต่างกัน</span><?php endif; ?></p>
   <?php endif; ?>
   <div class="mb-4 overflow-x-auto rounded-xl border border-stone-200"><table class="data-table">
-    <tr><th>อำเภอ</th><th class="text-right">จำนวนวัดในไฟล์</th><th>สถานะในระบบ</th></tr>
+    <tr><th><?= e(unit_district()) ?></th><th class="text-right">จำนวนวัดในไฟล์</th><th>สถานะในระบบ</th></tr>
     <?php foreach ($pv['districts'] as $d): ?>
-    <tr><td><?= e($d['name']) ?></td><td class="text-right"><?= (int)$d['count'] ?></td><td><?= $d['exists'] ? 'มีอยู่แล้ว' : '<span class="text-emerald-800">อำเภอใหม่ (สร้างให้)</span>' ?></td></tr>
+    <tr><td><?= e($d['name']) ?></td><td class="text-right"><?= (int)$d['count'] ?></td><td><?= $d['exists'] ? 'มีอยู่แล้ว' : '<span class="text-emerald-800">' . unit_district() . 'ใหม่ (สร้างให้)</span>' ?></td></tr>
     <?php endforeach; ?>
   </table></div>
   <form method="post" class="grid gap-2">
     <?= csrf_field() ?><input type="hidden" name="action" value="confirm"><input type="hidden" name="token" value="<?= e($rtoken) ?>"><input type="hidden" name="province" value="<?= e($fileProvince) ?>">
-    <label><input type="checkbox" name="create_districts" <?= $anyNewDistrict ? 'checked' : '' ?>> สร้างอำเภอที่ยังไม่มีในระบบจากไฟล์ (ถ้าไม่ติ๊ก วัดในอำเภอใหม่จะถูกข้าม)</label>
+    <label><input type="checkbox" name="create_districts" <?= $anyNewDistrict ? 'checked' : '' ?>> สร้าง<?= e(unit_district()) ?>ที่ยังไม่มีในระบบจากไฟล์ (ถ้าไม่ติ๊ก วัดใน<?= e(unit_district()) ?>ใหม่จะถูกข้าม)</label>
     <?php if ($provinceDiffers): ?>
     <label><input type="checkbox" name="set_province" checked> ตั้งชื่อจังหวัดของระบบเป็น "<?= e($fileProvince) ?>" (ใช้ในหัวเอกสาร รายงาน และข้อความใต้ชื่อระบบ)</label>
     <?php endif; ?>
-    <label><input type="checkbox" name="prune_districts" <?= $provinceDiffers ? 'checked' : '' ?>> ลบอำเภอที่ไม่มีวัดและไม่มีผู้ใช้หลังนำเข้า (เช่น อำเภอตัวอย่างของจังหวัดแพร่ที่ติดมากับระบบ)</label>
+    <label><input type="checkbox" name="prune_districts" <?= $provinceDiffers ? 'checked' : '' ?>> ลบ<?= e(unit_district()) ?>ที่ไม่มีวัดและไม่มีผู้ใช้หลังนำเข้า (เช่น <?= e(unit_district()) ?>ตัวอย่างของจังหวัดแพร่ที่ติดมากับระบบ)</label>
     <?php if ($review['set_emails'] || $pv['emails']): ?>
     <p class="text-sm text-stone-600">อีเมลวัดในไฟล์: <?= (int)$pv['emails'] ?> วัด — <?= $review['set_emails'] ? 'จะลงอีเมลให้เฉพาะวัดที่ยังไม่มีอีเมล' : 'ไม่นำเข้า (ไม่ได้ติ๊กตอนอัปโหลด)' ?></p>
     <?php endif; ?>
@@ -172,8 +172,8 @@ require __DIR__ . '/../includes/header.php';
   <h3>นำเข้าจากไฟล์ Excel ของสำนักงานพระพุทธศาสนาแห่งชาติ</h3>
   <p class="text-sm text-stone-700">ใช้เริ่มต้นระบบในจังหวัดใดก็ได้: ส่งออกรายงานทะเบียนวัดของจังหวัดนั้นเป็น Excel (.xlsx) จาก
     <a href="https://binfo.onab.go.th/Temple/Temple-List-view.aspx" target="_blank" rel="noopener noreferrer">binfo.onab.go.th → ทะเบียนวัด</a> แล้วอัปโหลดที่นี่ ไม่ต้องแก้ไฟล์
-    ระบบอ่านคอลัมน์จากหัวตารางเอง (รหัสวัด, ชื่อวัด, ประเภทวัด, นิกาย, วันที่ตั้งวัด, แขวง/ตำบล, เขต/อำเภอ, จังหวัด, รหัสไปรษณีย์, เบอร์โทรศัพท์, อีเมล์, ชื่อหมู่บ้าน, บ้านเลขที่, หมู่, ซอย, ถนน)
-    สร้างอำเภอและวัดให้ และสร้างบัญชีแอดมินวัดอัตโนมัติ (1 วัด 1 บัญชี) หรืออัปโหลดไฟล์ CSV ตามแบบ <code>data/temples_template.csv</code> ก็ได้ — ทั้งสองแบบมีขั้นตอนตรวจก่อนบันทึก</p>
+    ระบบอ่านคอลัมน์จากหัวตารางเอง (รหัสวัด, ชื่อวัด, ประเภทวัด, นิกาย, วันที่ตั้งวัด, แขวง/<?= e(unit_subdistrict()) ?>, เขต/<?= e(unit_district()) ?>, จังหวัด, รหัสไปรษณีย์, เบอร์โทรศัพท์, อีเมล์, ชื่อหมู่บ้าน, บ้านเลขที่, หมู่, ซอย, ถนน)
+    สร้าง<?= e(unit_district()) ?>และวัดให้ และสร้างบัญชีแอดมินวัดอัตโนมัติ (1 วัด 1 บัญชี) หรืออัปโหลดไฟล์ CSV ตามแบบ <code>data/temples_template.csv</code> ก็ได้ — ทั้งสองแบบมีขั้นตอนตรวจก่อนบันทึก</p>
   <?php if (!xlsx_available()): ?><p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">เซิร์ฟเวอร์ยังไม่ได้เปิดส่วนขยาย PHP <code>zip</code> จึงอ่านไฟล์ .xlsx ไม่ได้ (ติดตั้ง php-zip) — ใช้ไฟล์ CSV แทนได้</p><?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="mt-3 grid gap-2">
     <?= csrf_field() ?><input type="hidden" name="action" value="preview">
@@ -185,8 +185,8 @@ require __DIR__ . '/../includes/header.php';
 </div>
 <div class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-600 shadow-sm">
   <h3>รูปแบบ CSV (UTF-8)</h3>
-  คอลัมน์ตามลำดับ: <code>อำเภอ, ชื่อวัด, ตำบล, หมู่ที่, เจ้าอาวาส, โทรศัพท์, รหัสวัด, ประเภทวัด, นิกาย, ชื่อหมู่บ้าน, บ้านเลขที่, ซอย, ถนน, รหัสไปรษณีย์, ปีที่ตั้งวัด(พ.ศ.)</code> (คอลัมน์ที่ 7 เป็นต้นไปไม่บังคับ) ตัวอย่างที่ <code>data/temples_template.csv</code>
-  — วัดที่รหัสวัดซ้ำ หรือชื่อ+ตำบลซ้ำ จะถูกอัปเดตแทนการเพิ่มใหม่
+  คอลัมน์ตามลำดับ: <code><?= e(unit_district()) ?>, ชื่อวัด, <?= e(unit_subdistrict()) ?>, หมู่ที่, เจ้าอาวาส, โทรศัพท์, รหัสวัด, ประเภทวัด, นิกาย, ชื่อหมู่บ้าน, บ้านเลขที่, ซอย, ถนน, รหัสไปรษณีย์, ปีที่ตั้งวัด(พ.ศ.)</code> (คอลัมน์ที่ 7 เป็นต้นไปไม่บังคับ) ตัวอย่างที่ <code>data/temples_template.csv</code>
+  — วัดที่รหัสวัดซ้ำ หรือชื่อ+<?= e(unit_subdistrict()) ?>ซ้ำ จะถูกอัปเดตแทนการเพิ่มใหม่
 </div>
 <?php endif; ?>
 <?php require __DIR__ . '/../includes/footer.php'; ?>

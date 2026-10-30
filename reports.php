@@ -30,7 +30,7 @@ if (($_GET['export'] ?? '') === 'csv') {
     header('Content-Disposition: attachment; filename="report-' . $year . '.csv"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
-    fputcsv($out, ['วันที่', 'อำเภอ', 'วัด', 'ประเภท', 'หมวด', 'เลขที่เอกสาร', 'รายละเอียด', 'จำนวนเงิน']);
+    fputcsv($out, ['วันที่', unit_district(), 'วัด', 'ประเภท', 'หมวด', 'เลขที่เอกสาร', 'รายละเอียด', 'จำนวนเงิน']);
     foreach ($rows as $r) {
         // ป้องกัน CSV/Excel formula injection
         foreach (['district', 'temple', 'category', 'doc_no', 'description'] as $k) {
@@ -62,10 +62,10 @@ require __DIR__ . '/includes/header.php';
 <h2 class="print:hidden">รายงานสรุปรายรับ-รายจ่าย ปี พ.ศ. <?= $year ?></h2>
 <form class="my-4 flex flex-wrap items-end gap-3 print:hidden" method="get">
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
-  <div><label>อำเภอ</label><select name="district"><option value="0">ทุกอำเภอ</option>
+  <div><label><?= e(unit_district()) ?></label><select name="district"><option value="0">ทุก<?= e(unit_district()) ?></option>
     <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= $dist === (int)$d['id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
   <div><label>วัด</label><select name="temple"><option value="0">ทุกวัด</option>
-    <?php foreach ($groups as $dn => $list): ?><optgroup label="อำเภอ<?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $temple === (int)$t['id'] ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
+    <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $temple === (int)$t['id'] ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <button class="btn" type="submit">แสดงรายงาน</button>
   <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>">ส่งออก CSV (Excel)</a>
   <a class="btn btn-outline" href="statements.php<?= $temple ? '?temple=' . $temple : '' ?>">แบบฟอร์มรายงานประจำเดือน (แบบที่ 1–3)</a>
@@ -104,9 +104,9 @@ $lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['distri
     </table></div>
   </div>
   <div>
-    <h3 class="mt-6">แยกตามวัด (จัดกลุ่มตามอำเภอ)</h3>
+    <h3 class="mt-6">แยกตามวัด (จัดกลุ่มตาม<?= e(unit_district()) ?>)</h3>
     <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-      <tr><th>อำเภอ</th><th>วัด</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th></tr>
+      <tr><th><?= e(unit_district()) ?></th><th>วัด</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th></tr>
       <?php foreach ($byTemple as $r): ?>
       <tr><td><?= e($r['district']) ?></td><td><?= e($r['temple']) ?></td><td class="text-right whitespace-nowrap text-emerald-700"><?= money($r['inc']) ?></td><td class="text-right whitespace-nowrap text-red-700"><?= money($r['exp']) ?></td></tr>
       <?php endforeach; ?>

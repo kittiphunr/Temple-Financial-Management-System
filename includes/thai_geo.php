@@ -17,6 +17,12 @@ function thai_geo_load(): ?array
     return $geo;
 }
 
+/** ชื่อจังหวัดพร้อมคำนำหน้า: "จังหวัดแพร่" · กรุงเทพมหานครไม่มีคำว่า "จังหวัด" */
+function province_phrase_of(string $province): string
+{
+    return $province === 'กรุงเทพมหานคร' ? $province : 'จังหวัด' . $province;
+}
+
 /** ชื่อจังหวัดทั้งหมด (ไม่มีคำว่า "จังหวัด") เรียงตามตัวอักษร ถ้าไม่มีไฟล์ข้อมูลคืน [] */
 function thai_geo_province_names(): array
 {
@@ -92,3 +98,54 @@ function thai_geo_subdistricts(PDO $pdo, array $province): array
     }
     return $out;
 }
+
+/** จังหวัดปัจจุบันของระบบ: จากตาราง settings/config (province_name()) หรือค่า $CONFIG ถ้ายังไม่ได้โหลด settings (ตัวติดตั้ง/setup.php) */
+function geo_current_province(): string
+{
+    return function_exists('province_name') ? province_name() : (string)($GLOBALS['CONFIG']['province_name'] ?? 'แพร่');
+}
+
+/** กรุงเทพมหานครใช้คำว่า "เขต/แขวง" แทน "อำเภอ/ตำบล" (จังหวัดอื่นใช้ อำเภอ/ตำบล) */
+function is_bangkok(): bool
+{
+    return geo_current_province() === 'กรุงเทพมหานคร';
+}
+
+/** คำเรียกหน่วยปกครองระดับอำเภอ: "อำเภอ" หรือ "เขต" (กรุงเทพฯ) */
+function unit_district(): string
+{
+    return is_bangkok() ? 'เขต' : 'อำเภอ';
+}
+
+/** คำเรียกหน่วยปกครองระดับตำบล: "ตำบล" หรือ "แขวง" (กรุงเทพฯ) */
+function unit_subdistrict(): string
+{
+    return is_bangkok() ? 'แขวง' : 'ตำบล';
+}
+
+/** ชื่อจังหวัดพร้อมคำนำหน้า: "จังหวัดแพร่" · กรุงเทพมหานครไม่มีคำว่า "จังหวัด" */
+function province_phrase(): string
+{
+    return province_phrase_of(geo_current_province());
+}
+
+/** ตัวย่อหน่วยปกครองในที่อยู่/รายการ: "ต." "อ." (กรุงเทพฯ ใช้คำเต็ม "แขวง" "เขต") */
+function abbr_subdistrict(): string
+{
+    return is_bangkok() ? 'แขวง' : 'ต.';
+}
+
+function abbr_district(): string
+{
+    return is_bangkok() ? 'เขต' : 'อ.';
+}
+
+/** ที่อยู่ท้ายเอกสาร: "ต.ในเวียง อ.เมืองแพร่ จ.แพร่" หรือ "แขวงบางรัก เขตบางรัก กรุงเทพมหานคร" */
+function address_tail(?string $subdistrict, string $district): string
+{
+    if (is_bangkok()) {
+        return trim(($subdistrict ? 'แขวง' . $subdistrict . ' ' : '') . 'เขต' . $district . ' ' . geo_current_province());
+    }
+    return trim(($subdistrict ? 'ต.' . $subdistrict . ' ' : '') . 'อ.' . $district . ' จ.' . geo_current_province());
+}
+
