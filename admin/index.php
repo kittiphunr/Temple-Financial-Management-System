@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/bootstrap.php';
 require_admin();
+backup_auto_maybe(db());   // สำรองอัตโนมัติถ้าเปิดไว้และถึงกำหนด
 $pageTitle = 'จัดการระบบ';
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -13,6 +14,7 @@ require __DIR__ . '/../includes/header.php';
   <a class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm block no-underline transition hover:border-gold-500 hover:shadow-md" href="users.php"><div class="font-bold text-brand-700">ผู้ใช้ระดับจังหวัด/<?= e(unit_district()) ?></div>แอดมินหลัก · เจ้าคณะจังหวัด · แอดมินประจำ<?= e(unit_district()) ?> (จำกัดโควตา)</a>
   <a class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm block no-underline transition hover:border-gold-500 hover:shadow-md" href="subdistricts.php"><div class="font-bold text-brand-700">เจ้าคณะ<?= e(unit_subdistrict()) ?> (ดูข้อมูลอย่างเดียว)</div>สร้างบัญชีให้เจ้าคณะ<?= e(unit_subdistrict()) ?>ดูวัดใน<?= e(unit_subdistrict()) ?>ที่ดูแล (ไม่นับโควตา)</a>
   <a class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm block no-underline transition hover:border-gold-500 hover:shadow-md" href="categories.php"><div class="font-bold text-brand-700">หมวดรายรับ-รายจ่าย</div>กำหนดหมวดบัญชี</a>
+  <a class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm block no-underline transition hover:border-gold-500 hover:shadow-md" href="backup.php"><div class="font-bold text-brand-700">สำรองข้อมูล</div>ดาวน์โหลดไฟล์สำรอง ตั้งสำรองอัตโนมัติ สำรองกุญแจระบบ</a>
   <a class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm block no-underline transition hover:border-gold-500 hover:shadow-md" href="audit.php"><div class="font-bold text-brand-700">ประวัติการใช้งาน</div>ตรวจสอบย้อนหลังว่าใครทำอะไร</a>
 </div>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
