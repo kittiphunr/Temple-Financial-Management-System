@@ -139,13 +139,13 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อจัดการบัญชี</p>
 <?php else: ?>
-<p class="mb-3 text-sm text-stone-600">รายงานแบบที่ 1–3 ต้องรู้ <strong>ยอดยกมา</strong> ของเงินสดและบัญชีธนาคารแต่ละบัญชี ณ วันเริ่มใช้ระบบ แล้วระบบจะคำนวณยอดคงเหลือต่อให้เองจากรายการที่บันทึก
+<p class="mb-4 text-sm text-stone-600">รายงานแบบที่ 1–3 ต้องรู้ <strong>ยอดยกมา</strong> ของเงินสดและบัญชีธนาคารแต่ละบัญชี ณ วันเริ่มใช้ระบบ แล้วระบบจะคำนวณยอดคงเหลือต่อให้เองจากรายการที่บันทึก
   การนำเงินสดไปฝากธนาคาร/ถอนเงิน ให้บันทึกเป็น "โอน/ฝาก-ถอน" ด้านล่าง (ไม่นับเป็นรายรับ-รายจ่ายซ้ำ)</p>
 
 <?= ledger_accounts_panel($pdo, $temple, $canEdit, '') ?>
 
 <?php if ($canEdit): ?>
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>โอน / นำฝาก / ถอน ระหว่างบัญชี</h3>
   <p class="mb-2 text-sm text-stone-600">เช่น นำเงินสดฝากธนาคาร (จากเงินสด → ธนาคาร), ถอนเงินจากธนาคาร (ธนาคาร → เงินสด) ระบบบันทึกเป็นรายจ่ายของบัญชีต้นทางและรายรับของบัญชีปลายทางในรายงานแบบที่ 1–2 แต่ไม่นับเป็นรายรับ-รายจ่ายของวัดในแดชบอร์ดและรายงานสรุป</p>
   <?php $active = array_filter($accounts, fn($a) => $a['is_active']); ?>
@@ -164,7 +164,7 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <?php if ($transfers): ?>
-<section class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<section class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>จากบัญชี</th><th>ไปยังบัญชี</th><th>รายละเอียด</th><th class="text-right">จำนวนเงิน</th><th></th></tr>
   <?php foreach ($transfers as $t): ?>
   <tr><td class="whitespace-nowrap"><?= e(th_date($t['txn_date'])) ?></td><td><?= e($label($t['from_id'])) ?></td><td><?= e($label($t['to_id'])) ?></td><td><?= e($t['description']) ?></td>

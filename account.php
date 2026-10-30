@@ -60,7 +60,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <h2><?= $forced ? 'ตั้งรหัสผ่านใหม่ก่อนเริ่มใช้งาน' : 'บัญชีของฉัน' ?></h2>
 <?php if ($forced): ?>
-<div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+<div class="card border-amber-300 bg-amber-50 text-amber-950">
   <p class="font-bold">ยืนยันตัวตนทางอีเมลสำเร็จแล้ว — ขั้นตอนสุดท้ายคือตั้งรหัสผ่านของคุณเอง</p>
   <p class="mt-1 text-sm">รหัสผ่านที่ใช้เข้าสู่ระบบครั้งนี้เป็นรหัสเริ่มต้นที่ผู้ดูแลระบบหลักเตรียมไว้ให้ จึงต้องเปลี่ยนก่อนใช้งานส่วนอื่นของระบบ
     กรอกรหัสผ่านเริ่มต้นในช่อง "รหัสผ่านเดิม" แล้วตั้งรหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร และต้องไม่ซ้ำกับรหัสเดิมหรือชื่อผู้ใช้)</p>
@@ -68,7 +68,7 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 <div class="grid gap-4 <?= $forced ? 'mx-auto max-w-xl' : 'lg:grid-cols-2' ?>">
   <?php if (!$forced): ?>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <div class="card">
     <h3>ข้อมูลบัญชี</h3>
     <dl class="grid grid-cols-[8rem_1fr] gap-y-2">
       <dt class="text-stone-500">ชื่อผู้ใช้</dt><dd class="font-mono font-semibold"><?= e($me['username']) ?> <span class="badge">ล็อก — เปลี่ยนไม่ได้</span></dd>
@@ -96,7 +96,7 @@ require __DIR__ . '/includes/header.php';
   </div>
   <?php endif; ?>
 
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <div class="card">
     <h3><?= $forced ? 'ตั้งรหัสผ่านใหม่' : 'เปลี่ยนรหัสผ่าน' ?></h3>
     <form method="post" class="grid gap-3">
       <?= csrf_field() ?>

@@ -86,7 +86,7 @@ if (isset($_GET['txn'])) {
     require __DIR__ . '/includes/header.php';
     ?>
 <h2>ออกอนุโมทนาบัตร</h2>
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <div class="text-sm text-stone-600"><?= e($t['name']) ?> · <?= e(th_date($x['txn_date'])) ?> · <?= e($x['category']) ?></div>
   <div class="text-2xl font-bold text-emerald-700"><?= money($x['amount']) ?> บาท</div>
   <div class="text-sm text-stone-600">(<?= e(thai_baht_text($x['amount'])) ?>)</div>
@@ -94,7 +94,7 @@ if (isset($_GET['txn'])) {
   <?php if (!$t['tax_id'] && $canIssue): ?><p class="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">วัดยังไม่ได้กรอกเลขประจำตัวผู้เสียภาษี — ผู้บริจาคอาจนำไปลดหย่อนภาษีไม่ได้ กรอกได้ที่ <a class="underline" href="<?= BASE ?>profile.php<?= $u['role'] === 'admin' ? '?temple=' . $tid : '' ?>">ข้อมูลวัด</a></p><?php endif; ?>
 </div>
 <?php if ($canIssue): ?>
-<form method="post" class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 [&_input]:w-full">
+<form method="post" class="card grid gap-3 sm:grid-cols-2 [&_input]:w-full">
   <?= csrf_field() ?><input type="hidden" name="action" value="issue"><input type="hidden" name="txn" value="<?= $txnId ?>">
   <?php if (donor_available() && donor_can_manage($tid)): $dch = donor_choices($pdo, $tid); ?>
   <div class="col-span-full rounded-xl bg-gold-50 p-3 text-sm">
@@ -137,7 +137,7 @@ $extraScripts = '<script src="' . BASE . 'assets/vendor/qrcode.js"></script>';
 $pageTitle = 'อนุโมทนาบัตร ' . receipt_label($r);
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mb-3 flex flex-wrap items-center gap-2 print:hidden">
+<div class="mb-4 flex flex-wrap items-center gap-2 print:hidden">
   <h2 class="mr-auto">อนุโมทนาบัตร <?= e(receipt_label($r)) ?><?= $void ? ' <span class="badge">ยกเลิกแล้ว</span>' : '' ?></h2>
   <button class="btn" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
   <a class="btn btn-outline" href="receipts.php?temple=<?= $tid ?>">รายการทั้งหมด</a>

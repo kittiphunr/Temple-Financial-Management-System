@@ -56,7 +56,7 @@ $pageTitle = 'จัดการวัด';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>จัดการวัด</h2>
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3><?= $edit ? 'แก้ไขวัด' : 'เพิ่มวัด' ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
@@ -71,7 +71,7 @@ require __DIR__ . '/../includes/header.php';
     <div class="col-span-full"><button class="btn">บันทึก</button> <?php if ($edit): ?><a class="btn btn-outline" href="temples.php">ยกเลิก</a><?php endif; ?></div>
   </form>
 </div>
-<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th><?= e(unit_district()) ?></th><th>วัด</th><th><?= e(unit_subdistrict()) ?></th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr class="<?= $r['is_active'] ? '' : 'opacity-50' ?>">

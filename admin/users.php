@@ -86,16 +86,16 @@ $vacant = array_values(array_filter($slots, fn($s) => !$s['user']));
 $pageTitle = 'ผู้ใช้งาน';
 require __DIR__ . '/../includes/header.php';
 ?>
-<div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <h2 class="!my-0">ผู้ใช้ระดับจังหวัดและ<?= e(unit_district()) ?></h2>
   <span class="rounded-full border px-4 py-1.5 text-sm font-semibold <?= $used > $cap ? 'border-red-300 bg-red-50 text-red-800' : 'border-stone-300 bg-white' ?>">ใช้ไป <?= $used ?> จาก <?= $cap ?> คน</span>
 </div>
 <p class="mb-4 text-sm text-stone-600">โควตา = แอดมินประจำ<?= e(unit_district()) ?> (<?= e(unit_district()) ?>ละ 1 คน) + แอดมินหลัก 1 คน + ผู้ใช้เจ้าคณะจังหวัด 1 คน = จำนวน<?= e(unit_district()) ?> + 2
   บัญชีแอดมินประจำวัดไม่นับ — จัดการที่ <a class="font-semibold" href="temple_accounts.php">บัญชีวัด</a></p>
 
-<div class="mb-4 rounded-2xl border border-gold-500 bg-gold-50 p-4">
+<div class="card border-gold-500 bg-gold-50">
   <h3>สร้างบัญชีให้ครบทุกตำแหน่งอัตโนมัติ</h3>
-  <p class="mb-3 text-sm text-stone-700">สร้างผู้ใช้ในตำแหน่งที่ยังว่างจากทะเบียนวัดที่นำเข้า: <strong>เจ้าคณะจังหวัด</strong> 1 · <strong>แอดมินประจำ<?= e(unit_district()) ?></strong> <?= e(unit_district()) ?>ละ 1 ·
+  <p class="mb-4 text-sm text-stone-700">สร้างผู้ใช้ในตำแหน่งที่ยังว่างจากทะเบียนวัดที่นำเข้า: <strong>เจ้าคณะจังหวัด</strong> 1 · <strong>แอดมินประจำ<?= e(unit_district()) ?></strong> <?= e(unit_district()) ?>ละ 1 ·
     <strong>เจ้าคณะ<?= e(unit_subdistrict()) ?></strong> <?= e(unit_subdistrict()) ?>ละ 1 (ดูอย่างเดียว ไม่นับโควตา) พร้อมรหัสผ่านเริ่มต้นแบบสุ่ม ตำแหน่งที่มีผู้ใช้อยู่แล้วจะไม่ถูกแตะต้อง
     ผู้ใช้ต้องตั้งรหัสผ่านใหม่ตอนเข้าครั้งแรก และต้องลงอีเมลของแต่ละบัญชีก่อนจึงจะเข้าสู่ระบบได้</p>
   <form method="post" class="flex flex-wrap items-center gap-2" data-confirm="สร้างบัญชีผู้ใช้ระดับจังหวัด/<?= e(unit_district()) ?>/<?= e(unit_subdistrict()) ?>ที่ยังว่างทั้งหมด?"><?= csrf_field() ?><input type="hidden" name="action" value="provision_staff">
@@ -105,7 +105,7 @@ require __DIR__ . '/../includes/header.php';
 </div>
 
 <?php if ($vacant): ?>
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>เพิ่มผู้ใช้ในตำแหน่งที่ว่าง (<?= count($vacant) ?> ตำแหน่ง)</h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <?= csrf_field() ?><input type="hidden" name="action" value="create">
@@ -119,10 +119,10 @@ require __DIR__ . '/../includes/header.php';
   </form>
 </div>
 <?php else: ?>
-<div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">ครบทุกตำแหน่งแล้ว (<?= $cap ?> คน) — ต้องการเปลี่ยนผู้ดำรงตำแหน่ง ให้ปิดใช้งานผู้ใช้เดิมหรือรีเซ็ตรหัสผ่านให้ผู้สืบทอด</div>
+<div class="callout border-emerald-200 bg-emerald-50 text-sm text-emerald-900">ครบทุกตำแหน่งแล้ว (<?= $cap ?> คน) — ต้องการเปลี่ยนผู้ดำรงตำแหน่ง ให้ปิดใช้งานผู้ใช้เดิมหรือรีเซ็ตรหัสผ่านให้ผู้สืบทอด</div>
 <?php endif; ?>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <thead><tr><th>ตำแหน่ง</th><th>ผู้ใช้</th><th>ชื่อ</th><th>อีเมลยืนยัน</th><th>สถานะ</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($slots as $s): $r = $s['user']; ?>
@@ -154,7 +154,7 @@ require __DIR__ . '/../includes/header.php';
 </table></div>
 
 <?php if ($extras): ?>
-<div class="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+<div class="card border-red-200 bg-red-50">
   <h3 class="text-red-900">ผู้ใช้ที่เกินโควตา (<?= count($extras) ?>)</h3>
   <p class="mb-2 text-sm text-red-900">ผู้ใช้เหล่านี้ไม่ได้อยู่ในตำแหน่งใดเลย (มักมาจากข้อมูลเก่า) ควรลบเพื่อให้จำนวนอยู่ในเกณฑ์</p>
   <ul class="grid gap-1 text-sm">

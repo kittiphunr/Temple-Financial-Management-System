@@ -138,19 +138,19 @@ $navMobile = nav_render(array_merge($menu, $userMenu), true) . '<div class="mt-1
 if ($u && $role === 'temple' && !$forced && !in_array($cur, ['profile.php', 'account.php', 'accounts.php'], true)):
     $chk = temple_checklist(db(), (int)$u['temple_id']);
     if (!$chk['logo']): ?>
-  <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 print:hidden" role="alert">
+  <div class="callout flex flex-wrap items-center justify-between gap-2 border-amber-300 bg-amber-50 text-amber-950 print:hidden" role="alert">
     <span><strong>ยังไม่ได้ใส่โลโก้วัด</strong> — แอดมินวัดต้องใส่โลโก้เพื่อใช้เป็นหัวเอกสารที่ออกจากระบบ</span>
     <a class="btn btn-sm" href="<?= BASE ?>profile.php#logo">ใส่โลโก้วัดตอนนี้ →</a>
   </div>
     <?php endif;
     if (!$chk['abbot'] && !in_array($cur, ['people.php', 'person.php'], true)): ?>
-  <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-950 print:hidden">
+  <div class="callout flex flex-wrap items-center justify-between gap-2 border-sky-200 bg-sky-50 text-sky-950 print:hidden">
     <span>ยังไม่ได้กรอกข้อมูลเจ้าอาวาสและบุคลากรของวัด</span>
     <a class="btn btn-outline btn-sm" href="<?= BASE ?>people.php">กรอกข้อมูลบุคลากร →</a>
   </div>
     <?php endif;
     if (!$chk['cash_opening']): ?>
-  <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-950 print:hidden">
+  <div class="callout flex flex-wrap items-center justify-between gap-2 border-sky-200 bg-sky-50 text-sky-950 print:hidden">
     <span>ยังไม่ได้ตั้ง <strong>ยอดยกมาเงินสด</strong> และรายละเอียดบัญชีธนาคารของวัด — ใช้ออกรายงานแบบที่ 1–3 ประจำเดือน</span>
     <a class="btn btn-outline btn-sm" href="<?= BASE ?>profile.php#accounts">กรอกบัญชีของวัด →</a>
   </div>

@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'ลืมรหัสผ่าน';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mx-auto my-10 max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+<div class="card mx-auto my-10 max-w-sm">
   <h2>ลืมรหัสผ่าน</h2>
   <p class="mb-4 text-sm text-stone-600">กรอกชื่อผู้ใช้ ระบบจะส่งรหัสสำหรับตั้งรหัสผ่านใหม่ไปที่อีเมลที่ลงทะเบียนไว้ (บัญชีวัด = อีเมลวัดที่ผู้ดูแลระบบหลักลงไว้)
     หากไม่มีอีเมลในระบบ ให้ติดต่อผู้ดูแลระบบหลักเพื่อรีเซ็ตให้</p>

@@ -8,7 +8,7 @@
 function stat_cards(array $sum, int $beYear, int $temples, string $scopeText): string
 {
     $card = function (string $icon, string $iconCls, string $label, string $labelCls, string $value, string $valueCls, string $unit, string $note): string {
-        return '<div class="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">'
+        return '<div class="card flex items-center gap-3">'
             . '<span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full ' . $iconCls . '">' . icon($icon, 'h-7 w-7') . '</span>'
             . '<span class="min-w-0"><span class="block text-sm font-semibold ' . $labelCls . '">' . e($label) . '</span>'
             . '<span class="block break-words text-xl font-bold leading-tight sm:text-2xl ' . $valueCls . '">' . e($value) . ' <span class="text-sm font-semibold">' . e($unit) . '</span></span>'

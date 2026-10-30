@@ -13,7 +13,7 @@ if (!$tid) {
     require __DIR__ . '/includes/header.php';
     ?>
     <h2>บุคลากรวัด</h2>
-    <p class="mb-3 text-sm text-stone-600">เลือกวัดเพื่อดูรายชื่อเจ้าอาวาส พระลูกวัด และไวยาวัจกร</p>
+    <p class="mb-4 text-sm text-stone-600">เลือกวัดเพื่อดูรายชื่อเจ้าอาวาส พระลูกวัด และไวยาวัจกร</p>
     <form method="get" class="flex flex-wrap items-end gap-3">
       <div><label for="temple">วัด</label>
         <select id="temple" name="temple" class="w-72" required>
@@ -82,7 +82,7 @@ $d->execute([$t['district_id']]);
 $pageTitle = 'บุคลากรวัด';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0">บุคลากร<?= e($t['name']) ?></h2>
     <p class="text-sm text-stone-600"><?= e(unit_district()) ?><?= e($d->fetchColumn()) ?><?= $canEdit ? '' : ' · ดูข้อมูลได้อย่างเดียว (เลขบัตรประชาชนและที่อยู่ไม่แสดงให้ผู้ใช้ระดับนี้)' ?></p>
@@ -105,7 +105,7 @@ require __DIR__ . '/includes/header.php';
   <?php endif; ?>
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
     <?php foreach ($list as $p): ?>
-    <article class="flex gap-3 rounded-2xl border border-stone-200 bg-white p-3 shadow-sm <?= $p['is_active'] ? '' : 'opacity-60' ?>">
+    <article class="card flex gap-3 <?= $p['is_active'] ? '' : 'opacity-60' ?>">
       <?php if ($p['photo_media_id']): ?>
         <img class="h-24 w-[4.5rem] shrink-0 rounded-lg border border-stone-200 object-cover" src="<?= e(media_url((int)$p['photo_media_id'])) ?>" alt="รูปถ่าย <?= e(person_full_name($p, false)) ?>">
       <?php else: ?>

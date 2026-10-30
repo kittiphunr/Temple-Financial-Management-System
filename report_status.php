@@ -68,7 +68,7 @@ $remindable = $canRemind ? count(array_filter(report_list($pdo, $year, $month, [
 $pageTitle = 'ติดตามรายงาน';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0">ติดตามการส่งรายงานประจำเดือน</h2>
     <p class="mt-1 text-sm text-stone-600"><?= e(TH_MONTHS[$month]) ?> พ.ศ. <?= $year ?> · กำหนดส่งภายใน <?= e(th_date($due)) ?></p>
@@ -90,16 +90,16 @@ require __DIR__ . '/includes/header.php';
 </form>
 
 <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div class="text-sm text-emerald-900">ส่งแล้ว</div><div class="text-3xl font-bold text-emerald-800"><?= $sum['sent'] ?> <span class="text-base font-semibold">/ <?= $sum['total'] ?> วัด (<?= $ratio ?>%)</span></div>
+  <div class="card border-emerald-200 bg-emerald-50"><div class="text-sm text-emerald-900">ส่งแล้ว</div><div class="text-3xl font-bold text-emerald-800"><?= $sum['sent'] ?> <span class="text-base font-semibold">/ <?= $sum['total'] ?> วัด (<?= $ratio ?>%)</span></div>
     <div class="mt-2 h-2 overflow-hidden rounded-full bg-emerald-100"><div class="h-2 bg-emerald-600" style="width: <?= $ratio ?>%"></div></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4"><div class="text-sm text-stone-600">ยังไม่ส่ง</div><div class="text-3xl font-bold"><?= $sum['unsent'] ?> <span class="text-base font-semibold">วัด</span></div></div>
-  <div class="rounded-2xl border border-red-200 bg-red-50 p-4"><div class="text-sm text-red-900">เกินกำหนด</div><div class="text-3xl font-bold text-red-800"><?= $sum['late'] ?> <span class="text-base font-semibold">วัด</span></div></div>
-  <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm text-amber-900">แก้ไขหลังส่ง</div><div class="text-3xl font-bold text-amber-800"><?= $sum['changed'] ?> <span class="text-base font-semibold">วัด</span></div></div>
-  <?php if (month_close_available()): ?><div class="rounded-2xl border border-stone-200 bg-stone-50 p-4"><div class="text-sm text-stone-700"><?= icon('lock') ?> ปิดงวดแล้ว</div><div class="text-3xl font-bold text-stone-800"><?= $sum['closed'] ?> <span class="text-base font-semibold">วัด</span></div></div><?php endif; ?>
+  <div class="card"><div class="text-sm text-stone-600">ยังไม่ส่ง</div><div class="text-3xl font-bold"><?= $sum['unsent'] ?> <span class="text-base font-semibold">วัด</span></div></div>
+  <div class="card border-red-200 bg-red-50"><div class="text-sm text-red-900">เกินกำหนด</div><div class="text-3xl font-bold text-red-800"><?= $sum['late'] ?> <span class="text-base font-semibold">วัด</span></div></div>
+  <div class="card border-amber-200 bg-amber-50"><div class="text-sm text-amber-900">แก้ไขหลังส่ง</div><div class="text-3xl font-bold text-amber-800"><?= $sum['changed'] ?> <span class="text-base font-semibold">วัด</span></div></div>
+  <?php if (month_close_available()): ?><div class="card bg-stone-50"><div class="text-sm text-stone-700"><?= icon('lock') ?> ปิดงวดแล้ว</div><div class="text-3xl font-bold text-stone-800"><?= $sum['closed'] ?> <span class="text-base font-semibold">วัด</span></div></div><?php endif; ?>
 </div>
 
 <?php if ($canRemind || $u['role'] === 'admin'): ?>
-<div class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200 bg-white p-3 text-sm">
+<div class="card-bar flex flex-wrap items-center gap-3 text-sm">
   <?php if ($canRemind): ?>
   <form method="post" data-confirm="ส่งอีเมลเตือนวัดที่ยังไม่ส่งรายงานเดือนนี้?" class="flex items-center gap-2"><?= csrf_field() ?>
     <input type="hidden" name="action" value="remind"><input type="hidden" name="year" value="<?= $year ?>"><input type="hidden" name="month" value="<?= $month ?>"><input type="hidden" name="district" value="<?= $fDist ?>"><input type="hidden" name="q" value="<?= e($fQ) ?>">
@@ -114,7 +114,7 @@ require __DIR__ . '/includes/header.php';
 </div>
 <?php endif; ?>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <thead><tr><th><?= e(unit_district()) ?></th><th>วัด</th><th>สถานะ</th><th>ส่งเมื่อ</th><th class="text-right">รายการ</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th>เตือน</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($rows as $r): [$lab, $cls] = REPORT_STATE_LABEL[$r['state']]; ?>

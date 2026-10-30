@@ -57,7 +57,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>งบประมาณประจำปี<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2></div>
 
-<form method="get" class="my-3 flex flex-wrap items-end gap-3">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3">
   <?php if ($u['role'] !== 'temple'): ?>
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
@@ -69,12 +69,12 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อดูหรือตั้งงบประมาณ</p>
 <?php else: ?>
-<p class="mb-3 text-sm text-stone-600">ตั้งงบรายหมวดของปี พ.ศ. <?= $year ?> (ปีปฏิทิน ม.ค.–ธ.ค.) ระบบเทียบกับรายการที่บันทึกจริงในปีนั้น ไม่นับรายการที่ลบและรายการโอน/ฝาก-ถอน — หมวดรายจ่ายที่ใช้ถึง <?= BUDGET_WARN_PCT ?>% จะเตือนเป็นสีเหลือง และเกินงบเป็นสีแดง (เตือนตอนบันทึกรายจ่ายด้วย) เว้นว่างหรือใส่ 0 = ไม่ตั้งงบหมวดนั้น</p>
+<p class="mb-4 text-sm text-stone-600">ตั้งงบรายหมวดของปี พ.ศ. <?= $year ?> (ปีปฏิทิน ม.ค.–ธ.ค.) ระบบเทียบกับรายการที่บันทึกจริงในปีนั้น ไม่นับรายการที่ลบและรายการโอน/ฝาก-ถอน — หมวดรายจ่ายที่ใช้ถึง <?= BUDGET_WARN_PCT ?>% จะเตือนเป็นสีเหลือง และเกินงบเป็นสีแดง (เตือนตอนบันทึกรายจ่ายด้วย) เว้นว่างหรือใส่ 0 = ไม่ตั้งงบหมวดนั้น</p>
 
 <form method="post" class="space-y-4">
   <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="temple" value="<?= $tid ?>"><input type="hidden" name="year" value="<?= $year ?>">
   <?php foreach (['income' => ['รายรับ', $ti], 'expense' => ['รายจ่าย', $te]] as $type => [$title, $tot]): ?>
-  <section class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <section class="card-table"><table class="data-table">
     <tr><th><?= $title ?></th><th class="text-right">งบ (บาท)</th><th class="text-right">ผลจริง</th><th class="text-right">คงเหลือ</th><th>ใช้ไป</th></tr>
     <?php foreach ($rows[$type] as $r): $hasB = $r['budget'] !== null; $left = $hasB ? $r['budget'] - $r['actual'] : null; $over = $type === 'expense' && $hasB && $r['pct'] >= 100; $warn = $type === 'expense' && $hasB && $r['pct'] >= BUDGET_WARN_PCT && !$over; ?>
     <tr>

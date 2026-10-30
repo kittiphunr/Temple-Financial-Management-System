@@ -34,7 +34,7 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
         if (!$logoId) {
             $link = people_can_edit($templeId)
                 ? ' <a class="font-semibold underline" href="' . e(BASE . 'profile.php' . (user()['role'] === 'admin' ? '?temple=' . $templeId : '') . '#logo') . '">ใส่โลโก้วัด</a>' : '';
-            $warn = '<p class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 print:hidden">ยังไม่ได้ใส่โลโก้วัด — เอกสารที่พิมพ์จะไม่มีโลโก้' . $link . '</p>';
+            $warn = '<p class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 print:hidden">ยังไม่ได้ใส่โลโก้วัด — เอกสารที่พิมพ์จะไม่มีโลโก้' . $link . '</p>';
         }
     } elseif ($districtId) {
         $d = $pdo->prepare('SELECT name, logo_media_id FROM districts WHERE id = ?');

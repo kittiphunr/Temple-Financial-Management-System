@@ -80,13 +80,13 @@ $lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['distri
 <?= letterhead($pdo, $lhTemple, $lhDist, 'รายงานสรุปรายรับ-รายจ่าย', 'ปี พ.ศ. ' . $year) ?>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายจ่ายรวม</div><div class="text-2xl font-bold text-red-700"><?= money($sum['expense']) ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">คงเหลือ</div><div class="text-2xl font-bold text-sky-800"><?= money($sum['balance']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">รายจ่ายรวม</div><div class="text-2xl font-bold text-red-700"><?= money($sum['expense']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">คงเหลือ</div><div class="text-2xl font-bold text-sky-800"><?= money($sum['balance']) ?></div></div>
 </div>
 
 <h3 class="mt-6">รายเดือน</h3>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>เดือน</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th><th class="text-right whitespace-nowrap">คงเหลือ</th></tr>
   <?php foreach ($mon as $m => $v): ?>
   <tr><td><?= TH_MONTHS[$m] ?></td><td class="text-right whitespace-nowrap text-emerald-700"><?= money($v['inc']) ?></td><td class="text-right whitespace-nowrap text-red-700"><?= money($v['exp']) ?></td><td class="text-right whitespace-nowrap text-sky-800"><?= money($v['inc'] - $v['exp']) ?></td></tr>
@@ -96,7 +96,7 @@ $lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['distri
 <div class="grid gap-4 lg:grid-cols-2">
   <div>
     <h3 class="mt-6">แยกตามหมวด</h3>
-    <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+    <div class="card-table"><table class="data-table">
       <tr><th>ประเภท</th><th>หมวด</th><th class="text-right whitespace-nowrap">รวม</th></tr>
       <?php foreach ($byCat as $r): ?>
       <tr><td><?= $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></td><td><?= e($r['name']) ?></td><td class="text-right whitespace-nowrap"><?= money($r['total']) ?></td></tr>
@@ -106,7 +106,7 @@ $lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['distri
   </div>
   <div>
     <h3 class="mt-6">แยกตามวัด (จัดกลุ่มตาม<?= e(unit_district()) ?>)</h3>
-    <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+    <div class="card-table"><table class="data-table">
       <tr><th><?= e(unit_district()) ?></th><th>วัด</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th></tr>
       <?php foreach ($byTemple as $r): ?>
       <tr><td><?= e($r['district']) ?></td><td><?= e($r['temple']) ?></td><td class="text-right whitespace-nowrap text-emerald-700"><?= money($r['inc']) ?></td><td class="text-right whitespace-nowrap text-red-700"><?= money($r['exp']) ?></td></tr>

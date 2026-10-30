@@ -72,11 +72,11 @@ require __DIR__ . '/includes/header.php';
   <span class="flex gap-2"><button class="btn btn-outline btn-sm" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button><a class="btn btn-outline btn-sm" href="<?= e($self) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
 <?php if ($detail['purpose']): ?><p class="text-stone-600"><?= e($detail['purpose']) ?></p><?php endif; ?>
 <div class="grid gap-3 sm:grid-cols-3">
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รับสะสม<?= $detail['target_amount'] ? ' (เป้า ' . money($detail['target_amount']) . ')' : '' ?></div><div class="text-2xl font-bold text-emerald-700"><?= money($detail['raised']) ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ใช้ไปสะสม</div><div class="text-2xl font-bold text-red-700"><?= money($detail['spent']) ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">คงเหลือของกองทุน</div><div class="text-2xl font-bold <?= $detail['balance'] < 0 ? 'text-red-700' : 'text-sky-800' ?>"><?= money($detail['balance']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">รับสะสม<?= $detail['target_amount'] ? ' (เป้า ' . money($detail['target_amount']) . ')' : '' ?></div><div class="text-2xl font-bold text-emerald-700"><?= money($detail['raised']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">ใช้ไปสะสม</div><div class="text-2xl font-bold text-red-700"><?= money($detail['spent']) ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">คงเหลือของกองทุน</div><div class="text-2xl font-bold <?= $detail['balance'] < 0 ? 'text-red-700' : 'text-sky-800' ?>"><?= money($detail['balance']) ?></div></div>
 </div>
-<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>หมวด</th><th>รายละเอียด</th><th class="text-right">รับ</th><th class="text-right">จ่าย</th><th class="text-right">คงเหลือ</th></tr>
   <?php foreach ($txns as $x): $run += $x['type'] === 'income' ? (float)$x['amount'] : -(float)$x['amount']; ?>
   <tr><td class="whitespace-nowrap"><?= e(th_date($x['txn_date'])) ?></td><td><?= e($x['category']) ?></td><td><?= e($x['description']) ?></td>
@@ -88,7 +88,7 @@ require __DIR__ . '/includes/header.php';
 <?php else: ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>กองทุน/โครงการ<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2></div>
 <?php if ($u['role'] !== 'temple'): ?>
-<form method="get" class="my-3 flex flex-wrap items-end gap-3">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <noscript><button class="btn">แสดง</button></noscript>
@@ -97,8 +97,8 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อดูกองทุน/โครงการ</p>
 <?php else: ?>
-<p class="mb-3 text-sm text-stone-600">แยกเงินตามวัตถุประสงค์ เช่น กฐิน ผ้าป่าสามัคคี สร้างอาคาร กองทุนการศึกษา — เลือกกองทุนที่ช่อง "กองทุน/โครงการ" ตอนบันทึกรายรับ-รายจ่าย ระบบสรุปรับ/ใช้/คงเหลือของแต่ละกองทุน (ไม่นับรายการโอน/ฝาก-ถอน) และชื่อกองทุนจะเป็นวัตถุประสงค์เริ่มต้นบนอนุโมทนาบัตร</p>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<p class="mb-4 text-sm text-stone-600">แยกเงินตามวัตถุประสงค์ เช่น กฐิน ผ้าป่าสามัคคี สร้างอาคาร กองทุนการศึกษา — เลือกกองทุนที่ช่อง "กองทุน/โครงการ" ตอนบันทึกรายรับ-รายจ่าย ระบบสรุปรับ/ใช้/คงเหลือของแต่ละกองทุน (ไม่นับรายการโอน/ฝาก-ถอน) และชื่อกองทุนจะเป็นวัตถุประสงค์เริ่มต้นบนอนุโมทนาบัตร</p>
+<div class="card-table"><table class="data-table">
   <tr><th>กองทุน/โครงการ</th><th class="text-right">เป้ายอด</th><th class="text-right">รับสะสม</th><th class="text-right">ใช้ไป</th><th class="text-right">คงเหลือ</th><th>ความคืบหน้า</th><th></th></tr>
   <?php foreach ($funds as $f): ?>
   <tr class="<?= $f['is_active'] ? '' : 'opacity-60' ?>">
@@ -115,7 +115,7 @@ require __DIR__ . '/includes/header.php';
 </table></div>
 
 <?php if ($canEdit): ?>
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3><?= $edit ? 'แก้ไขกองทุน/โครงการ' : 'สร้างกองทุน/โครงการ' ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 [&_input:not([type=checkbox])]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="temple" value="<?= $tid ?>"><input type="hidden" name="fund_id" value="<?= (int)($edit['id'] ?? 0) ?>">

@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'ตั้งรหัสผ่านใหม่';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mx-auto my-10 max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+<div class="card mx-auto my-10 max-w-sm">
   <h2>ตั้งรหัสผ่านใหม่</h2>
   <p class="mb-4 text-sm text-stone-600">กรอกรหัส 8 หลักที่ส่งไปทางอีเมล (ใช้ได้ครั้งเดียว หมดอายุใน <?= OTP_PURPOSES['reset']['ttl'] / 60 ?> นาที) แล้วตั้งรหัสผ่านใหม่
     — บัญชีวัดอย่างน้อย 8 ตัว, แอดมินหลัก/<?= e(unit_district()) ?>/เจ้าคณะจังหวัดอย่างน้อย 10 ตัวและมีทั้งตัวอักษรกับตัวเลข</p>

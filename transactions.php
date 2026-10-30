@@ -189,7 +189,7 @@ function temple_options(array $groups, int $sel): string
   <span class="flex flex-wrap gap-2"><a class="btn btn-outline btn-sm" href="accounts.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">บัญชีเงินสด/ธนาคาร · โอน-ฝาก-ถอน</a>
   <a class="btn btn-outline btn-sm" href="statements.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">รายงานแบบที่ 1–3 ประจำเดือน</a></span></div>
 
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:hidden">
+<div class="card print:hidden">
   <h3><?= $edit ? "แก้ไขรายการ$label" : "เพิ่มรายการ$label" ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?>
@@ -226,7 +226,7 @@ function temple_options(array $groups, int $sel): string
   <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
 </form>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>บัญชี</th><th>รายละเอียด</th><th>เลขที่</th><th class="text-right whitespace-nowrap">จำนวนเงิน</th><th class="print:hidden"></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>

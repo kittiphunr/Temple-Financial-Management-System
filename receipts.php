@@ -30,7 +30,7 @@ require __DIR__ . '/includes/header.php';
   <?php endif; ?>
   <button class="btn">แสดง</button>
 </form>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>เลขที่</th><th>วันที่ออก</th><th>วัด</th><th>ผู้บริจาค</th><th class="text-right">จำนวนเงิน</th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr><td class="whitespace-nowrap"><?= e(receipt_label($r)) ?></td><td><?= e(th_date($r['receipt_date'])) ?></td>

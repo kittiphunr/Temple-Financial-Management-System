@@ -13,7 +13,7 @@ function ledger_accounts_panel(PDO $pdo, array $temple, bool $canEdit, string $b
 <?php foreach ($accounts as $a):
     $bal = ledger_balance_on($pdo, $a, $today);
     $isBank = $a['kind'] === 'bank'; ?>
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm <?= $a['is_active'] ? '' : 'opacity-70' ?>">
+  <section class="card <?= $a['is_active'] ? '' : 'opacity-70' ?>">
     <div class="flex flex-wrap items-start justify-between gap-2">
       <div>
         <h3 class="!my-0"><?= $isBank ? 'บัญชีธนาคาร' : 'เงินสด / เช็ค' ?><?= $a['is_active'] ? '' : ' <span class="badge">ปิดใช้งาน</span>' ?></h3>
@@ -52,7 +52,7 @@ function ledger_accounts_panel(PDO $pdo, array $temple, bool $canEdit, string $b
 </div>
 
 <?php if ($canEdit): ?>
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>เพิ่มบัญชีธนาคาร</h3>
   <form method="post" action="<?= BASE ?>accounts.php" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 [&_input]:w-full">
     <?= csrf_field() ?><input type="hidden" name="back" value="<?= e($back) ?>"><input type="hidden" name="action" value="add_bank"><input type="hidden" name="temple" value="<?= $tid ?>">

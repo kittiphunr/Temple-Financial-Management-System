@@ -54,11 +54,11 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>หลักฐานแนบรายการ</h2>
   <a class="btn btn-outline btn-sm" href="<?= e($back) ?>"><?= icon('arrow-left') ?> กลับ</a></div>
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <p><b><?= $x['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></b> · <?= e($x['temple']) ?> · <?= e(th_date($x['txn_date'])) ?> · <?= e($x['category']) ?> · <?= money($x['amount']) ?> บาท</p>
   <?php if ($x['description'] !== ''): ?><p class="text-stone-600"><?= e($x['description']) ?></p><?php endif; ?>
 </div>
-<div class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>ไฟล์แนบ (<?= count($list) ?>/<?= ATT_MAX_PER_TXN ?>)</h3>
   <?php if (!$list): ?><p class="text-stone-500">ยังไม่มีไฟล์แนบ</p><?php endif; ?>
   <ul class="divide-y divide-stone-100">

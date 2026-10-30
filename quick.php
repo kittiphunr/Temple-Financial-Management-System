@@ -35,7 +35,7 @@ require __DIR__ . '/includes/header.php';
 <div class="mx-auto max-w-lg">
 <h2>บันทึกรายรับ-รายจ่ายด่วน<?= $temple ? '<span class="block text-base font-normal text-stone-600">' . e($temple['name']) . '</span>' : '' ?></h2>
 <?php if ($u['role'] !== 'temple'): ?>
-<form method="get" class="mb-3">
+<form method="get" class="mb-4">
   <label>วัด</label><select name="temple" onchange="this.form.submit()" class="w-full text-lg"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select>
   <noscript><button class="btn mt-2">แสดง</button></noscript>
@@ -45,10 +45,7 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อบันทึกรายการ</p>
 <?php else: ?>
-<form method="post" action="transactions.php?type=<?= $qType ?>" id="quick-form" class="space-y-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm [&_input:not([type=radio])]:w-full [&_select]:w-full [&_input]:min-h-12 [&_select]:min-h-12 [&_input]:text-lg [&_select]:text-lg">
-  <?= csrf_field() ?>
-  <input type="hidden" name="action" value="save"><input type="hidden" name="back" value="quick"><input type="hidden" name="temple_id" value="<?= $tid ?>">
-  <?php $today = date('Y-m-d'); echo '<input type="hidden" name="txn_date_d" value="' . (int)date('j') . '"><input type="hidden" name="txn_date_m" value="' . (int)date('n') . '"><input type="hidden" name="txn_date_y" value="' . ((int)date('Y') + 543) . '" data-today>'; ?>
+<form method="post" action="transactions.php?type=<?= $qType ?>" id="quick-form" class="card space-y-4 [&_input:not([type=radio])]:w-full [&_select]:w-full [&_input]:min-h-12 [&_select]:min-h-12 [&_input]:text-lg [&_select]:text-lg">
   <fieldset class="grid grid-cols-2 gap-3" aria-label="ประเภทรายการ">
     <label class="flex min-h-14 cursor-pointer items-center justify-center rounded-xl border-2 border-emerald-600 text-lg font-bold text-emerald-700 has-[:checked]:bg-emerald-600 has-[:checked]:text-white"><input type="radio" name="kind" value="income" class="sr-only" <?= $qType === 'income' ? 'checked' : '' ?>>รายรับ</label>
     <label class="flex min-h-14 cursor-pointer items-center justify-center rounded-xl border-2 border-red-600 text-lg font-bold text-red-700 has-[:checked]:bg-red-600 has-[:checked]:text-white"><input type="radio" name="kind" value="expense" class="sr-only" <?= $qType === 'expense' ? 'checked' : '' ?>>รายจ่าย</label>
@@ -62,18 +59,22 @@ require __DIR__ . '/includes/header.php';
   <?php else: ?><input type="hidden" name="account_id" value="cash"><?php endif; ?>
   <?php if ($funds): ?><div><label for="q-fund" class="text-lg">กองทุน/โครงการ</label><select id="q-fund" name="fund_id"><option value="0">เงินทั่วไป</option>
     <?php foreach ($funds as $f): ?><option value="<?= (int)$f['id'] ?>"><?= e($f['name']) ?></option><?php endforeach; ?></select></div><?php endif; ?>
+  <?php $today = date('Y-m-d'); ?>
   <input type="hidden" name="doc_no" value="">
   <button class="btn w-full !min-h-14 !text-xl" type="submit">บันทึก</button>
   <p class="text-center text-sm text-stone-500">บันทึกเป็นวันที่ <?= e(th_date($today)) ?> · แก้วันที่หรือเพิ่มรายละเอียดอื่นได้ที่ <a class="underline" href="transactions.php?type=<?= $qType ?>">หน้าบัญชี<?= $qType === 'income' ? 'รายรับ' : 'รายจ่าย' ?></a></p>
+  <?= csrf_field() ?>
+  <input type="hidden" name="action" value="save"><input type="hidden" name="back" value="quick"><input type="hidden" name="temple_id" value="<?= $tid ?>">
+  <?php $today = date('Y-m-d'); echo '<input type="hidden" name="txn_date_d" value="' . (int)date('j') . '"><input type="hidden" name="txn_date_m" value="' . (int)date('n') . '"><input type="hidden" name="txn_date_y" value="' . ((int)date('Y') + 543) . '" data-today>'; ?>
 </form>
 
-<h3 class="mt-5">ล่าสุด</h3>
-<ul class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white shadow-sm">
+<h3 class="mt-6">ล่าสุด</h3>
+<ul class="card-table divide-y divide-stone-100">
   <?php foreach ($recent as $r): ?>
-  <li class="flex items-center justify-between gap-3 px-4 py-3"><span class="min-w-0"><span class="block truncate"><?= e($r['category']) ?><?= $r['description'] ? ' · ' . e($r['description']) : '' ?></span><span class="text-xs text-stone-500"><?= e(th_date($r['txn_date'])) ?></span></span>
+  <li class="flex items-center justify-between gap-3 px-5 py-3"><span class="min-w-0"><span class="block truncate"><?= e($r['category']) ?><?= $r['description'] ? ' · ' . e($r['description']) : '' ?></span><span class="text-xs text-stone-500"><?= e(th_date($r['txn_date'])) ?></span></span>
     <span class="whitespace-nowrap text-lg font-bold <?= $r['type'] === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= $r['type'] === 'income' ? '+' : '−' ?><?= money($r['amount']) ?></span></li>
   <?php endforeach; ?>
-  <?php if (!$recent): ?><li class="px-4 py-3 text-stone-500">ยังไม่มีรายการ</li><?php endif; ?>
+  <?php if (!$recent): ?><li class="px-5 py-3 text-stone-500">ยังไม่มีรายการ</li><?php endif; ?>
 </ul>
 <?php endif; ?>
 </div>

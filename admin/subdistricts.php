@@ -89,7 +89,7 @@ require __DIR__ . '/../includes/header.php';
 <p class="mb-4 text-sm text-stone-600">บัญชีนี้ดูแดชบอร์ด รายงาน รายงานประจำเดือนแบบที่ 1–3 และรายชื่อบุคลากรของ <strong>วัดใน<?= e(unit_subdistrict()) ?>ที่ได้รับมอบหมายเท่านั้น</strong> — บันทึก/แก้ไขข้อมูลหรือออกอนุโมทนาบัตรไม่ได้
   1 บัญชีดูได้หลาย<?= e(unit_subdistrict()) ?> และไม่นับในโควตาผู้ใช้ระดับจังหวัด/<?= e(unit_district()) ?> ต้องมีอีเมลสำหรับรับรหัสยืนยันตัวตน 2 ชั้น</p>
 
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>เพิ่มบัญชีเจ้าคณะ<?= e(unit_subdistrict()) ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2">
     <?= csrf_field() ?><input type="hidden" name="action" value="create">
@@ -103,7 +103,7 @@ require __DIR__ . '/../includes/header.php';
 </div>
 
 <?php if (!$users): ?>
-<p class="rounded-2xl border border-stone-200 bg-white p-4 text-stone-500">ยังไม่มีบัญชีเจ้าคณะ<?= e(unit_subdistrict()) ?></p>
+<p class="card text-stone-500">ยังไม่มีบัญชีเจ้าคณะ<?= e(unit_subdistrict()) ?></p>
 <?php endif; ?>
 <?php foreach ($users as $r):
     $assign = subdistrict_assignments($pdo, (int)$r['id']);
@@ -111,7 +111,7 @@ require __DIR__ . '/../includes/header.php';
     foreach ($assign as $a) {
         $picked[$a['district_id'] . '|' . $a['subdistrict']] = true;
     } ?>
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
       <div class="font-semibold"><?= e($r['full_name']) ?> <span class="font-mono text-sm text-stone-500">(<?= e($r['username']) ?>)</span>

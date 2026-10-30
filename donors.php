@@ -59,7 +59,7 @@ require __DIR__ . '/includes/header.php';
 <?php if ($detail): $rcs = donor_receipts($pdo, (int)$detail['id']); $sum = 0.0; ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= e($detail['name']) ?> · <?= e($temple['name']) ?></h2>
   <span class="flex gap-2"><?php if (!$detail['withdrawn_at']): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>"><?= icon('edit-2') ?> แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
-<section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <?php if ($detail['withdrawn_at']): ?>
     <p class="rounded-lg border border-stone-300 bg-stone-50 p-3">ผู้บริจาคถอนความยินยอมเมื่อ <?= e(th_date(substr($detail['withdrawn_at'], 0, 10))) ?> — ข้อมูลส่วนบุคคลในทะเบียนถูกลบแล้ว (ใบอนุโมทนาที่ออกไปแล้วยังเก็บสำเนาตามหลักฐานทางบัญชี)</p>
   <?php else: ?>
@@ -74,8 +74,8 @@ require __DIR__ . '/includes/header.php';
     <button class="btn btn-danger btn-sm">บันทึกการถอนความยินยอม (ลบข้อมูลส่วนบุคคล)</button></form>
   <?php endif; ?>
 </section>
-<h3 class="mt-4">ประวัติการบริจาค (ตามใบอนุโมทนาที่ออก)</h3>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<h3 class="mt-6">ประวัติการบริจาค (ตามใบอนุโมทนาที่ออก)</h3>
+<div class="card-table"><table class="data-table">
   <tr><th>เลขที่ใบ</th><th>วันที่</th><th>วัตถุประสงค์</th><th>สถานะ</th><th class="text-right">จำนวนเงิน</th></tr>
   <?php foreach ($rcs as $r): if ($r['status'] === 'issued') $sum += (float)$r['amount']; ?>
   <tr class="<?= $r['status'] === 'void' ? 'opacity-60' : '' ?>"><td><a class="underline" href="receipt.php?id=<?= (int)$r['id'] ?>"><?= (int)$r['receipt_no'] ?>/<?= (int)$r['receipt_year'] ?></a></td><td><?= e(th_date($r['receipt_date'])) ?></td><td><?= e($r['purpose']) ?></td><td><?= $r['status'] === 'void' ? 'ยกเลิก' : 'ออกแล้ว' ?></td><td class="text-right"><?= money($r['amount']) ?></td></tr>
@@ -85,7 +85,7 @@ require __DIR__ . '/includes/header.php';
 </table></div>
 <?php elseif ($showForm): $v = $edit ?? []; ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= $edit ? 'แก้ไขผู้บริจาค' : 'เพิ่มผู้บริจาค' ?> · <?= e($temple['name']) ?></h2><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>">ยกเลิก</a></div>
-<form method="post" class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 [&_input:not([type=checkbox])]:w-full [&_select]:w-full [&_textarea]:w-full">
+<form method="post" class="card grid gap-3 sm:grid-cols-2 [&_input:not([type=checkbox])]:w-full [&_select]:w-full [&_textarea]:w-full">
   <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="donor_id" value="<?= (int)($edit['id'] ?? 0) ?>"><?php foreach ($tq as $k => $val): ?><input type="hidden" name="<?= $k ?>" value="<?= (int)$val ?>"><?php endforeach; ?>
   <div><label>ชื่อผู้บริจาค *</label><input name="name" required maxlength="200" value="<?= e($v['name'] ?? '') ?>"></div>
   <div><label>เบอร์โทร</label><input name="phone" inputmode="tel" maxlength="20" value="<?= e($v['phone'] ?? '') ?>"></div>
@@ -104,7 +104,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>ทะเบียนผู้บริจาค<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
   <?php if ($temple): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>"><?= icon('plus') ?> เพิ่มผู้บริจาค</a><?php endif; ?></div>
 <?php if ($u['role'] !== 'temple'): ?>
-<form method="get" class="my-3 flex flex-wrap items-end gap-3">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <noscript><button class="btn">แสดง</button></noscript>
@@ -113,12 +113,12 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อดูทะเบียนผู้บริจาค</p>
 <?php else: ?>
-<p class="mb-3 text-sm text-stone-600">ทะเบียนนี้ไม่บังคับ — เก็บเฉพาะผู้บริจาคที่ให้ความยินยอม เพื่อค้นหาและเติมชื่อ-ที่อยู่ในอนุโมทนาบัตรอัตโนมัติ ที่อยู่และเบอร์โทรเก็บแบบเข้ารหัส และผู้บริจาคถอนความยินยอมได้ทุกเมื่อ</p>
-<form method="get" class="mb-3 flex flex-wrap items-end gap-3">
+<p class="mb-4 text-sm text-stone-600">ทะเบียนนี้ไม่บังคับ — เก็บเฉพาะผู้บริจาคที่ให้ความยินยอม เพื่อค้นหาและเติมชื่อ-ที่อยู่ในอนุโมทนาบัตรอัตโนมัติ ที่อยู่และเบอร์โทรเก็บแบบเข้ารหัส และผู้บริจาคถอนความยินยอมได้ทุกเมื่อ</p>
+<form method="get" class="mb-4 flex flex-wrap items-end gap-3">
   <?php foreach ($tq as $k => $val): ?><input type="hidden" name="<?= $k ?>" value="<?= (int)$val ?>"><?php endforeach; ?>
   <div><label>ค้นหาชื่อ</label><input name="q" value="<?= e($q) ?>"></div><button class="btn" type="submit">ค้นหา</button>
 </form>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>ชื่อ</th><th>เบอร์โทร</th><th class="text-right">ใบที่ออก</th><th class="text-right">ยอดรวม</th><th>ความยินยอม</th></tr>
   <?php foreach ($donors as $d): ?>
   <tr class="<?= $d['withdrawn_at'] ? 'opacity-60' : '' ?>"><td><a class="underline" href="<?= e($url(['donor' => (int)$d['id']])) ?>"><?= e($d['name']) ?></a></td><td><?= e($d['phone'] ?: '-') ?></td>

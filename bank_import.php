@@ -95,7 +95,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>นำเข้ารายการจากไฟล์ธนาคาร<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
   <?php if ($temple): ?><a class="btn btn-outline btn-sm" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร</a><?php endif; ?></div>
 
-<form method="get" class="my-3 flex flex-wrap items-end gap-3">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3">
   <?php if ($u['role'] !== 'temple'): ?>
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
@@ -109,9 +109,9 @@ require __DIR__ . '/includes/header.php';
 <?php elseif (!$acc): ?>
   <p class="text-stone-600">วัดนี้ยังไม่มีบัญชีธนาคารที่ใช้งานอยู่ — เพิ่มได้ที่หน้า <a class="underline" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร</a></p>
 <?php elseif (!$preview): ?>
-<section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-  <p class="mb-3 text-sm text-stone-600">ดาวน์โหลด statement จากธนาคาร (Internet/Mobile Banking) เป็นไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> แล้วอัปโหลดที่นี่ ระบบจะเดาคอลัมน์ วันที่ รายการ ฝาก/ถอน ให้เอง (แก้ได้ก่อนนำเข้า) รองรับวันที่ ค.ศ./พ.ศ. จากนั้นเลือกหมวดของแต่ละรายการ ระบบจะจำหมวดที่เคยใช้กับรายการชื่อเดียวกัน และข้ามรายการที่มีอยู่แล้วให้ ไฟล์ไม่เกิน 5 MB (<?= number_format(BANK_IMPORT_MAX_ROWS) ?> แถว)</p>
-  <?php if (!xlsx_available()): ?><p class="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">เซิร์ฟเวอร์ยังไม่ได้เปิดส่วนขยาย PHP <code>zip</code> จึงอ่านไฟล์ .xlsx ไม่ได้ — ใช้ไฟล์ CSV แทนได้</p><?php endif; ?>
+<section class="card">
+  <p class="mb-4 text-sm text-stone-600">ดาวน์โหลด statement จากธนาคาร (Internet/Mobile Banking) เป็นไฟล์ <strong>.csv</strong> หรือ <strong>.xlsx</strong> แล้วอัปโหลดที่นี่ ระบบจะเดาคอลัมน์ วันที่ รายการ ฝาก/ถอน ให้เอง (แก้ได้ก่อนนำเข้า) รองรับวันที่ ค.ศ./พ.ศ. จากนั้นเลือกหมวดของแต่ละรายการ ระบบจะจำหมวดที่เคยใช้กับรายการชื่อเดียวกัน และข้ามรายการที่มีอยู่แล้วให้ ไฟล์ไม่เกิน 5 MB (<?= number_format(BANK_IMPORT_MAX_ROWS) ?> แถว)</p>
+  <?php if (!xlsx_available()): ?><p class="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">เซิร์ฟเวอร์ยังไม่ได้เปิดส่วนขยาย PHP <code>zip</code> จึงอ่านไฟล์ .xlsx ไม่ได้ — ใช้ไฟล์ CSV แทนได้</p><?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="upload"><input type="hidden" name="account" value="<?= (int)$acc['id'] ?>"><?php foreach ($tq as $k => $v): ?><input type="hidden" name="<?= $k ?>" value="<?= (int)$v ?>"><?php endforeach; ?>
     <div><label>ไฟล์ statement (.csv / .xlsx)</label><input type="file" name="file" accept=".csv,.txt,.xlsx" required></div>
@@ -125,7 +125,7 @@ require __DIR__ . '/includes/header.php';
     $ncols = max(array_map('count', array_slice($preview['rows'], 0, 40)));
     $nOk = count(array_filter($impRows, fn($i) => $i['error'] === '' && !$i['dup'] && $i['locked'] === ''));
 ?>
-<section class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>ไฟล์ <?= e($preview['file']) ?> — ตรวจคอลัมน์</h3>
   <?php if (!isset($preview['map']['date'])): ?><p class="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-950">ระบบเดาหัวตารางไม่ได้ กรุณาเลือกคอลัมน์ด้านล่างให้ตรงกับไฟล์ แล้วกด "ใช้คอลัมน์นี้"</p><?php endif; ?>
   <form method="post" class="grid gap-2 sm:grid-cols-3 lg:grid-cols-4 [&_select]:w-full [&_input]:w-full">
@@ -142,7 +142,7 @@ require __DIR__ . '/includes/header.php';
 <form method="post">
   <?= csrf_field() ?><input type="hidden" name="action" value="import"><input type="hidden" name="account" value="<?= (int)$acc['id'] ?>"><?php foreach ($tq as $k => $v): ?><input type="hidden" name="<?= $k ?>" value="<?= (int)$v ?>"><?php endforeach; ?>
   <p class="mb-2 text-sm text-stone-700">พบ <strong><?= count($impRows) ?></strong> รายการ · พร้อมนำเข้า <strong><?= $nOk ?></strong> · ซ้ำกับในระบบ <strong><?= count(array_filter($impRows, fn($i) => $i['dup'])) ?></strong> · มีปัญหา <strong><?= count(array_filter($impRows, fn($i) => $i['error'] !== '' || $i['locked'] !== '')) ?></strong></p>
-  <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <div class="card-table"><table class="data-table">
     <tr><th>นำเข้า</th><th>แถว</th><th>วันที่</th><th>รายละเอียด</th><th class="text-right">เงินเข้า</th><th class="text-right">เงินออก</th><th>หมวด</th><th>หมายเหตุ</th></tr>
     <?php foreach ($impRows as $i => $it): $bad = $it['error'] !== '' || $it['locked'] !== ''; $on = !$bad && !$it['dup']; ?>
     <tr class="<?= $bad ? 'bg-red-50' : ($it['dup'] ? 'bg-amber-50' : '') ?>">

@@ -102,6 +102,24 @@ def _run(R, q, app):
     check('U20 กล่องแจ้งเตือนมีไอคอน และบัญชีของฉัน/ออกจากระบบแสดงแต่ไอคอนบนแถบแคบ (มี title และข้อความสำหรับโปรแกรมอ่านหน้าจอ)',
           'sr-only 2xl:not-sr-only' in desk and 'title="ออกจากระบบ"' in desk and 'aria-hidden="true"' in desk)
 
+    # ================= การ์ดกลาง: ช่องว่างเท่ากันทั้งระบบ =================
+    css = g.raw('/assets/css/tailwind.css')[2].decode('utf-8', 'ignore')
+    check('U21 CSS การ์ดกลางถูกคอมไพล์ (.card .card-table .card-bar .callout) พร้อมกฎจัดช่องไฟในกริด', all(x in css for x in ('.card{', '.card-table{', '.card-bar{', '.callout{')) and ':has(' in css)
+    raw_cards = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'class="([^"]*)"', f.read_text(encoding='utf-8')):
+            v = m.group(1).split('<?')[0].split()
+            if 'rounded-2xl' in v and 'border' in v and 'border-stone-200' in v and 'bg-white' in v and not ({'card', 'card-table', 'card-bar'} & set(v)) and 'rc-page' not in v:
+                raw_cards.append(f'{f.name}: {" ".join(v)[:70]}')
+    check('U22 ไม่มีกล่องที่ประกอบสไตล์การ์ดเอง (ต้องใช้ .card/.card-table/.card-bar ให้ padding เท่ากันทั้งระบบ)', raw_cards == [], '; '.join(raw_cards[:5]))
+    padded = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'class="([^"]*)"', f.read_text(encoding='utf-8')):
+            v = m.group(1).split('<?')[0].split()
+            if ({'card', 'card-table', 'card-bar'} & set(v)) and any(re.fullmatch(r'(p|px|py|pt|pb|pl|pr)-\d+(\.\d+)?', t) for t in v):
+                padded.append(f'{f.name}: {" ".join(v)[:70]}')
+    check('U23 การ์ดไม่กำหนด padding เอง (padding มาจาก .card เท่ากันทุกด้าน)', not padded, '; '.join(padded[:5]))
+
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================
     today = date.today()
     be = today.year + 543

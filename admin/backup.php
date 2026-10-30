@@ -85,10 +85,10 @@ $pageTitle = 'สำรองข้อมูล';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>สำรองข้อมูล</h2>
-<p class="mb-3 text-sm text-stone-600">ไฟล์สำรองคือสำเนาฐานข้อมูลทั้งหมด (บัญชี ผู้ใช้ รูป หลักฐานแนบ ฯลฯ) เก็บใน <code>storage/backups/</code> ซึ่งปิดไม่ให้เปิดจากเว็บ ควรดาวน์โหลดเก็บไว้นอกเซิร์ฟเวอร์เป็นประจำ
+<p class="mb-4 text-sm text-stone-600">ไฟล์สำรองคือสำเนาฐานข้อมูลทั้งหมด (บัญชี ผู้ใช้ รูป หลักฐานแนบ ฯลฯ) เก็บใน <code>storage/backups/</code> ซึ่งปิดไม่ให้เปิดจากเว็บ ควรดาวน์โหลดเก็บไว้นอกเซิร์ฟเวอร์เป็นประจำ
   ข้อมูลอ่อนไหว (เลขบัตรประชาชน ที่อยู่ผู้บริจาค) ในไฟล์สำรองเข้ารหัสด้วย <strong>กุญแจระบบ</strong> — ต้องเก็บกุญแจสำรองแยกต่างหากด้านล่าง ไม่เช่นนั้นกู้คืนแล้วจะอ่านข้อมูลเหล่านั้นไม่ได้</p>
 
-<section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="!mb-0">ไฟล์สำรอง (<?= count($list) ?>)</h3>
     <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="create"><button class="btn btn-sm">สร้างไฟล์สำรองตอนนี้</button></form></div>
   <p class="mt-1 text-xs text-stone-500">สำรองล่าสุด: <?= $last ? e(th_datetime(date('Y-m-d H:i:s', $last))) : 'ยังไม่เคย' ?></p>
@@ -103,7 +103,7 @@ require __DIR__ . '/../includes/header.php';
   </table></div>
 </section>
 
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>สำรองอัตโนมัติ</h3>
   <form method="post" class="flex flex-wrap items-end gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="settings">
@@ -115,7 +115,7 @@ require __DIR__ . '/../includes/header.php';
   <pre class="mt-1 overflow-x-auto rounded-lg bg-stone-100 p-2 text-xs">0 2 * * * cd <?= e($root) ?> &amp;&amp; php backup.php --keep=<?= $keep ?></pre>
 </section>
 
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>สำรองกุญแจระบบ (แยกจากไฟล์สำรองข้อมูล)</h3>
   <p class="mb-2 text-sm text-stone-600">ดาวน์โหลดกุญแจระบบ (<code>storage/app.key</code>) แบบ<strong>เข้ารหัสด้วยรหัสผ่านสำรอง</strong> ที่คุณตั้งเอง เก็บไฟล์นี้และจดรหัสผ่านสำรองไว้คนละที่กับไฟล์สำรองข้อมูล ถ้าทำกุญแจหาย เลขบัตรประชาชนและข้อมูลที่เข้ารหัสจะกู้คืนไม่ได้อีก</p>
   <form method="post" class="grid gap-3 sm:grid-cols-3 [&_input]:w-full" autocomplete="off">
@@ -127,7 +127,7 @@ require __DIR__ . '/../includes/header.php';
   </form>
 </section>
 
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-700 shadow-sm">
+<section class="card text-sm text-stone-700">
   <h3>กู้คืนข้อมูล</h3>
   <p>กู้คืนทำผ่านบรรทัดคำสั่งเท่านั้น (ป้องกันการเขียนทับข้อมูลโดยไม่ตั้งใจ):</p>
   <pre class="mt-1 overflow-x-auto rounded-lg bg-stone-100 p-2 text-xs">php restore_backup.php storage/backups/ไฟล์.sql.gz --yes --key=tfms-app-key-วันที่.json</pre>

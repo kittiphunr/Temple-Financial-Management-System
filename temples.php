@@ -21,7 +21,7 @@ require __DIR__ . '/includes/header.php';
   <?php if (!$list): ?>
     <p class="text-stone-500">ยังไม่มีข้อมูลวัดของ<?= e(unit_district()) ?>นี้ในระบบ</p>
   <?php else: ?>
-  <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <div class="card-table"><table class="data-table">
     <tr><th>ชื่อวัด</th><th><?= e(unit_subdistrict()) ?></th><th>หมู่</th><th>ประเภท / นิกาย</th><th>รหัสวัด</th><th>สถานะข้อมูล</th></tr>
     <?php foreach ($list as $r): ?>
     <tr>

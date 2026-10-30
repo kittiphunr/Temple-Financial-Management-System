@@ -109,7 +109,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= e($detail['name']) ?> · <?= e($temple['name']) ?></h2>
   <span class="flex gap-2"><?php if ($canEdit): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>"><?= icon('edit-2') ?> แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
 <div class="grid gap-4 lg:grid-cols-[1fr_16rem]">
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section class="card">
     <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
       <?php foreach ([['เลขทะเบียน', $detail['asset_no'] ?: '-'], ['ประเภท', ASSET_CATEGORIES[$detail['category']]], ['วันที่ได้มา', $detail['acquired_date'] ? th_date($detail['acquired_date']) : '-'], ['ได้มาโดย', $detail['acquired_how'] ?: '-'],
           ['มูลค่า/ราคาทุน', money($detail['value']) . ' บาท'], ['สภาพ', ASSET_STATUS[$detail['status']]], ['สถานที่', $detail['location'] ?: '-'], ['ผู้รับผิดชอบ', $detail['holder'] ?: '-']] as [$k, $v]): ?>
@@ -132,8 +132,8 @@ require __DIR__ . '/includes/header.php';
   </section>
   <aside><?php if ($detail['photo_media_id']): ?><img class="w-full rounded-2xl border border-stone-200" src="<?= e(media_url((int)$detail['photo_media_id'])) ?>" alt="รูปทรัพย์สิน"><?php else: ?><div class="rounded-2xl border border-dashed border-stone-300 p-6 text-center text-stone-400">ไม่มีรูป</div><?php endif; ?></aside>
 </div>
-<h3 class="mt-4">รายจ่ายที่ซื้อ/ซ่อมทรัพย์สินนี้</h3>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<h3 class="mt-6">รายจ่ายที่ซื้อ/ซ่อมทรัพย์สินนี้</h3>
+<div class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>ประเภท</th><th>หมวด</th><th>รายละเอียด</th><th class="text-right">จำนวนเงิน</th></tr>
   <?php foreach ($txns as $x): ?><tr><td class="whitespace-nowrap"><?= e(th_date($x['txn_date'])) ?></td><td><?= e(ASSET_KINDS[$x['asset_kind']] ?? '-') ?></td><td><?= e($x['category']) ?></td><td><?= e($x['description']) ?></td><td class="text-right"><?= money($x['amount']) ?></td></tr><?php endforeach; ?>
   <?php if (!$txns): ?><tr><td colspan="5" class="text-stone-500">ยังไม่มีรายจ่ายที่ผูกไว้ — เลือกทรัพย์สินที่ช่อง "ทรัพย์สินที่ซื้อ/ซ่อม" ตอนบันทึกรายจ่าย</td></tr><?php endif; ?>
@@ -141,7 +141,7 @@ require __DIR__ . '/includes/header.php';
 </table></div>
 <?php elseif ($showForm): $v = $edit ?? []; ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= $edit ? 'แก้ไขทรัพย์สิน' : 'เพิ่มทรัพย์สิน' ?> · <?= e($temple['name']) ?></h2><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>">ยกเลิก</a></div>
-<form method="post" enctype="multipart/form-data" class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 [&_input:not([type=checkbox]):not([type=file])]:w-full [&_select]:w-full">
+<form method="post" enctype="multipart/form-data" class="card grid gap-3 sm:grid-cols-2 [&_input:not([type=checkbox]):not([type=file])]:w-full [&_select]:w-full">
   <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="asset_id" value="<?= (int)($edit['id'] ?? 0) ?>"><input type="hidden" name="temple" value="<?= $tid ?>">
   <div class="col-span-full"><label>ชื่อทรัพย์สิน *</label><input name="name" required maxlength="200" value="<?= e($v['name'] ?? '') ?>" placeholder="เช่น อุโบสถ, รถกระบะ, เครื่องเสียง"></div>
   <div><label>ประเภท *</label><select name="category"><?php foreach (ASSET_CATEGORIES as $k => $lab): ?><option value="<?= $k ?>" <?= ($v['category'] ?? 'equipment') === $k ? 'selected' : '' ?>><?= e($lab) ?></option><?php endforeach; ?></select></div>
@@ -161,7 +161,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2 print:hidden"><h2>ทะเบียนทรัพย์สิน<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
   <?php if ($canEdit): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>"><?= icon('plus') ?> เพิ่มทรัพย์สิน</a><?php endif; ?></div>
 <?php if ($u['role'] !== 'temple'): ?>
-<form method="get" class="my-3 flex flex-wrap items-end gap-3 print:hidden">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3 print:hidden">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <noscript><button class="btn">แสดง</button></noscript>
@@ -171,7 +171,7 @@ require __DIR__ . '/includes/header.php';
   <p class="text-stone-600">เลือกวัดเพื่อดูทะเบียนทรัพย์สิน</p>
 <?php else: ?>
 <?= letterhead($pdo, $tid, 0, 'ทะเบียนทรัพย์สิน', 'ข้อมูล ณ วันที่ ' . th_date(date('Y-m-d')), true) ?>
-<form method="get" class="my-3 flex flex-wrap items-end gap-3 print:hidden">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3 print:hidden">
   <?php if ($u['role'] !== 'temple'): ?><input type="hidden" name="temple" value="<?= $tid ?>"><?php endif; ?>
   <div><label>ประเภท</label><select name="category"><option value="">ทั้งหมด</option><?php foreach (ASSET_CATEGORIES as $k => $lab): ?><option value="<?= $k ?>" <?= $filters['category'] === $k ? 'selected' : '' ?>><?= e($lab) ?></option><?php endforeach; ?></select></div>
   <div><label>สภาพ</label><select name="status"><option value="">ทั้งหมด</option><?php foreach (ASSET_STATUS as $k => $lab): ?><option value="<?= $k ?>" <?= $filters['status'] === $k ? 'selected' : '' ?>><?= e($lab) ?></option><?php endforeach; ?></select></div>
@@ -180,9 +180,9 @@ require __DIR__ . '/includes/header.php';
   <a class="btn btn-outline" href="<?= e($url(array_filter($filters) + ['export' => 'csv'])) ?>"><?= icon('download') ?> ส่งออก CSV</a>
   <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ทะเบียน</button>
 </form>
-<?php if ($sumByCat): ?><div class="mb-3 flex flex-wrap gap-2 text-sm"><?php foreach ($sumByCat as $k => $s): ?><span class="rounded-lg border border-stone-200 bg-white px-3 py-1"><?= e(ASSET_CATEGORIES[$k]) ?> <strong><?= $s['n'] ?></strong> รายการ · <?= money($s['v']) ?> บาท</span><?php endforeach; ?>
+<?php if ($sumByCat): ?><div class="mb-4 flex flex-wrap gap-2 text-sm"><?php foreach ($sumByCat as $k => $s): ?><span class="rounded-lg border border-stone-200 bg-white px-3 py-1"><?= e(ASSET_CATEGORIES[$k]) ?> <strong><?= $s['n'] ?></strong> รายการ · <?= money($s['v']) ?> บาท</span><?php endforeach; ?>
   <span class="rounded-lg border border-gold-500 bg-white px-3 py-1">รวม <strong><?= array_sum(array_column($sumByCat, 'n')) ?></strong> รายการ · <?= money(array_sum(array_column($sumByCat, 'v'))) ?> บาท</span></div><?php endif; ?>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm print:border-0 print:shadow-none"><table class="data-table">
+<div class="card-table print:border-0 print:shadow-none"><table class="data-table">
   <tr><th>เลขทะเบียน</th><th>ทรัพย์สิน</th><th>ประเภท</th><th>วันที่ได้มา</th><th class="text-right">มูลค่า</th><th>สภาพ</th><th>ผู้ดูแล/สถานที่</th><th class="text-right print:hidden">ค่าซ่อมสะสม</th></tr>
   <?php foreach ($assets as $a): ?>
   <tr class="<?= $a['status'] === 'disposed' ? 'opacity-60' : '' ?>">

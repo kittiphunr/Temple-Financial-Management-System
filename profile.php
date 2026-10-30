@@ -72,7 +72,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <h2><?= e($t['name']) ?> <span class="text-lg font-semibold text-stone-600"><?= e(unit_district()) ?><?= e($districtName) ?></span></h2>
 
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>สิ่งที่ควรกรอกให้ครบ</h3>
   <ul class="grid gap-1.5 text-sm">
     <?php foreach ([
@@ -93,9 +93,9 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <div class="grid gap-4 lg:grid-cols-2">
-  <section id="logo" class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section id="logo" class="card">
     <h3>โลโก้วัด</h3>
-    <div class="mb-3 flex items-center gap-4">
+    <div class="mb-4 flex items-center gap-4">
       <?php if ($t['logo_media_id']): ?>
         <img class="h-28 w-28 rounded-xl border border-stone-200 bg-white object-contain p-1" src="<?= e(media_url((int)$t['logo_media_id'])) ?>" alt="โลโก้ <?= e($t['name']) ?>">
       <?php else: ?>
@@ -116,7 +116,7 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
   </section>
 
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section class="card">
     <h3>ข้อมูลทะเบียนวัด <span class="badge">แก้ไขไม่ได้</span></h3>
     <dl class="grid grid-cols-[8rem_1fr] gap-y-1.5 text-sm">
       <dt class="text-stone-500">รหัสวัด</dt><dd class="font-mono"><?= e($t['temple_code'] ?? '-') ?></dd>
@@ -129,7 +129,7 @@ require __DIR__ . '/includes/header.php';
   </section>
 </div>
 
-<section id="contact" class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section id="contact" class="card">
   <h3>ที่อยู่และการติดต่อ</h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <?= csrf_field() ?><input type="hidden" name="action" value="save_profile">

@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = $mode === 'enroll' ? 'ยืนยันอีเมลผู้ดูแลระบบ' : 'เปลี่ยนอีเมลยืนยันตัวตน';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mx-auto my-8 max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+<div class="card mx-auto my-8 max-w-md">
   <h2><?= $mode === 'enroll' ? 'ลงทะเบียนอีเมลผู้ดูแลระบบ' : 'เปลี่ยนอีเมลยืนยันตัวตน' ?></h2>
   <?php if ($mode === 'enroll'): ?>
   <p class="mb-4 text-stone-600">เพื่อความปลอดภัย บัญชีผู้ดูแลระบบต้องยืนยันตัวตนด้วยรหัส 6 หลักทางอีเมลทุกครั้งที่เข้าสู่ระบบ กรุณาระบุอีเมลที่ใช้ได้จริงและเข้าถึงได้เฉพาะคุณ
@@ -115,7 +115,7 @@ require __DIR__ . '/includes/header.php';
     <button class="btn">ส่งรหัสยืนยันไปที่อีเมลนี้</button>
   </form>
   <?php else: ?>
-  <p class="mb-3 text-stone-600">ส่งรหัส 6 หลักไปที่ <strong class="whitespace-nowrap"><?= e(mask_email($pending['email'])) ?></strong> แล้ว (หมดอายุใน <?= OTP_PURPOSES['enroll']['ttl'] / 60 ?> นาที)</p>
+  <p class="mb-4 text-stone-600">ส่งรหัส 6 หลักไปที่ <strong class="whitespace-nowrap"><?= e(mask_email($pending['email'])) ?></strong> แล้ว (หมดอายุใน <?= OTP_PURPOSES['enroll']['ttl'] / 60 ?> นาที)</p>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="verify">
     <input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus class="w-full text-center text-2xl tracking-[0.5em]">
