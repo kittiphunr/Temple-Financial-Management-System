@@ -70,6 +70,7 @@ function page(string $title, int $step, string $body, int $status = 200): never
 <meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> | ตัวช่วยติดตั้งระบบ</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
 <link rel="stylesheet" href="assets/css/tailwind.css">
 </head>
 <body class="min-h-screen">

@@ -200,6 +200,7 @@ require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/people.php';
 require_once __DIR__ . '/staff.php';
 require_once __DIR__ . '/letterhead.php';
+require_once __DIR__ . '/receipts.php';
 
 // ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน: ทุกหน้า (ยกเว้นหน้าเปลี่ยนรหัสผ่านและออกจากระบบ) ถูกส่งไปหน้าเปลี่ยนรหัสผ่าน
 if (!empty($_SESSION['user']['must_change'])

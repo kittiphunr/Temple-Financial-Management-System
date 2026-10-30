@@ -20,7 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0');
         $st->execute([$id]);
         $row = $st->fetch();
-        if ($row && can_access_temple((int)$row['temple_id'])) {
+        if ($row && can_access_temple((int)$row['temple_id']) && ($rc = receipt_active_for($pdo, $id))) {
+            flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะลบได้', 'err');
+        } elseif ($row && can_access_temple((int)$row['temple_id'])) {
             $pdo->prepare('UPDATE transactions SET is_deleted = 1 WHERE id = ?')->execute([$id]);
             audit('delete', 'transaction', $id);
             flash('ลบรายการแล้ว');
@@ -55,6 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 http_response_code(403);
                 exit('ไม่มีสิทธิ์แก้ไขรายการนี้');
             }
+            if ($rc = receipt_active_for($pdo, $id)) {
+                flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะแก้ไขได้', 'err');
+                redirect("transactions.php?type=$type");
+            }
             $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=? WHERE id=?')
                 ->execute([$templeId, $catId, $date, $doc, $desc, $amount, $id]);
             audit('update', 'transaction', $id, "$type $amount");
@@ -86,7 +92,8 @@ if (!empty($_GET['edit'])) {
     $edit = $st->fetch() ?: null;
 }
 
-$sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category
+$sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation,
+      (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id
     FROM transactions x JOIN temples t ON t.id = x.temple_id
     JOIN districts d ON d.id = t.district_id JOIN categories c ON c.id = x.category_id
     WHERE x.is_deleted = 0 AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
@@ -154,6 +161,9 @@ function temple_options(array $groups, int $sel): string
     <td><?= e($r['category']) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
+      <?php if ($type === 'income' && $r['is_donation']): ?>
+        <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
+      <?php endif; ?>
       <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
       <form method="post" class="inline" onsubmit="return confirm('ยืนยันการลบรายการนี้?')">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">

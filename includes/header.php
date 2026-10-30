@@ -10,7 +10,7 @@ function nav_item(string $href, string $label, bool $active): string
     $cls = $active
         ? 'bg-brand-600 text-white'
         : 'text-stone-700 hover:bg-gold-100';
-    return '<a class="whitespace-nowrap rounded-lg px-3 py-2 font-semibold no-underline ' . $cls . '" href="' . e(BASE . $href) . '">' . e($label) . '</a>';
+    return '<a class="whitespace-nowrap rounded-lg px-2 py-2 font-semibold no-underline 2xl:px-3 ' . $cls . '" href="' . e(BASE . $href) . '">' . e($label) . '</a>';
 }
 
 $forced = !empty($u['must_change']);
@@ -27,6 +27,9 @@ if (!$u) {
         $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     }
     $items .= nav_item('reports.php', 'รายงาน', $cur === 'reports.php');
+    if ($role !== 'province') {
+        $items .= nav_item('receipts.php', 'อนุโมทนาบัตร', in_array($cur, ['receipts.php', 'receipt.php'], true));
+    }
     $items .= $role === 'temple'
         ? nav_item('profile.php', 'ข้อมูลวัดของฉัน', $cur === 'profile.php')
         : nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
@@ -39,8 +42,8 @@ if ($u) {
     $items .= nav_item('account.php', $forced ? 'เปลี่ยนรหัสผ่าน' : 'บัญชีของฉัน', $cur === 'account.php');
 }
 $items .= $u
-    ? '<a class="btn btn-outline btn-sm ml-1" href="' . BASE . 'logout.php">ออกจากระบบ</a>'
-    : '<a class="btn btn-outline btn-sm ml-1" href="' . BASE . 'login.php">เข้าสู่ระบบ</a>';
+    ? '<a class="btn btn-outline btn-sm ml-1 whitespace-nowrap" href="' . BASE . 'logout.php">ออกจากระบบ</a>'
+    : '<a class="btn btn-outline btn-sm ml-1 whitespace-nowrap" href="' . BASE . 'login.php">เข้าสู่ระบบ</a>';
 ?>
 <!doctype html>
 <html lang="th">
@@ -50,6 +53,7 @@ $items .= $u
 <title><?= e(($pageTitle ?? '') ? $pageTitle . ' | ' : '') . e($CONFIG['app_name']) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="<?= BASE ?>assets/img/logo.svg">
 <link rel="stylesheet" href="<?= BASE ?>assets/css/tailwind.css">
 </head>
 <body class="min-h-screen">

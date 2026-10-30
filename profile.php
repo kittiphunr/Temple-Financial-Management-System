@@ -26,13 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $f = fn(string $k, int $max) => mb_substr(trim($_POST[$k] ?? ''), 0, $max) ?: null;
         $phone = preg_replace('/[^0-9+]/', '', $_POST['phone'] ?? '');
         $post = trim($_POST['postcode'] ?? '');
+        $taxId = preg_replace('/[\s-]/', '', $_POST['tax_id'] ?? '');
         if ($phone !== '' && !preg_match('/^\+?\d{9,15}$/', $phone)) {
             flash('เบอร์โทรศัพท์ไม่ถูกต้อง (9–15 หลัก)', 'err');
         } elseif ($post !== '' && !preg_match('/^\d{5}$/', $post)) {
             flash('รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก', 'err');
+        } elseif ($taxId !== '' && !preg_match('/^\d{13}$/', $taxId)) {
+            flash('เลขประจำตัวผู้เสียภาษีต้องเป็นตัวเลข 13 หลัก', 'err');
         } else {
-            $pdo->prepare('UPDATE temples SET phone=?, village=?, house_no=?, moo=?, soi=?, road=?, postcode=? WHERE id=?')
-                ->execute([$phone ?: null, $f('village', 100), $f('house_no', 50), $f('moo', 20), $f('soi', 100), $f('road', 100), $post ?: null, $tid]);
+            $pdo->prepare('UPDATE temples SET phone=?, village=?, house_no=?, moo=?, soi=?, road=?, postcode=?, tax_id=? WHERE id=?')
+                ->execute([$phone ?: null, $f('village', 100), $f('house_no', 50), $f('moo', 20), $f('soi', 100), $f('road', 100), $post ?: null, $taxId ?: null, $tid]);
             audit('update', 'temple_profile', $tid);
             flash('บันทึกข้อมูลวัดแล้ว');
         }
@@ -126,7 +129,7 @@ require __DIR__ . '/includes/header.php';
   <h3>ที่อยู่และการติดต่อ</h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <?= csrf_field() ?><input type="hidden" name="action" value="save_profile">
-    <?php foreach ([['phone', 'โทรศัพท์วัด', 50], ['house_no', 'บ้านเลขที่', 50], ['village', 'ชื่อหมู่บ้าน', 100], ['moo', 'หมู่ที่', 20], ['soi', 'ซอย', 100], ['road', 'ถนน', 100], ['postcode', 'รหัสไปรษณีย์', 5]] as [$k, $label, $max]): ?>
+    <?php foreach ([['phone', 'โทรศัพท์วัด', 50], ['house_no', 'บ้านเลขที่', 50], ['village', 'ชื่อหมู่บ้าน', 100], ['moo', 'หมู่ที่', 20], ['soi', 'ซอย', 100], ['road', 'ถนน', 100], ['postcode', 'รหัสไปรษณีย์', 5], ['tax_id', 'เลขประจำตัวผู้เสียภาษีของวัด (ใช้ในอนุโมทนาบัตร)', 17]] as [$k, $label, $max]): ?>
       <div><label for="f_<?= $k ?>"><?= e($label) ?></label><input id="f_<?= $k ?>" name="<?= $k ?>" value="<?= e($t[$k]) ?>" maxlength="<?= $max ?>" class="w-full"></div>
     <?php endforeach; ?>
     <div class="col-span-full"><button class="btn">บันทึก</button></div>
