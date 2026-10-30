@@ -26,9 +26,12 @@ if (!$u) {
         $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
         $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     }
-    $items .= nav_item('reports.php', 'รายงาน', in_array($cur, ['reports.php', 'statements.php', 'accounts.php'], true));
+    $items .= nav_item('reports.php', 'รายงาน', in_array($cur, ['reports.php', 'statements.php', 'accounts.php', 'annual.php'], true));
     if ($role !== 'temple' && report_available()) {
         $items .= nav_item('report_status.php', 'ติดตามรายงาน', $cur === 'report_status.php');
+    }
+    if (fund_available()) {
+        $items .= nav_item('funds.php', 'กองทุน/โครงการ', $cur === 'funds.php');
     }
     if (budget_available()) {
         $items .= nav_item('budget.php', 'งบประมาณ', $cur === 'budget.php');

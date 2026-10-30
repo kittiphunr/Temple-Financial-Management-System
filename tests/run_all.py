@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""รันชุดทดสอบทั้งหมด:  python3 tests/run_all.py [features|install|people|receipts|auth|ui|statements|import|subdistrict|credits|bangkok|reportstatus|monthclose|attachments|reconcile|budget]
+"""รันชุดทดสอบทั้งหมด:  python3 tests/run_all.py [features|install|people|receipts|auth|ui|statements|import|subdistrict|credits|bangkok|reportstatus|monthclose|attachments|reconcile|budget|funds]
 
 ต้องมี: PHP 8.1+ (CLI + pdo_mysql) และ MySQL/MariaDB ที่เชื่อมต่อได้ด้วยบัญชีที่สร้าง/ลบฐานข้อมูลได้
 ตั้งค่าผ่านตัวแปรสภาพแวดล้อม  TFMS_TEST_DB_HOST (127.0.0.1)  TFMS_TEST_DB_PORT (3306)
@@ -29,9 +29,10 @@ import test_monthclose  # noqa: E402
 import test_attachments  # noqa: E402
 import test_reconcile  # noqa: E402
 import test_budget  # noqa: E402
+import test_funds  # noqa: E402
 from support import Db, DbUnavailable, Results  # noqa: E402
 
-SUITES = {'features': test_features, 'install': test_install, 'people': test_people, 'receipts': test_receipts, 'auth': test_auth, 'ui': test_ui, 'statements': test_statements, 'import': test_import, 'subdistrict': test_subdistrict, 'credits': test_credits, 'bangkok': test_bangkok, 'reportstatus': test_reportstatus, 'monthclose': test_monthclose, 'attachments': test_attachments, 'reconcile': test_reconcile, 'budget': test_budget}
+SUITES = {'features': test_features, 'install': test_install, 'people': test_people, 'receipts': test_receipts, 'auth': test_auth, 'ui': test_ui, 'statements': test_statements, 'import': test_import, 'subdistrict': test_subdistrict, 'credits': test_credits, 'bangkok': test_bangkok, 'reportstatus': test_reportstatus, 'monthclose': test_monthclose, 'attachments': test_attachments, 'reconcile': test_reconcile, 'budget': test_budget, 'funds': test_funds}
 
 
 def main(argv):

@@ -68,6 +68,12 @@ if (isset($_GET['txn'])) {
         redirect('receipt.php?id=' . $act['id']);
     }
     $tid = (int)$x['temple_id'];
+    $fundName = '';
+    if (fund_available() && !empty($x['fund_id'])) {
+        $fn = $pdo->prepare('SELECT name FROM funds WHERE id = ?');
+        $fn->execute([(int)$x['fund_id']]);
+        $fundName = (string)$fn->fetchColumn();
+    }
     $canIssue = people_can_edit($tid) && $x['is_donation'];
     $t = temple_row($tid);
     $last = $pdo->prepare('SELECT book_no FROM donation_receipts WHERE temple_id = ? ORDER BY id DESC LIMIT 1');
@@ -92,7 +98,7 @@ if (isset($_GET['txn'])) {
   <?= csrf_field() ?><input type="hidden" name="action" value="issue"><input type="hidden" name="txn" value="<?= $txnId ?>">
   <div class="col-span-full"><label>ชื่อผู้บริจาค *</label><input name="donor_name" required maxlength="200"></div>
   <div class="col-span-full"><label>ที่อยู่ผู้บริจาค</label><input name="donor_address" maxlength="500"></div>
-  <div class="col-span-full"><label>เพื่อ (วัตถุประสงค์)</label><input name="purpose" maxlength="255" value="<?= e($x['description'] ?? '') ?>"></div>
+  <div class="col-span-full"><label>เพื่อ (วัตถุประสงค์)</label><input name="purpose" maxlength="255" value="<?= e(($fundName ?? '') !== '' ? $fundName : ($x['description'] ?? '')) ?>"></div>
   <div><label>เล่มที่</label><input name="book_no" maxlength="20" required value="<?= e($book) ?>"></div>
   <div><label>วันที่ออก</label><?= date_be_field('receipt_date', null, 3, 0) ?></div>
   <div><label>ผู้รับเงิน (ชื่อ)</label><input name="receiver_name" maxlength="200" value="<?= e($rc ? person_full_name($rc, false) : '') ?>"></div>

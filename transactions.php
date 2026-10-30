@@ -48,6 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $acc = $accIn === 'cash' || $accIn === '' ? ledger_account($pdo, ledger_cash_account($pdo, $templeId)) : ledger_account($pdo, (int)$accIn, $templeId);
             if (!$acc || !$acc['is_active']) $errs[] = 'เลือกบัญชีของวัดนี้ (เงินสดหรือบัญชีธนาคาร)';
         }
+        $fundId = null;
+        if (fund_available() && $templeId && can_access_temple($templeId)) {
+            $curFund = null;
+            if ($id) {
+                $cf = $pdo->prepare('SELECT fund_id FROM transactions WHERE id = ?');
+                $cf->execute([$id]);
+                $curFund = $cf->fetchColumn() ?: null;
+            }
+            [$fundId, $fe] = fund_resolve($pdo, $_POST['fund_id'] ?? 0, $templeId, $curFund ? (int)$curFund : null);
+            if ($fe !== '') $errs[] = $fe;
+        }
         if ($date === null) $errs[] = 'วันที่ไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ.)';
         if ($amount <= 0 || $amount > 999999999999) $errs[] = 'จำนวนเงินต้องมากกว่า 0';
         if ($templeId && can_access_temple($templeId) && ($lock = period_lock_error($pdo, $templeId, $date)) !== '') $errs[] = $lock;
@@ -75,12 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะแก้ไขได้', 'err');
                 redirect("transactions.php?type=$type");
             }
-            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=?, account_id=? WHERE id=?')
-                ->execute([$templeId, $catId, $date, $doc, $desc, $amount, $acc['id'], $id]);
+            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=?, account_id=?' . (fund_available() ? ', fund_id=?' : '') . ' WHERE id=?')
+                ->execute(array_merge([$templeId, $catId, $date, $doc, $desc, $amount, $acc['id']], fund_available() ? [$fundId] : [], [$id]));
             audit('update', 'transaction', $id, "$type $amount");
         } else {
-            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,account_id,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
-                ->execute([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']]);
+            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,account_id,created_by' . (fund_available() ? ',fund_id' : '') . ') VALUES (?,?,?,?,?,?,?,?,?' . (fund_available() ? ',?' : '') . ')')
+                ->execute(array_merge([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']], fund_available() ? [$fundId] : []));
             audit('create', 'transaction', (int)$pdo->lastInsertId(), "$type $amount");
         }
         $bw = $type === 'expense' ? budget_warning($pdo, $templeId, $catId, $date) : '';
@@ -108,6 +119,7 @@ if (!empty($_GET['edit'])) {
 }
 
 $sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation, a.kind AS acc_kind, a.bank_name AS acc_bank, a.account_no AS acc_no,
+      " . (fund_available() ? "(SELECT f.name FROM funds f WHERE f.id = x.fund_id) AS fund_name," : "NULL AS fund_name,") . "
       (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id" . (attachments_available()
       ? ", (SELECT COUNT(*) FROM transaction_attachments ta WHERE ta.transaction_id = x.id) AS att_n" : ', 0 AS att_n') . (month_close_available()
       ? ",
@@ -132,6 +144,7 @@ $bs->execute($sp);
 foreach ($bs->fetchAll() as $b) {
     $bankMap[(int)$b['temple_id']][] = [(string)$b['id'], ledger_account_label(['kind' => 'bank'] + $b)];
 }
+$fundMap = fund_available() ? fund_map($pdo) : [];
 $formTemple = (int)($edit['temple_id'] ?? ($u['temple_id'] ?? 0));
 $editAcc = $edit && $edit['account_id'] ? (string)$edit['account_id'] : 'cash';
 $accLabel = fn(array $r) => ($r['acc_kind'] ?? 'cash') === 'bank' ? ledger_account_label(['kind' => 'bank', 'bank_name' => $r['acc_bank'], 'account_no' => $r['acc_no']]) : 'เงินสด';
@@ -173,6 +186,9 @@ function temple_options(array $groups, int $sel): string
       <option value="cash">เงินสด / เช็ค</option>
       <?php foreach ($bankMap[$formTemple] ?? [] as [$bid, $bl]): ?><option value="<?= e($bid) ?>" <?= $editAcc === $bid ? 'selected' : '' ?>><?= e($bl) ?></option><?php endforeach; ?>
     </select></div>
+    <?php if (fund_available()): ?><div><label>กองทุน/โครงการ</label><select name="fund_id" data-fund-map='<?= e(json_encode($fundMap, JSON_UNESCAPED_UNICODE)) ?>' data-temple-select="temple_id" data-selected="<?= (int)($edit['fund_id'] ?? 0) ?>">
+      <option value="0">เงินทั่วไป (ไม่ระบุกองทุน)</option>
+    </select></div><?php endif; ?>
     <div><label>จำนวนเงิน (บาท)</label><input name="amount" inputmode="decimal" required value="<?= e($edit['amount'] ?? '') ?>"></div>
     <div><label>เลขที่เอกสาร</label><input name="doc_no" maxlength="50" value="<?= e($edit['doc_no'] ?? '') ?>"></div>
     <div class="col-span-full"><label>รายละเอียด</label><input name="description" maxlength="255" value="<?= e($edit['description'] ?? '') ?>"></div>
@@ -195,7 +211,7 @@ function temple_options(array $groups, int $sel): string
   <tr>
     <td><?= e(th_date($r['txn_date'])) ?></td>
     <td><?= e($r['temple']) ?><br><small class="text-stone-500">อ.<?= e($r['district']) ?></small></td>
-    <td><?= e($r['category']) ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
+    <td><?= e($r['category']) ?><?= !empty($r['fund_name']) ? '<br><small class="text-stone-500">🏛️ ' . e($r['fund_name']) . '</small>' : '' ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
       <?php if (attachments_available()): ?>

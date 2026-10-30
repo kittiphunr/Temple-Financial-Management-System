@@ -125,6 +125,22 @@ CREATE TABLE IF NOT EXISTS accounts (
   CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
 ) ENGINE=InnoDB;
 
+-- กองทุน/โครงการของวัด (กฐิน ผ้าป่า สร้างอาคาร ฯลฯ) ใช้แยกยอดรับ-จ่ายตามวัตถุประสงค์
+
+CREATE TABLE IF NOT EXISTS funds (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  purpose VARCHAR(255) NULL,
+  target_amount DECIMAL(14,2) NULL COMMENT 'เป้ายอด NULL = ไม่ตั้งเป้า',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_fund_name (temple_id, name),
+  CONSTRAINT fk_fund_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_fund_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS transactions (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   temple_id INT UNSIGNED NOT NULL,
@@ -135,6 +151,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   description VARCHAR(255) NULL,
   amount DECIMAL(14,2) NOT NULL,
   account_id INT UNSIGNED NULL COMMENT 'บัญชีที่รายการเกิดขึ้น (NULL = เงินสด)',
+  fund_id INT UNSIGNED NULL COMMENT 'กองทุน/โครงการที่รายการนี้เป็นของ NULL = เงินทั่วไป',
   transfer_id INT UNSIGNED NULL COMMENT 'รหัสกลุ่มรายการโอน/ฝาก-ถอนระหว่างบัญชี (ไม่นับเป็นรายรับ-รายจ่ายในสถิติ)',
   created_by INT UNSIGNED NULL,
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
@@ -144,9 +161,11 @@ CREATE TABLE IF NOT EXISTS transactions (
   KEY idx_type_date (type, txn_date),
   KEY idx_txn_account (account_id, txn_date),
   KEY idx_txn_transfer (transfer_id),
+  KEY idx_txn_fund (fund_id),
   CONSTRAINT fk_txn_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_txn_cat FOREIGN KEY (category_id) REFERENCES categories(id),
   CONSTRAINT fk_txn_account FOREIGN KEY (account_id) REFERENCES accounts(id),
+  CONSTRAINT fk_txn_fund FOREIGN KEY (fund_id) REFERENCES funds(id),
   CONSTRAINT fk_txn_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
