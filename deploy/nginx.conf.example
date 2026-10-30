@@ -1,0 +1,33 @@
+# ตัวอย่าง Nginx + PHP-FPM — แก้ server_name, root, และ path ของ fastcgi_pass ให้ตรงกับเซิร์ฟเวอร์
+server {
+    listen 80;
+    server_name wat.example.org;
+    return 301 https://$host$request_uri;      # บังคับ HTTPS (รหัสผ่าน/รหัส 2FA/เลขบัตรผ่านระบบนี้)
+}
+server {
+    listen 443 ssl http2;
+    server_name wat.example.org;
+    ssl_certificate     /etc/letsencrypt/live/wat.example.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/wat.example.org/privkey.pem;
+
+    root /var/www/tfms;
+    index index.php;
+    client_max_body_size 4m;                   # อัปโหลดโลโก้/รูปถ่าย (ระบบจำกัดไม่เกิน 2 MB ต่อไฟล์)
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy same-origin always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # ห้ามเข้าถึงจากเว็บ: ที่เก็บรหัส/กุญแจ/ข้อมูล และไฟล์เอกสาร
+    location ~ ^/(storage|includes|sql|data)/ { deny all; return 404; }
+    location ~ ^/(README|UPGRADE)\.md$        { deny all; return 404; }
+    location ~ /\.                            { deny all; return 404; }
+
+    location / { try_files $uri $uri/ =404; }
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;   # ปรับตามเวอร์ชัน PHP
+    }
+}

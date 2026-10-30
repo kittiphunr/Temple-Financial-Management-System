@@ -1,0 +1,61 @@
+# ชุดไฟล์พร้อมติดตั้งลงเซิร์ฟเวอร์จริง
+
+โฟลเดอร์นี้เก็บเครื่องมือและตัวอย่างค่าตั้งสำหรับขึ้นระบบจริง ชุดไฟล์ที่พร้อมอัปโหลดถูก **สร้างจากซอร์สด้วยสคริปต์** (ไม่เก็บสำเนาไว้ใน git เพื่อไม่ให้โค้ดซ้ำและล้าสมัย)
+
+| ไฟล์ | หน้าที่ |
+|---|---|
+| `build.sh` | สร้างชุดติดตั้ง → `deploy/dist/tfms/` และ `deploy/dist/tfms-<วันที่>.zip` (+ `.sha256`) |
+| `nginx.conf.example` | ตัวอย่าง Nginx + PHP-FPM + HTTPS (ปิดทางเว็บของ `storage/ includes/ sql/ data/`) |
+| `apache.conf.example` | ตัวอย่าง Apache + HTTPS |
+| `php.ini.recommended` | ค่า PHP ที่แนะนำ (อัปโหลดรูป ซ่อน error คุกกี้ปลอดภัย) |
+
+## 1. สร้างชุดติดตั้ง (บนเครื่องที่มีซอร์ส)
+```bash
+bash deploy/build.sh
+```
+ชุดที่ได้มีเฉพาะไฟล์ที่ระบบใช้รันจริง (59 ไฟล์ ราว 240 KB) **ไม่มี** ชุดทดสอบ, `node_modules`, เครื่องมือพัฒนา, `config.local.php`, `storage/app.key`, รหัสผ่านเริ่มต้น
+สคริปต์ตรวจ PHP syntax ทุกไฟล์และตรวจว่าไม่มีไฟล์ลับหลุดเข้าชุดก่อนแพ็ก ถ้าแก้ Tailwind ให้รัน `npm run build:css` ก่อน (ไฟล์ `assets/css/tailwind.css` ที่คอมไพล์แล้วอยู่ใน git)
+
+## 2. เตรียมเซิร์ฟเวอร์
+- PHP 8.1+ พร้อมส่วนขยาย `pdo_mysql mbstring sodium gd fileinfo` (ตรวจด้วย `php -m`)
+- MySQL 8 / MariaDB 10.6+ — สร้างฐานข้อมูล (utf8mb4) และผู้ใช้เฉพาะระบบนี้
+  ```sql
+  CREATE DATABASE tfms_phrae CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE USER 'tfms'@'localhost' IDENTIFIED BY 'รหัสผ่านที่เดายาก';
+  GRANT ALL ON tfms_phrae.* TO 'tfms'@'localhost';
+  ```
+- **HTTPS บังคับ** (ระบบส่งรหัสผ่าน รหัส 2FA และข้อมูลส่วนบุคคล) — ใช้ตัวอย่าง `nginx.conf.example` หรือ `apache.conf.example` และ `php.ini.recommended`
+- ตั้ง SMTP ให้ส่งอีเมลได้ (แอดมินวัดล็อกอินด้วยรหัส 2FA ทางอีเมล) — ตั้งในตัวช่วยติดตั้งและกดปุ่มส่งอีเมลทดสอบ
+
+## 3. อัปโหลดและตั้งสิทธิ์
+```bash
+# อัปโหลด zip ไปเซิร์ฟเวอร์ ตรวจ checksum แล้วแตกไฟล์
+sha256sum -c tfms-YYYYMMDD.zip.sha256
+unzip tfms-YYYYMMDD.zip -d /var/www/          # ได้ /var/www/tfms
+
+sudo chown -R root:root /var/www/tfms
+sudo chown -R www-data:www-data /var/www/tfms/storage     # ผู้ใช้ของเว็บเซิร์ฟเวอร์ (www-data / nginx / apache)
+sudo chmod 750 /var/www/tfms/storage
+sudo chmod 755 /var/www/tfms                                # ตัวช่วยติดตั้งเขียน config.local.php ลงโฟลเดอร์นี้
+sudo chown www-data /var/www/tfms                           # ชั่วคราวระหว่างติดตั้ง (ดูข้อ 5)
+```
+ต้องเขียน `storage/` ได้ (เก็บกุญแจเข้ารหัส `app.key`, ไฟล์ล็อกการติดตั้ง, CSV รหัสผ่านเริ่มต้น)
+
+## 4. ติดตั้ง
+เปิด `https://โดเมนของคุณ/install.php` แล้วทำตามตัวช่วย (ตรวจความพร้อม → ฐานข้อมูล → ผู้ดูแลระบบ → อีเมล → ติดตั้ง) จะได้ไฟล์ CSV รหัสผ่านเริ่มต้นของแต่ละวัด **ดาวน์โหลดได้ครั้งเดียว**
+หรือใช้บรรทัดคำสั่ง: `TFMS_DB_NAME=... TFMS_DB_USER=... TFMS_DB_PASS=... php setup.php 'รหัสผ่านแอดมิน'`
+ถ้าไม่อยากให้ใครเปิดตัวช่วยติดตั้งได้ ตั้ง `TFMS_INSTALL_KEY` ก่อน (ตัวช่วยจะถามรหัสนี้)
+
+## 5. หลังติดตั้ง (สำคัญ)
+1. **สำรอง `storage/app.key`** ไว้ที่ปลอดภัยแยกจากเซิร์ฟเวอร์ — ถ้าหาย เลขบัตรประชาชนที่เข้ารหัสไว้ถอดไม่ได้
+2. เอาสิทธิ์เขียนโฟลเดอร์ราก (`/var/www/tfms`) คืน: `sudo chown root:root /var/www/tfms` — `config.local.php` ที่สร้างแล้วต้องอ่านได้โดยเว็บแต่เขียนไม่ได้ (ตัวช่วยตั้งสิทธิ์ 0640 ให้แล้ว)
+3. ตัวช่วยติดตั้งล็อกตัวเองเมื่อติดตั้งเสร็จ (`storage/installed.lock`) แต่แนะนำให้ลบ `install.php` และ `setup.php` ออกจากเซิร์ฟเวอร์
+4. ลบ CSV รหัสผ่านเริ่มต้นใน `storage/` หลังแจกจ่ายให้แต่ละวัดแล้ว
+5. ตั้งสำรองฐานข้อมูลอัตโนมัติ (`mysqldump`) พร้อมสำรอง `storage/app.key`
+6. ทดสอบจริง: เข้าสู่ระบบแอดมินหลัก → สร้างแอดมินอำเภอ/เจ้าคณะจังหวัด → ใส่โลโก้อำเภอ → ให้วัดทดลองเข้าระบบด้วยอีเมล + 2FA แล้วตรวจว่า `https://โดเมน/storage/app.key` และ `https://โดเมน/includes/bootstrap.php` เปิดไม่ได้ (ต้องได้ 403/404)
+
+## อัปเดตระบบที่ติดตั้งแล้ว
+สร้างชุดใหม่ด้วย `build.sh` แล้วแทนที่ไฟล์บนเซิร์ฟเวอร์ **ยกเว้น** `config.local.php` และโฟลเดอร์ `storage/` (ห้ามทับ) จากนั้นรัน migration ที่ยังไม่ได้ทำตาม [UPGRADE.md](../UPGRADE.md)
+
+## ข้อจำกัด
+ชุดนี้ทดสอบด้วยการติดตั้งและเข้าใช้งานผ่านเซิร์ฟเวอร์ในตัวของ PHP กับ MariaDB 10.11 ส่วนตัวอย่าง Nginx/Apache ยังไม่ได้ทดสอบกับเซิร์ฟเวอร์จริง ให้ตรวจ path/โมดูลให้ตรงกับเครื่องคุณก่อนใช้
