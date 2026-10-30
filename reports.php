@@ -69,6 +69,7 @@ require __DIR__ . '/includes/header.php';
   <button class="btn" type="submit">แสดงรายงาน</button>
   <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>">ส่งออก CSV (Excel)</a>
   <a class="btn btn-outline" href="statements.php<?= $temple ? '?temple=' . $temple : '' ?>">แบบฟอร์มรายงานประจำเดือน (แบบที่ 1–3)</a>
+  <a class="btn btn-outline" href="annual.php?year=<?= $year ?><?= $temple ? '&temple=' . $temple : '' ?>">งบแสดงรายรับ-รายจ่ายประจำปี (รายวัด เทียบปีก่อน)</a>
   <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
 </form>
 

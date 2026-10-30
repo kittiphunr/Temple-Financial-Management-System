@@ -74,6 +74,25 @@
   });
 })();
 
+/* ช่อง "กองทุน/โครงการ" ในฟอร์มรายการ: แสดงกองทุนของวัดที่เลือก (data-fund-map = {รหัสวัด: [[รหัสกองทุน, ชื่อ], ...]}) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-fund-map]').forEach(function (sel) {
+    var form = sel.form, temple = form && form.elements[sel.getAttribute('data-temple-select')], map;
+    try { map = JSON.parse(sel.getAttribute('data-fund-map')); } catch (e) { return; }
+    if (!temple) return;
+    function render(keep) {
+      var want = keep || '0';
+      sel.innerHTML = '';
+      sel.add(new Option('เงินทั่วไป (ไม่ระบุกองทุน)', '0'));
+      (map[temple.value] || []).forEach(function (f) { sel.add(new Option(f[1], f[0])); });
+      sel.value = Array.prototype.some.call(sel.options, function (o) { return o.value === want; }) ? want : '0';
+    }
+    temple.addEventListener('change', function () { render('0'); });
+    render(sel.getAttribute('data-selected'));
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';
