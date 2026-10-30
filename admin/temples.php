@@ -25,7 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     audit('update', 'temple', $id, $f[1]);
                 } else {
                     $pdo->prepare('INSERT INTO temples (district_id,name,subdistrict,moo,abbot,phone,verified) VALUES (?,?,?,?,?,?,?)')->execute($f);
-                    audit('create', 'temple', (int)$pdo->lastInsertId(), $f[1]);
+                    $newId = (int)$pdo->lastInsertId();
+                    audit('create', 'temple', $newId, $f[1]);
+                    // เปิดบัญชีให้วัดใหม่อัตโนมัติ (1 วัด = 1 บัญชี)
+                    if ($acct = provision_temple_accounts($pdo, [$newId])) {
+                        [, , , $accUser, $accPass] = $acct[0];
+                        flash("บันทึกวัดแล้ว และสร้างบัญชีให้อัตโนมัติ: ชื่อผู้ใช้ $accUser รหัสผ่านเริ่มต้น  $accPass  (แสดงครั้งเดียว) — วัดนี้จะเข้าสู่ระบบได้เมื่อลงอีเมลที่เมนู บัญชีวัด");
+                        redirect('temples.php');
+                    }
                 }
                 flash('บันทึกข้อมูลวัดแล้ว');
             } catch (PDOException $ex) {
@@ -49,9 +56,9 @@ $pageTitle = 'จัดการวัด';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>จัดการวัด</h2>
-<div class="card">
+<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <h3><?= $edit ? 'แก้ไขวัด' : 'เพิ่มวัด' ?></h3>
-  <form method="post" class="form-grid">
+  <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
     <div><label>อำเภอ</label><select name="district_id" required>
       <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= ($edit['district_id'] ?? 0) == $d['id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
@@ -60,18 +67,18 @@ require __DIR__ . '/../includes/header.php';
     <div><label>หมู่ที่</label><input name="moo" value="<?= e($edit['moo'] ?? '') ?>"></div>
     <div><label>เจ้าอาวาส</label><input name="abbot" value="<?= e($edit['abbot'] ?? '') ?>"></div>
     <div><label>โทรศัพท์</label><input name="phone" value="<?= e($edit['phone'] ?? '') ?>"></div>
-    <div><label><input type="checkbox" name="verified" style="width:auto" <?= !empty($edit['verified']) ? 'checked' : '' ?>> ตรวจสอบกับทะเบียนวัดแล้ว</label></div>
-    <div class="full"><button class="btn">บันทึก</button> <?php if ($edit): ?><a class="btn btn-outline" href="temples.php">ยกเลิก</a><?php endif; ?></div>
+    <div><label><input type="checkbox" name="verified" <?= !empty($edit['verified']) ? 'checked' : '' ?>> ตรวจสอบกับทะเบียนวัดแล้ว</label></div>
+    <div class="col-span-full"><button class="btn">บันทึก</button> <?php if ($edit): ?><a class="btn btn-outline" href="temples.php">ยกเลิก</a><?php endif; ?></div>
   </form>
 </div>
-<div class="table-wrap" style="margin-top:16px"><table>
+<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
   <tr><th>อำเภอ</th><th>วัด</th><th>ตำบล</th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
-  <tr style="<?= $r['is_active'] ? '' : 'opacity:.5' ?>">
+  <tr class="<?= $r['is_active'] ? '' : 'opacity-50' ?>">
     <td><?= e($r['dn']) ?></td><td><?= e($r['name']) ?></td><td><?= e($r['subdistrict']) ?></td>
-    <td><?= $r['verified'] ? '<span class="badge ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
+    <td><?= $r['verified'] ? '<span class="badge badge-ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
     <td><a class="btn btn-sm btn-outline" href="?edit=<?= (int)$r['id'] ?>">แก้ไข</a>
-      <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+      <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิดใช้งาน' : 'เปิดใช้งาน' ?></button></form></td>
   </tr>
   <?php endforeach; ?>

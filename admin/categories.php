@@ -28,16 +28,16 @@ $pageTitle = 'หมวดบัญชี';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>หมวดรายรับ-รายจ่าย</h2>
-<div class="card">
-  <form method="post" class="form-grid">
+<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="create">
     <div><label>ประเภท</label><select name="type"><option value="income">รายรับ</option><option value="expense">รายจ่าย</option></select></div>
     <div><label>ชื่อหมวด</label><input name="name" required></div>
     <div><label>ลำดับ</label><input type="number" name="sort_order" value="5"></div>
-    <div class="full"><button class="btn">เพิ่มหมวด</button></div>
+    <div class="col-span-full"><button class="btn">เพิ่มหมวด</button></div>
   </form>
 </div>
-<div class="table-wrap" style="margin-top:16px"><table>
+<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
   <tr><th>ประเภท</th><th>หมวด</th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr><td><?= $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></td><td><?= e($r['name']) ?></td><td><?= $r['is_active'] ? 'ใช้งาน' : 'ปิด' ?></td>

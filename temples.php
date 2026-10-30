@@ -15,19 +15,19 @@ $pageTitle = 'ข้อมูลวัด';
 require __DIR__ . '/includes/header.php';
 ?>
 <h2>ข้อมูลวัดจังหวัดแพร่ แยกตามอำเภอ</h2>
-<p class="muted">ข้อมูลจากทะเบียนวัดจังหวัดแพร่ ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงวัดที่เพิ่มเองและยังไม่ได้เทียบกับทะเบียนทางการ</p>
+<p class="text-stone-500">ข้อมูลจากทะเบียนวัดจังหวัดแพร่ ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงวัดที่เพิ่มเองและยังไม่ได้เทียบกับทะเบียนทางการ</p>
 <?php foreach ($districts as $dn): $list = $groups[$dn] ?? []; ?>
-  <h3 class="district-title">อำเภอ<?= e($dn) ?> <small class="muted">(<?= count($list) ?> วัด)</small></h3>
+  <h3 class="mb-2 mt-7 rounded-md border-l-4 border-gold-500 bg-gold-100 px-3 py-1.5 !text-lg !font-semibold">อำเภอ<?= e($dn) ?> <small class="text-stone-500">(<?= count($list) ?> วัด)</small></h3>
   <?php if (!$list): ?>
-    <p class="muted">ยังไม่มีข้อมูลวัดของอำเภอนี้ในระบบ</p>
+    <p class="text-stone-500">ยังไม่มีข้อมูลวัดของอำเภอนี้ในระบบ</p>
   <?php else: ?>
-  <div class="table-wrap"><table>
+  <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
     <tr><th>ชื่อวัด</th><th>ตำบล</th><th>หมู่</th><th>ประเภท / นิกาย</th><th>รหัสวัด</th><th>สถานะข้อมูล</th></tr>
     <?php foreach ($list as $r): ?>
     <tr>
       <td><?= e($r['name']) ?></td><td><?= e($r['subdistrict'] ?? '-') ?></td>
       <td><?= e($r['moo'] ?? '-') ?></td><td><?= e(trim(($r['temple_type'] ?? '') . ' / ' . ($r['sect'] ?? ''), ' /') ?: '-') ?></td><td><?= e($r['temple_code'] ?? '-') ?></td>
-      <td><?= $r['verified'] ? '<span class="badge ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
+      <td><?= $r['verified'] ? '<span class="badge badge-ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
     </tr>
     <?php endforeach; ?>
   </table></div>

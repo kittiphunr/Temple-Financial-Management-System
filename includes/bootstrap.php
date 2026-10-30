@@ -18,6 +18,8 @@ function db(): PDO
         $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
             $CONFIG['db_host'], $CONFIG['db_port'], $CONFIG['db_name']);
         $pdo = new PDO($dsn, $CONFIG['db_user'], $CONFIG['db_pass'], [
+            // ให้ NOW() ในฐานข้อมูลใช้เขตเวลาเดียวกับ PHP (เวลาล็อกบัญชี/รหัส 2FA/เวลาเข้าสู่ระบบจะตรงกัน)
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '" . date('P') . "'",
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
@@ -178,3 +180,7 @@ function temples_grouped(): array
     }
     return $out;
 }
+
+require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/accounts.php';
+require_once __DIR__ . '/twofactor.php';

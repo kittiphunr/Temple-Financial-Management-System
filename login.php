@@ -8,39 +8,67 @@ if (user()) {
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+    $pdo = db();
     $_SESSION['login_fail'] = $_SESSION['login_fail'] ?? 0;
-    if ($_SESSION['login_fail'] >= 5) {
+    unset($_SESSION['pending_2fa']);
+
+    if ($_SESSION['login_fail'] >= 10) {
         $error = 'ลองเข้าสู่ระบบผิดหลายครั้ง กรุณาปิดเบราว์เซอร์แล้วลองใหม่อีกครั้ง';
     } else {
-        $st = db()->prepare('SELECT * FROM users WHERE username = ? AND is_active = 1');
+        $st = $pdo->prepare('SELECT u.*, t.email AS temple_email, t.is_active AS temple_active
+            FROM users u LEFT JOIN temples t ON t.id = u.temple_id
+            WHERE u.username = ? AND u.is_active = 1');
         $st->execute([trim($_POST['username'] ?? '')]);
         $row = $st->fetch();
-        if ($row && password_verify($_POST['password'] ?? '', $row['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['login_fail'] = 0;
-            $_SESSION['user'] = [
-                'id' => (int)$row['id'], 'username' => $row['username'], 'full_name' => $row['full_name'],
-                'role' => $row['role'], 'district_id' => $row['district_id'], 'temple_id' => $row['temple_id'],
-            ];
-            audit('login', 'user', (int)$row['id']);
+
+        // ตรวจรหัสผ่านทุกครั้ง (แม้ไม่พบผู้ใช้) เพื่อไม่ให้เวลาตอบสนองบอกได้ว่าชื่อผู้ใช้มีอยู่หรือไม่
+        $hash = $row['password_hash'] ?? password_hash('dummy', PASSWORD_DEFAULT);
+        $pwOk = password_verify($_POST['password'] ?? '', $hash) && $row;
+
+        if ($row && account_locked($row)) {
+            $error = 'ลองเข้าสู่ระบบผิดหลายครั้ง บัญชีถูกล็อกชั่วคราว กรุณาลองใหม่ภายหลัง ' . LOGIN_LOCK_MINUTES . ' นาที';
+        } elseif (!$pwOk) {
+            if ($row) {
+                register_failed_login($pdo, (int)$row['id']);
+            }
+            $_SESSION['login_fail']++;
+            $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        } elseif ($row['role'] === 'temple') {
+            if (!$row['temple_active']) {
+                $error = 'บัญชีวัดนี้ถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ';
+            } elseif (trim((string)$row['temple_email']) === '') {
+                // วัดที่ยังไม่มีอีเมลในระบบ เข้าสู่ระบบไม่ได้จนกว่าแอดมินหลักจะลงข้อมูล
+                audit('login_blocked_no_email', 'user', (int)$row['id']);
+                $error = 'ยังเข้าสู่ระบบไม่ได้ เนื่องจากวัดนี้ยังไม่ได้ลงทะเบียนอีเมลกับผู้ดูแลระบบ กรุณาแจ้งอีเมลของวัดให้ผู้ดูแลระบบหลักเพื่อลงข้อมูลก่อน';
+            } else {
+                [$sent, $why] = otp_issue($pdo, $row, $row['temple_email']);
+                if ($sent) {
+                    session_regenerate_id(true);
+                    $_SESSION['pending_2fa'] = ['uid' => (int)$row['id'], 't' => time()];
+                    audit('otp_sent', 'user', (int)$row['id']);
+                    redirect('login_verify.php');
+                }
+                $error = $why;
+            }
+        } else {
+            complete_login($pdo, $row);
             redirect('index.php');
         }
-        $_SESSION['login_fail']++;
-        $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
     }
 }
 
 $pageTitle = 'เข้าสู่ระบบ';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="card login-box">
+<div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm mx-auto my-10 max-w-sm">
   <h2>เข้าสู่ระบบ</h2>
-  <?php if ($error): ?><div class="alert alert-err"><?= e($error) ?></div><?php endif; ?>
-  <form method="post" class="form-grid">
+  <?php if ($error): ?><div class="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-red-900"><?= e($error) ?></div><?php endif; ?>
+  <form method="post" class="grid gap-3">
     <?= csrf_field() ?>
-    <div class="full"><label>ชื่อผู้ใช้</label><input name="username" required autofocus></div>
-    <div class="full"><label>รหัสผ่าน</label><input type="password" name="password" required></div>
-    <div class="full"><button class="btn" type="submit">เข้าสู่ระบบ</button></div>
+    <div><label>ชื่อผู้ใช้</label><input name="username" required autofocus autocomplete="username" class="w-full"></div>
+    <div><label>รหัสผ่าน</label><input type="password" name="password" required autocomplete="current-password" class="w-full"></div>
+    <div><button class="btn w-full" type="submit">เข้าสู่ระบบ</button></div>
   </form>
+  <p class="mt-4 text-sm text-stone-500">บัญชีของวัดต้องยืนยันตัวตนด้วยรหัส 6 หลักที่ส่งไปยังอีเมลของวัดหลังกรอกรหัสผ่าน</p>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

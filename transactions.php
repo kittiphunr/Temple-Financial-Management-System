@@ -113,9 +113,9 @@ function temple_options(array $groups, int $sel): string
 ?>
 <h2>บัญชี<?= $label ?></h2>
 
-<div class="card no-print">
+<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:hidden">
   <h3><?= $edit ? "แก้ไขรายการ$label" : "เพิ่มรายการ$label" ?></h3>
-  <form method="post" class="form-grid">
+  <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
@@ -126,13 +126,13 @@ function temple_options(array $groups, int $sel): string
     </select></div>
     <div><label>จำนวนเงิน (บาท)</label><input name="amount" inputmode="decimal" required value="<?= e($edit['amount'] ?? '') ?>"></div>
     <div><label>เลขที่เอกสาร</label><input name="doc_no" maxlength="50" value="<?= e($edit['doc_no'] ?? '') ?>"></div>
-    <div class="full"><label>รายละเอียด</label><input name="description" maxlength="255" value="<?= e($edit['description'] ?? '') ?>"></div>
-    <div class="full"><button class="btn" type="submit">บันทึก</button>
+    <div class="col-span-full"><label>รายละเอียด</label><input name="description" maxlength="255" value="<?= e($edit['description'] ?? '') ?>"></div>
+    <div class="col-span-full"><button class="btn" type="submit">บันทึก</button>
       <?php if ($edit): ?><a class="btn btn-outline" href="transactions.php?type=<?= $type ?>">ยกเลิก</a><?php endif; ?></div>
   </form>
 </div>
 
-<form class="toolbar" method="get">
+<form class="my-4 flex flex-wrap items-end gap-3 print:hidden" method="get">
   <input type="hidden" name="type" value="<?= $type ?>">
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <div><label>วัด</label><select name="temple"><option value="0">ทุกวัด</option><?= temple_options($groups, $fTemple) ?></select></div>
@@ -140,24 +140,24 @@ function temple_options(array $groups, int $sel): string
   <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์</button>
 </form>
 
-<div class="table-wrap"><table>
-  <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>รายละเอียด</th><th>เลขที่</th><th class="r">จำนวนเงิน</th><th class="no-print"></th></tr>
+<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>รายละเอียด</th><th>เลขที่</th><th class="text-right whitespace-nowrap">จำนวนเงิน</th><th class="print:hidden"></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
     <td><?= e(th_date($r['txn_date'])) ?></td>
-    <td><?= e($r['temple']) ?><br><small class="muted">อ.<?= e($r['district']) ?></small></td>
+    <td><?= e($r['temple']) ?><br><small class="text-stone-500">อ.<?= e($r['district']) ?></small></td>
     <td><?= e($r['category']) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
-    <td class="r <?= $type === 'income' ? 'inc' : 'exp' ?>"><?= money($r['amount']) ?></td>
-    <td class="no-print">
+    <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
+    <td class="print:hidden">
       <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
-      <form method="post" style="display:inline" onsubmit="return confirm('ยืนยันการลบรายการนี้?')">
+      <form method="post" class="inline" onsubmit="return confirm('ยืนยันการลบรายการนี้?')">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <button class="btn btn-sm btn-danger">ลบ</button></form>
     </td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$rows): ?><tr><td colspan="7" class="muted">ยังไม่มีรายการในช่วงที่เลือก</td></tr><?php endif; ?>
-  <tr><th colspan="5" class="r">รวม (<?= count($rows) ?> รายการ)</th><th class="r"><?= money($total) ?></th><th class="no-print"></th></tr>
+  <?php if (!$rows): ?><tr><td colspan="7" class="text-stone-500">ยังไม่มีรายการในช่วงที่เลือก</td></tr><?php endif; ?>
+  <tr><th colspan="5" class="text-right whitespace-nowrap">รวม (<?= count($rows) ?> รายการ)</th><th class="text-right whitespace-nowrap"><?= money($total) ?></th><th class="print:hidden"></th></tr>
 </table></div>
-<?php if (count($rows) === 500): ?><p class="muted">แสดง 500 รายการล่าสุด กรุณากรองตามวัดเพื่อดูเพิ่มเติม</p><?php endif; ?>
+<?php if (count($rows) === 500): ?><p class="text-stone-500">แสดง 500 รายการล่าสุด กรุณากรองตามวัดเพื่อดูเพิ่มเติม</p><?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

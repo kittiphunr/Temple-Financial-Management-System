@@ -1,7 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ตราสัญลักษณ์">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ตราสัญลักษณ์ (ตัวอย่าง)">
   <circle cx="60" cy="60" r="56" fill="#fff" stroke="#9b1c1c" stroke-width="4"/>
   <circle cx="60" cy="60" r="48" fill="none" stroke="#b8892e" stroke-width="1.5"/>
-  <path d="M60 18 C70 34 78 44 78 62 L78 86 L42 86 L42 62 C42 44 50 34 60 18Z" fill="none" stroke="#9b1c1c" stroke-width="3"/>
-  <path d="M60 34 L60 78 M50 56 H70" stroke="#b8892e" stroke-width="3" stroke-linecap="round"/>
-  <path d="M34 92 H86" stroke="#9b1c1c" stroke-width="4" stroke-linecap="round"/>
+  <!-- เจดีย์ทรงระฆัง -->
+  <path d="M60 14 V30" stroke="#b8892e" stroke-width="3" stroke-linecap="round"/>
+  <path d="M60 30 L53 52 H67 Z" fill="#b8892e"/>
+  <path d="M52 52 H68 L72 60 H48 Z" fill="#9b1c1c"/>
+  <path d="M48 60 H72 C80 70 82 80 80 86 H40 C38 80 40 70 48 60 Z" fill="#fff" stroke="#9b1c1c" stroke-width="3"/>
+  <rect x="36" y="86" width="48" height="6" rx="1.5" fill="#9b1c1c"/>
+  <rect x="30" y="92" width="60" height="6" rx="1.5" fill="#b8892e"/>
 </svg>
