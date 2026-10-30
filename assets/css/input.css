@@ -39,3 +39,25 @@
   .data-table tr:last-child td { @apply border-b-0; }
   .data-table tbody tr:hover td { @apply bg-gold-50; }
 }
+
+/* หน้าต่าง "เกี่ยวกับ" (SweetAlert2) และปรับธีมกล่องแจ้งเตือนให้เข้ากับระบบ */
+@layer components {
+  .swal2-popup { @apply font-sans; font-family: inherit; }
+  .swal2-popup.about-popup { @apply rounded-3xl p-2 text-left sm:p-4; }
+  .swal2-html-container.about-body { @apply m-0 px-3 pb-4 pt-2 text-left text-base text-stone-800; }
+  .about-head { @apply flex items-center gap-4 border-b border-stone-200 pb-4; }
+  .about-head h3 { @apply m-0 text-xl font-bold leading-snug text-stone-900 sm:text-2xl; }
+  .about h4 { @apply mb-3 mt-5 text-xl font-bold text-stone-900; }
+  .about-dev { @apply flex flex-wrap items-center gap-4; }
+  .about-photo { @apply h-24 w-24 rounded-full border-4 border-brand-600 object-cover; }
+  .about-name { @apply text-xl font-bold; }
+  .about-sub { @apply text-stone-600; }
+  .about-tag { @apply mt-1 inline-block rounded-full bg-brand-50 px-3 py-0.5 text-sm font-semibold text-brand-700; }
+  .about-contact { @apply my-4 grid grid-cols-[5rem_1fr] gap-y-1; }
+  .about-contact dt { @apply text-stone-500; }
+  .about-contact dd { @apply m-0; }
+  .about p { @apply my-2 leading-relaxed; }
+  .about ul { @apply my-2 list-disc space-y-1.5 pl-6; }
+}
+
+.swal2-popup.about-popup .swal2-html-container.about-body, .about { text-align: left !important; }

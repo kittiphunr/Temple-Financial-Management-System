@@ -80,10 +80,10 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm mx-auto my-10 max-w-sm">
   <h2>เข้าสู่ระบบ</h2>
-  <?php if ($error): ?><div class="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-red-900"><?= e($error) ?></div><?php endif; ?>
+  <?php if ($error): ?><?= alert_box($error, 'err') ?><?php endif; ?>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?>
-    <div><label>ชื่อผู้ใช้</label><input name="username" required autofocus autocomplete="username" class="w-full"></div>
+    <div><label>ชื่อผู้ใช้</label><input name="username" required autofocus autocomplete="username" value="<?= e($_POST["username"] ?? "") ?>" class="w-full"></div>
     <div><label>รหัสผ่าน</label><input type="password" name="password" required autocomplete="current-password" class="w-full"></div>
     <div><button class="btn w-full" type="submit">เข้าสู่ระบบ</button></div>
   </form>

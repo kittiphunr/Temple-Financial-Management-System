@@ -72,7 +72,7 @@ require __DIR__ . '/includes/header.php';
   <h2>ยืนยันตัวตนสองชั้น</h2>
   <p class="mb-4 text-stone-600">ระบบส่งรหัส 6 หลักไปที่อีเมล <strong class="whitespace-nowrap"><?= e(mask_email($mailTo)) ?></strong>
     รหัสใช้ได้ครั้งเดียวและหมดอายุใน <?= OTP_PURPOSES['login']['ttl'] / 60 ?> นาที</p>
-  <?php if ($error): ?><div class="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-red-900"><?= e($error) ?></div><?php endif; ?>
+  <?php if ($error): ?><?= alert_box($error, 'err') ?><?php endif; ?>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="verify">
     <div><label for="code">รหัส 6 หลัก</label>

@@ -22,6 +22,8 @@
   - ต้องติ๊กยืนยันว่าได้รับความยินยอมจากเจ้าของข้อมูล (PDPA) ก่อนเพิ่มบุคคล
 - **ต้องสำรอง `storage/app.key`** (กุญแจเข้ารหัสเลขบัตร) ไว้ที่ปลอดภัย — ถ้าหาย เลขบัตรที่บันทึกไว้จะถอดรหัสไม่ได้ (หรือกำหนดเองผ่าน config `app_key` / env `TFMS_APP_KEY`) ต้องเปิดส่วนขยาย PHP `sodium`, `gd`, `fileinfo`
 - ระบบจัดการ (`admin/`): วัด, นำเข้ารายชื่อวัด CSV, ผู้ใช้, หมวดบัญชี, ประวัติการใช้งาน (audit log)
+- **การแจ้งเตือนด้วย SweetAlert2**: ข้อความสำเร็จเป็นป้ายมุมจอ ข้อผิดพลาดเป็นกล่องแจ้ง และกล่องยืนยันก่อนลบ/ดำเนินการ (`data-confirm` บนฟอร์มหรือปุ่ม) ไฟล์ไลบรารีอยู่ในเครื่อง (`assets/vendor/`, ไม่พึ่ง CDN) ไม่มี JavaScript ก็ยังเห็นข้อความเป็นแถบและฟอร์มส่งได้
+- **หน้าต่าง "เกี่ยวกับระบบ · ผู้พัฒนา"** (ปุ่มท้ายทุกหน้า): หน่วยงาน ผู้พัฒนา ช่องทางติดต่อ และคำอธิบายระบบ แก้ข้อมูลที่ `includes/about.php`
 - ความปลอดภัย: PDO prepared statements, CSRF token, `password_hash`, จำกัดสิทธิ์ตามขอบเขต, กัน CSV formula injection
 
 ## ติดตั้ง
@@ -135,6 +137,7 @@ npm run build:css      # หรือ npm run watch:css ระหว่างพ
 ```
 install.php (ตัวช่วยติดตั้ง)  setup.php (ติดตั้งผ่าน CLI)
 index.php  dashboard.php  login.php  logout.php  temples.php  transactions.php  reports.php
+assets/    css, js/app.js (แจ้งเตือน), vendor/sweetalert2 (MIT), img
 admin/     index, temples, temple_accounts, districts (โลโก้), import, users (โควตา), categories, audit
 receipt.php  receipts.php (อนุโมทนาบัตร)  profile.php (ข้อมูล/โลโก้วัด)  people.php  person.php (บุคลากร)  media.php (เสิร์ฟรูปแบบตรวจสิทธิ์)
 login.php  login_verify.php (2FA)  account.php (เปลี่ยนรหัสผ่านของตนเอง)

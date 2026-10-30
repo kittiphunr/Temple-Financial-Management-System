@@ -143,7 +143,7 @@ $v = fn(string $k) => $form[$k] ?? '';
     <?php if ($person): ?>
     <hr class="my-4 border-stone-200">
     <button class="btn btn-outline btn-sm" type="submit" name="action" value="reveal" formnovalidate
-            onclick="return confirm('ดูเลขบัตรประชาชนฉบับเต็ม? การดูจะถูกบันทึกในประวัติการใช้งาน')">แสดงเลขบัตรเต็ม</button>
+            data-confirm="ดูเลขบัตรประชาชนฉบับเต็ม? การดูจะถูกบันทึกในประวัติการใช้งาน">แสดงเลขบัตรเต็ม</button>
     <?php endif; ?>
   </aside>
 </form>
