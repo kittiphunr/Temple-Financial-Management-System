@@ -33,7 +33,7 @@ function subdistrict_label(array $assign): string
     }
     $parts = [];
     foreach ($by as $dn => $subs) {
-        $parts[] = 'ต.' . implode(', ', $subs) . ' อ.' . $dn;
+        $parts[] = abbr_subdistrict() . implode(', ', $subs) . ' ' . abbr_district() . $dn;
     }
     return implode(' · ', $parts);
 }
@@ -52,12 +52,12 @@ function subdistrict_parse_selection(PDO $pdo, array $raw): array
     foreach ($raw as $v) {
         $v = (string)$v;
         if (!isset($valid[$v])) {
-            return [[], 'มีตำบลที่เลือกไม่ถูกต้องหรือไม่มีวัดในตำบลนั้น'];
+            return [[], 'มี' . unit_subdistrict() . 'ที่เลือกไม่ถูกต้องหรือไม่มีวัดใน' . unit_subdistrict() . 'นั้น'];
         }
         $out[$v] = ['district_id' => $valid[$v]['district_id'], 'subdistrict' => $valid[$v]['subdistrict']];
     }
     if (!$out) {
-        return [[], 'กรุณาเลือกตำบลที่ดูแลอย่างน้อย 1 ตำบล'];
+        return [[], 'กรุณาเลือก' . unit_subdistrict() . 'ที่ดูแลอย่างน้อย 1 ' . unit_subdistrict()];
     }
     return [array_values($out), ''];
 }
@@ -89,7 +89,7 @@ function subdistrict_create(PDO $pdo, string $username, string $fullName, string
     }
     $email = trim($email);
     if ($email === '' ? staff_2fa_enabled() : !valid_email($email)) {
-        return [false, $email === '' ? 'กรุณากรอกอีเมลของเจ้าคณะตำบล (ใช้รับรหัสยืนยันตัวตนและกู้รหัสผ่าน)' : 'รูปแบบอีเมลไม่ถูกต้อง'];
+        return [false, $email === '' ? 'กรุณากรอกอีเมลของเจ้าคณะ' . unit_subdistrict() . ' (ใช้รับรหัสยืนยันตัวตนและกู้รหัสผ่าน)' : 'รูปแบบอีเมลไม่ถูกต้อง'];
     }
     if (trim($fullName) === '') {
         return [false, 'กรุณากรอกชื่อ-นามสกุล'];
@@ -109,7 +109,7 @@ function subdistrict_create(PDO $pdo, string $username, string $fullName, string
         }
         $pdo->commit();
         audit('create', 'user', $id, 'subdistrict:' . $username . ' x' . count($items));
-        return [true, 'สร้างบัญชีเจ้าคณะตำบลแล้ว (ดูแล ' . count($items) . ' ตำบล)'];
+        return [true, 'สร้างบัญชีเจ้าคณะ' . unit_subdistrict() . 'แล้ว (ดูแล ' . count($items) . ' ' . unit_subdistrict() . ')'];
     } catch (PDOException $e) {
         $pdo->inTransaction() && $pdo->rollBack();
         return [false, $e->getCode() === '23000' ? 'ชื่อผู้ใช้นี้มีอยู่แล้ว' : 'สร้างผู้ใช้ไม่สำเร็จ'];

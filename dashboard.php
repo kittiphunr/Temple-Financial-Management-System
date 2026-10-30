@@ -40,10 +40,9 @@ $expCats = top_categories($year, 'expense', $dist);
 $rows = $dist ? temple_breakdown($year, $dist) : summary_by_district($year);
 $withData = $dist ? count(array_filter($rows, fn($r) => (int)$r['n'] > 0)) : 0;
 
-$pv = province_name();
 $subLabel = $u['role'] === 'subdistrict' ? subdistrict_label($assign ?? []) : '';
-$scopeText = $u['role'] === 'temple' ? 'เฉพาะวัดของท่าน' : ($subLabel !== '' ? 'ในตำบลที่ท่านดูแล' : ($dist ? 'ในสังกัดอำเภอ' . $distName : 'ในสังกัดจังหวัด' . $pv));
-$title = $subLabel !== '' ? 'แดชบอร์ดเจ้าคณะตำบล' : ($dist ? 'แดชบอร์ดอำเภอ' . $distName : 'แดชบอร์ดทั้งจังหวัด' . $pv);
+$scopeText = $u['role'] === 'temple' ? 'เฉพาะวัดของท่าน' : ($subLabel !== '' ? 'ใน' . unit_subdistrict() . 'ที่ท่านดูแล' : ($dist ? 'ในสังกัด' . unit_district() . $distName : 'ในสังกัด' . province_phrase()));
+$title = $subLabel !== '' ? 'แดชบอร์ดเจ้าคณะ' . unit_subdistrict() : ($dist ? 'แดชบอร์ด' . unit_district() . $distName : 'แดชบอร์ดทั้ง' . province_phrase());
 $q = fn(array $o = []) => http_build_query(array_merge(['district' => $dist, 'year' => $year], $o));
 
 $pageTitle = $title;
@@ -56,7 +55,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0"><?= e($title) ?> <span class="text-xl font-semibold text-stone-600">(ปี พ.ศ. <?= $year ?>)</span></h2>
-    <p class="mt-1 text-sm text-stone-600">สรุปข้อมูลบัญชีรายรับ-รายจ่ายของวัด<?= $subLabel !== '' ? 'ในตำบลที่ท่านดูแล: ' . e($subLabel) : ($dist ? 'ในสังกัดคณะสงฆ์อำเภอ' . e($distName) . ' ' : '') . 'จังหวัด' . e($pv) ?></p>
+    <p class="mt-1 text-sm text-stone-600">สรุปข้อมูลบัญชีรายรับ-รายจ่ายของวัด<?= $subLabel !== '' ? 'ใน' . unit_subdistrict() . 'ที่ท่านดูแล: ' . e($subLabel) : ($dist ? 'ในสังกัดคณะสงฆ์' . unit_district() . e($distName) . ' ' : '') . e(province_phrase()) ?></p>
   </div>
   <form method="get" class="flex items-center gap-2 print:hidden">
     <input type="hidden" name="district" value="<?= $dist ?>">
@@ -71,7 +70,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 </div>
 
 <?php if (in_array($u['role'], ['admin', 'province'], true)): ?>
-<nav class="mb-4 flex flex-wrap gap-1.5 print:hidden" aria-label="เลือกอำเภอ">
+<nav class="mb-4 flex flex-wrap gap-1.5 print:hidden" aria-label="เลือก<?= e(unit_district()) ?>">
   <?php foreach ([0 => 'ทั้งจังหวัด'] + $byId as $id => $nm):
       $on = $id === $dist; ?>
     <a class="rounded-full border px-3.5 py-1.5 text-sm font-semibold no-underline <?= $on ? 'border-brand-600 bg-brand-600 text-white' : 'border-stone-300 bg-white text-stone-700 hover:bg-gold-100' ?>"
@@ -118,12 +117,12 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <?php if ($dist): ?>
 <section class="mt-4">
   <div class="mb-2 flex flex-wrap items-end justify-between gap-3">
-    <h3 class="!mb-0"><?= $subLabel !== '' ? 'วัดในตำบลที่ท่านดูแล' : 'วัดในอำเภอ' . e($distName) ?></h3>
+    <h3 class="!mb-0"><?= $subLabel !== '' ? 'วัดใน' . unit_subdistrict() . 'ที่ท่านดูแล' : 'วัดใน' . unit_district() . e($distName) ?></h3>
     <span class="text-sm text-stone-600">บันทึกบัญชีแล้ว <strong><?= $withData ?></strong> จาก <?= count($rows) ?> วัด
       <?php if ($rows): ?>(<?= round($withData / count($rows) * 100) ?>%)<?php endif; ?></span>
   </div>
   <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-    <thead><tr><th class="text-right">#</th><th>วัด</th><th>ตำบล</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th><th class="text-right">รายการ</th><th>บันทึกล่าสุด</th></tr></thead>
+    <thead><tr><th class="text-right">#</th><th>วัด</th><th><?= e(unit_subdistrict()) ?></th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th><th class="text-right">รายการ</th><th>บันทึกล่าสุด</th></tr></thead>
     <tbody>
     <?php foreach ($rows as $i => $r): $none = (int)$r['n'] === 0; ?>
       <tr class="<?= $none ? 'text-stone-500' : '' ?>">
@@ -137,16 +136,16 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
         <td class="whitespace-nowrap"><?= $none ? '<span class="badge">ยังไม่มีรายการ</span>' : e(th_date($r['last_date'])) ?></td>
       </tr>
     <?php endforeach; ?>
-    <?php if (!$rows): ?><tr><td colspan="8" class="text-stone-500">ไม่พบวัดในอำเภอนี้</td></tr><?php endif; ?>
+    <?php if (!$rows): ?><tr><td colspan="8" class="text-stone-500">ไม่พบวัดใน<?= e(unit_district()) ?>นี้</td></tr><?php endif; ?>
     </tbody>
   </table></div>
-  <p class="mt-2 text-sm print:hidden"><a class="font-semibold" href="reports.php?<?= e(http_build_query(['year' => $year, 'district' => $dist])) ?>">ดูรายงานฉบับเต็มของอำเภอนี้ →</a></p>
+  <p class="mt-2 text-sm print:hidden"><a class="font-semibold" href="reports.php?<?= e(http_build_query(['year' => $year, 'district' => $dist])) ?>">ดูรายงานฉบับเต็มของ<?= e(unit_district()) ?>นี้ →</a></p>
 </section>
 <?php else: ?>
 <section class="mt-4">
-  <h3>เปรียบเทียบรายอำเภอ</h3>
+  <h3>เปรียบเทียบราย<?= e(unit_district()) ?></h3>
   <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-    <thead><tr><th>อำเภอ</th><th class="text-right">วัด</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
+    <thead><tr><th><?= e(unit_district()) ?></th><th class="text-right">วัด</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
     <tbody>
     <?php foreach ($rows as $r): ?>
       <tr>

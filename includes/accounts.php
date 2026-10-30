@@ -65,7 +65,7 @@ function provision_temple_accounts(PDO $pdo, array $templeIds = []): array
 function write_credentials_csv($handle, array $rows): void
 {
     fwrite($handle, "\xEF\xBB\xBF");
-    fputcsv($handle, ['รหัสวัด', 'อำเภอ', 'วัด', 'ชื่อผู้ใช้', 'รหัสผ่านเริ่มต้น', 'อีเมลวัด (แอดมินหลักกรอกในระบบ)']);
+    fputcsv($handle, ['รหัสวัด', unit_district(), 'วัด', 'ชื่อผู้ใช้', 'รหัสผ่านเริ่มต้น', 'อีเมลวัด (แอดมินหลักกรอกในระบบ)']);
     foreach ($rows as $r) {
         fputcsv($handle, array_merge($r, ['']));
     }

@@ -14,5 +14,6 @@
 ## ข้อตกลงของโปรเจค
 - ผู้เขียนคอมมิตและ PR คือ `kittiphunr <247279355+kittiphunr@users.noreply.github.com>` เท่านั้น ไม่ใส่ข้อความ Co-Authored-By หรือข้อความที่ระบุว่าสร้างโดย Claude/Anthropic ในคอมมิตหรือเนื้อ PR (เซิร์ฟเวอร์อาจเติมท้าย PR ให้อัตโนมัติ ให้แก้เนื้อ PR ลบออก)
 - เปิด PR หรือ merge เมื่อเจ้าของโปรเจคสั่งเท่านั้น
+- ข้อความบนหน้าจอ/เอกสารที่เรียกหน่วยปกครองต้องใช้ `unit_district()` / `unit_subdistrict()` / `province_phrase()` / `address_tail()` (กรุงเทพมหานครใช้ เขต/แขวง) ห้ามพิมพ์คำว่า อำเภอ/ตำบล ตรง ๆ ในหน้าจอ — ชุดทดสอบ `bangkok` ตรวจให้
 - ไม่ใช้ `;` ในข้อความ COMMENT ของ `sql/schema.sql` (ตัวติดตั้งแยกคำสั่ง SQL ด้วย `;`)
 - ชุดทดสอบ: `python3 tests/run_all.py` (ต้องมี MariaDB/MySQL ตั้งค่าตาม `tests/README.md`)

@@ -66,7 +66,7 @@ function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = 
     $count = staff_count($pdo);
 
     if ($province && !(int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'province'")->fetchColumn() && $count < $cap) {
-        if ($insRow('province', null, 'province', 'เจ้าคณะจังหวัด' . $pv, 'เจ้าคณะจังหวัด (ดูอย่างเดียว)', 'ทั้งจังหวัด' . $pv) !== null) {
+        if ($insRow('province', null, 'province', 'เจ้าคณะ' . province_phrase_of($pv), 'เจ้าคณะจังหวัด (ดูอย่างเดียว)', 'ทั้ง' . province_phrase_of($pv)) !== null) {
             $count++;
         }
     }
@@ -78,7 +78,7 @@ function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = 
                 continue;
             }
             $u = 'amphoe' . preg_replace('/[^A-Za-z0-9]/', '', (string)$d['code']);
-            if ($insRow('district', (int)$d['id'], $u, 'แอดมินประจำอำเภอ' . $d['name'], 'แอดมินประจำอำเภอ', 'อำเภอ' . $d['name']) !== null) {
+            if ($insRow('district', (int)$d['id'], $u, 'แอดมินประจำ' . unit_district() . $d['name'], 'แอดมินประจำ' . unit_district(), unit_district() . $d['name']) !== null) {
                 $count++;
             }
         }
@@ -133,7 +133,7 @@ function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = 
                 } while (isset($used[$username]));
             }
             $pdo->beginTransaction();
-            $id = $insRow('subdistrict', null, $username, 'เจ้าคณะตำบล' . $o['subdistrict'], 'เจ้าคณะตำบล (ดูอย่างเดียว)', 'ตำบล' . $o['subdistrict'] . ' อำเภอ' . ($dname[$o['district_id']] ?? ''));
+            $id = $insRow('subdistrict', null, $username, 'เจ้าคณะ' . unit_subdistrict() . $o['subdistrict'], 'เจ้าคณะ' . unit_subdistrict() . ' (ดูอย่างเดียว)', unit_subdistrict() . $o['subdistrict'] . ' ' . unit_district() . ($dname[$o['district_id']] ?? ''));
             if ($id === null) {
                 $pdo->commit();
                 continue;

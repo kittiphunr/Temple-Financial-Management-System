@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             isset($_POST['verified']) ? 1 : 0,
         ];
         if ($f[1] === '' || !$f[0]) {
-            flash('กรุณากรอกชื่อวัดและเลือกอำเภอ', 'err');
+            flash('กรุณากรอกชื่อวัดและเลือก' . unit_district(), 'err');
         } else {
             try {
                 if ($id) {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 flash('บันทึกข้อมูลวัดแล้ว');
             } catch (PDOException $ex) {
-                flash($ex->getCode() === '23000' ? 'มีวัดชื่อนี้ในอำเภอนี้แล้ว' : 'บันทึกไม่สำเร็จ', 'err');
+                flash($ex->getCode() === '23000' ? 'มีวัดชื่อนี้ใน' . unit_district() . 'นี้แล้ว' : 'บันทึกไม่สำเร็จ', 'err');
             }
         }
     }
@@ -60,10 +60,10 @@ require __DIR__ . '/../includes/header.php';
   <h3><?= $edit ? 'แก้ไขวัด' : 'เพิ่มวัด' ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
-    <div><label>อำเภอ</label><select name="district_id" required>
+    <div><label><?= e(unit_district()) ?></label><select name="district_id" required>
       <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= ($edit['district_id'] ?? 0) == $d['id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
     <div><label>ชื่อวัด</label><input name="name" required value="<?= e($edit['name'] ?? '') ?>"></div>
-    <div><label>ตำบล</label><input name="subdistrict" value="<?= e($edit['subdistrict'] ?? '') ?>"></div>
+    <div><label><?= e(unit_subdistrict()) ?></label><input name="subdistrict" value="<?= e($edit['subdistrict'] ?? '') ?>"></div>
     <div><label>หมู่ที่</label><input name="moo" value="<?= e($edit['moo'] ?? '') ?>"></div>
     <div><label>เจ้าอาวาส</label><input name="abbot" value="<?= e($edit['abbot'] ?? '') ?>"></div>
     <div><label>โทรศัพท์</label><input name="phone" value="<?= e($edit['phone'] ?? '') ?>"></div>
@@ -72,7 +72,7 @@ require __DIR__ . '/../includes/header.php';
   </form>
 </div>
 <div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-  <tr><th>อำเภอ</th><th>วัด</th><th>ตำบล</th><th>สถานะ</th><th></th></tr>
+  <tr><th><?= e(unit_district()) ?></th><th>วัด</th><th><?= e(unit_subdistrict()) ?></th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr class="<?= $r['is_active'] ? '' : 'opacity-50' ?>">
     <td><?= e($r['dn']) ?></td><td><?= e($r['name']) ?></td><td><?= e($r['subdistrict']) ?></td>

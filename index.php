@@ -11,7 +11,7 @@ require __DIR__ . '/includes/header.php';
 $features = [
     ['จัดการบัญชีรายรับ', 'บันทึกรายรับจากการบริจาค การทำบุญ และรายได้อื่น ๆ ของวัด', 'transactions.php?type=income', 'bg-emerald-100 text-emerald-700', '＋'],
     ['จัดการบัญชีรายจ่าย', 'บันทึกค่าบูรณปฏิสังขรณ์ ค่าสาธารณูปโภค และค่าใช้จ่ายอื่น ๆ', 'transactions.php?type=expense', 'bg-red-100 text-red-700', '－'],
-    ['ดูรายงานและสรุปผล', 'สรุปรายรับ-รายจ่าย รายเดือน รายปี แยกตามอำเภอและวัด', 'reports.php', 'bg-sky-100 text-sky-700', '▤'],
+    ['ดูรายงานและสรุปผล', 'สรุปรายรับ-รายจ่าย รายเดือน รายปี แยกตาม' . unit_district() . 'และวัด', 'reports.php', 'bg-sky-100 text-sky-700', '▤'],
     ['พิมพ์และส่งออกเอกสาร', 'พิมพ์รายงาน และส่งออกไฟล์ CSV (เปิดด้วย Excel ได้)', 'reports.php?export=csv', 'bg-amber-100 text-amber-700', '⇩'],
 ];
 ?>
@@ -61,11 +61,11 @@ $features = [
     </select>
   </form>
 </div>
-<?= stat_cards($sum, $year, temple_count(), 'ในสังกัดจังหวัด' . province_name()) ?>
+<?= stat_cards($sum, $year, temple_count(), 'ในสังกัด' . province_phrase()) ?>
 
-<h2 class="mt-8">สรุปตามอำเภอ <a class="ml-2 text-base font-semibold" href="dashboard.php?year=<?= $year ?>">ดูแดชบอร์ดแต่ละอำเภอ →</a></h2>
+<h2 class="mt-8">สรุปตาม<?= e(unit_district()) ?> <a class="ml-2 text-base font-semibold" href="dashboard.php?year=<?= $year ?>">ดูแดชบอร์ดแต่ละ<?= e(unit_district()) ?> →</a></h2>
 <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-  <thead><tr><th>อำเภอ</th><th class="text-right">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
+  <thead><tr><th><?= e(unit_district()) ?></th><th class="text-right">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
   <tbody>
   <?php foreach ($rows as $r): ?>
   <tr>

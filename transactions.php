@@ -130,7 +130,7 @@ function temple_options(array $groups, int $sel): string
 {
     $h = '';
     foreach ($groups as $dn => $list) {
-        $h .= '<optgroup label="อำเภอ' . e($dn) . '">';
+        $h .= '<optgroup label="' . unit_district() . e($dn) . '">';
         foreach ($list as $t) {
             $h .= '<option value="' . (int)$t['id'] . '"' . ($t['id'] == $sel ? ' selected' : '') . '>' . e($t['name']) . '</option>';
         }

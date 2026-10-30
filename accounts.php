@@ -122,7 +122,7 @@ require __DIR__ . '/includes/header.php';
 <form method="get" class="mb-4 flex flex-wrap items-end gap-3">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()">
     <option value="0">— เลือกวัด —</option>
-    <?php foreach ($groups as $dn => $list): ?><optgroup label="อำเภอ<?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
+    <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
   </select></div>
   <noscript><button class="btn">แสดง</button></noscript>
 </form>

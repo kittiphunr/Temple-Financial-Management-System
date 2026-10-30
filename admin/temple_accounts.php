@@ -30,7 +30,7 @@ if (($_GET['download'] ?? '') === 'email_template') {
     header('Content-Disposition: attachment; filename="temple-emails.csv"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
-    fputcsv($out, ['รหัสวัด', 'อีเมล', 'ชื่อวัด (อ้างอิง)', 'อำเภอ', 'ตำบล']);
+    fputcsv($out, ['รหัสวัด', 'อีเมล', 'ชื่อวัด (อ้างอิง)', unit_district(), unit_subdistrict()]);
     foreach ($rows as $r) {
         fputcsv($out, [$r['temple_code'], $r['email'], $r['name'], $r['dn'], $r['subdistrict']]);
     }
@@ -196,7 +196,7 @@ require __DIR__ . '/../includes/header.php';
 </div>
 
 <form class="my-4 flex flex-wrap items-end gap-3" method="get">
-  <div><label>อำเภอ</label><select name="district"><option value="0">ทุกอำเภอ</option>
+  <div><label><?= e(unit_district()) ?></label><select name="district"><option value="0">ทุก<?= e(unit_district()) ?></option>
     <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= $fDist === (int)$d['id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
   <div><label>สถานะอีเมล</label><select name="status">
     <option value="">ทั้งหมด</option><option value="no_email" <?= $fStatus === 'no_email' ? 'selected' : '' ?>>ยังไม่มีอีเมล</option><option value="has_email" <?= $fStatus === 'has_email' ? 'selected' : '' ?>>มีอีเมลแล้ว</option></select></div>
@@ -208,7 +208,7 @@ require __DIR__ . '/../includes/header.php';
   <tr><th>วัด</th><th>ชื่อผู้ใช้ (ล็อก)</th><th>อีเมลวัด (แก้ได้เฉพาะแอดมินหลัก)</th><th>สถานะ</th><th>เข้าสู่ระบบล่าสุด</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
-    <td><div class="font-semibold"><?= e($r['name']) ?></div><div class="text-xs text-stone-500">อ.<?= e($r['dn']) ?><?= $r['subdistrict'] ? ' · ต.' . e($r['subdistrict']) : '' ?> · <?= $r['has_logo'] ? '<span class="text-emerald-700">มีโลโก้</span>' : '<span class="text-amber-700">ยังไม่มีโลโก้</span>' ?></div></td>
+    <td><div class="font-semibold"><?= e($r['name']) ?></div><div class="text-xs text-stone-500"><?= e(abbr_district()) ?><?= e($r['dn']) ?><?= $r['subdistrict'] ? ' · ' . abbr_subdistrict() . e($r['subdistrict']) : '' ?> · <?= $r['has_logo'] ? '<span class="text-emerald-700">มีโลโก้</span>' : '<span class="text-amber-700">ยังไม่มีโลโก้</span>' ?></div></td>
     <td class="font-mono text-sm"><?= $r['username'] ? e($r['username']) : '<span class="text-stone-400">ยังไม่มีบัญชี</span>' ?></td>
     <td>
       <form method="post" class="flex gap-1">

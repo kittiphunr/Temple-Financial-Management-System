@@ -33,8 +33,8 @@ function stmt_context(PDO $pdo, int $templeId): array
 
 function stmt_place(array $c): string
 {
-    return '<p><b>วัด</b>' . stmt_dots($c['t']['name']) . ' <b>ตำบล</b>' . stmt_dots((string)$c['t']['subdistrict'])
-        . ' <b>อำเภอ</b>' . stmt_dots($c['district']) . ' <b>จังหวัด</b>' . stmt_dots($c['province']) . '</p>';
+    return '<p><b>วัด</b>' . stmt_dots($c['t']['name']) . ' <b>' . unit_subdistrict() . '</b>' . stmt_dots((string)$c['t']['subdistrict'])
+        . ' <b>' . unit_district() . '</b>' . stmt_dots($c['district']) . ' <b>จังหวัด</b>' . stmt_dots($c['province']) . '</p>';
 }
 
 function stmt_logo(array $c): string

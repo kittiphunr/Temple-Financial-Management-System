@@ -31,7 +31,7 @@ function staff_slots(PDO $pdo): array
     }
     foreach ($pdo->query('SELECT id, name FROM districts ORDER BY sort_order, id') as $d) {
         $slots[] = ['key' => 'district:' . $d['id'], 'role' => 'district', 'district_id' => (int)$d['id'],
-            'label' => 'แอดมินประจำอำเภอ' . $d['name'], 'user' => $byDistrict[(int)$d['id']] ?? null];
+            'label' => 'แอดมินประจำ' . unit_district() . $d['name'], 'user' => $byDistrict[(int)$d['id']] ?? null];
     }
     return $slots;
 }
@@ -74,7 +74,7 @@ function staff_create(PDO $pdo, string $slotKey, string $username, string $fullN
     }
     try {
         if (staff_count($pdo) >= staff_capacity($pdo)) {
-            return [false, 'ผู้ใช้ระดับจังหวัด/อำเภอครบโควตาแล้ว (' . staff_capacity($pdo) . ' คน)'];
+            return [false, 'ผู้ใช้ระดับจังหวัด/' . unit_district() . 'ครบโควตาแล้ว (' . staff_capacity($pdo) . ' คน)'];
         }
         $slot = null;
         foreach (staff_slots($pdo) as $s) {

@@ -18,7 +18,7 @@ if (!$tid) {
       <div><label for="temple">วัด</label>
         <select id="temple" name="temple" class="w-72" required>
           <option value="">— เลือกวัด —</option>
-          <?php foreach ($groups as $dn => $list): ?><optgroup label="อำเภอ<?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
+          <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?>
         </select></div>
       <button class="btn">แสดง</button>
     </form>
@@ -85,7 +85,7 @@ require __DIR__ . '/includes/header.php';
 <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0">บุคลากร<?= e($t['name']) ?></h2>
-    <p class="text-sm text-stone-600">อำเภอ<?= e($d->fetchColumn()) ?><?= $canEdit ? '' : ' · ดูข้อมูลได้อย่างเดียว (เลขบัตรประชาชนและที่อยู่ไม่แสดงให้ผู้ใช้ระดับนี้)' ?></p>
+    <p class="text-sm text-stone-600"><?= e(unit_district()) ?><?= e($d->fetchColumn()) ?><?= $canEdit ? '' : ' · ดูข้อมูลได้อย่างเดียว (เลขบัตรประชาชนและที่อยู่ไม่แสดงให้ผู้ใช้ระดับนี้)' ?></p>
   </div>
   <?php if ($canEdit): ?>
   <div class="flex flex-wrap gap-2">
