@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบบัญชีรายรับ-รายจ่ายวัด — ระบบบัญชีสำหรับคณะสงฆ์ระดับจังหวัด</title>
+<meta name="description" content="ระบบ PHP + MySQL สำหรับบันทึกบัญชีรายรับ-รายจ่ายของวัด แดชบอร์ดรายอำเภอ อนุโมทนาบัตร รายงานประจำเดือนตามแบบฟอร์มวัด นำเข้าทะเบียนวัดจาก Excel ติดตั้งเองได้">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top"><img src="assets/logo.svg" alt="" width="40" height="40"><span>ระบบบัญชีรายรับ-รายจ่ายวัด</span></a>
+    <nav>
+      <a href="#features">ฟังก์ชัน</a><a href="#screens">ตัวอย่างหน้าจอ</a><a href="#install">ติดตั้ง</a><a href="#faq">คำถามที่พบบ่อย</a>
+      <a class="btn btn-sm" href="#download" data-open-download>ดาวน์โหลด</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">สำหรับคณะสงฆ์ระดับจังหวัด · ติดตั้งบนเซิร์ฟเวอร์ของคุณเอง</p>
+      <h1>บัญชีวัดทั้งจังหวัด<br>อยู่ในที่เดียว <span>เป็นระเบียบ ตรวจสอบได้</span></h1>
+      <p class="lead">ระบบบันทึกรายรับ-รายจ่ายของวัด จัดกลุ่มตามอำเภอ พร้อมแดชบอร์ดภาพรวม ออกอนุโมทนาบัตร และรายงานประจำเดือนตามแบบฟอร์มของวัด — พัฒนาขึ้นสำหรับคณะสงฆ์จังหวัดแพร่ และนำไปใช้กับจังหวัดอื่นได้ด้วยการนำเข้าทะเบียนวัดจากไฟล์ Excel</p>
+      <div class="cta">
+        <a class="btn btn-lg" href="#download" data-open-download>ดาวน์โหลดชุดติดตั้ง <small data-ver></small></a>
+        <a class="btn btn-lg btn-ghost" href="#screens">ดูตัวอย่างหน้าจอ</a>
+      </div>
+      <ul class="facts">
+        <li><b>4</b> ระดับผู้ใช้</li><li><b>1 วัด 1 บัญชี</b> พร้อม 2FA อีเมล</li><li><b>PHP + MySQL</b> โฮสต์ทั่วไปก็ได้</li>
+      </ul>
+    </div>
+    <figure class="hero-shot"><img src="assets/shots/dashboard.webp" alt="แดชบอร์ดภาพรวมทั้งจังหวัด แสดงรายรับ รายจ่าย และกราฟรายเดือน" width="1600" height="1011"></figure>
+  </div>
+</section>
+
+<section id="features" class="sec">
+  <div class="wrap">
+    <h2>ฟังก์ชันหลัก</h2>
+    <p class="sub">ออกแบบตามงานบัญชีวัดจริง ตั้งแต่บันทึกประจำวันถึงรายงานที่ต้องส่ง</p>
+    <div class="grid">
+      <article class="card"><h3>📒 บัญชีรายรับ-รายจ่าย</h3><p>บันทึก แก้ไข ลบ (เก็บประวัติ) แยกหมวด ผูกกับวัด เลือกบัญชีเงินสดหรือธนาคาร และโอน/ฝาก/ถอนระหว่างบัญชีได้</p></article>
+      <article class="card"><h3>📊 แดชบอร์ดรายอำเภอ</h3><p>รายรับรวม รายจ่ายรวม ยอดคงเหลือ กราฟรายเดือน หมวดสูงสุด และรายชื่อวัดที่ยังไม่บันทึกบัญชี เลือกดูทั้งจังหวัดหรือรายอำเภอ</p></article>
+      <article class="card"><h3>🧾 อนุโมทนาบัตร</h3><p>ออกจากรายรับหมวดบริจาคได้ทันที เลขที่ต่อเนื่องรายวัดรายปี แปลงจำนวนเงินเป็นตัวอักษรไทย พิมพ์ B5 แนวนอน พร้อม QR ตรวจสอบความถูกต้อง</p></article>
+      <article class="card"><h3>📑 รายงานประจำเดือน แบบที่ 1–3</h3><p>บัญชีเงินสด บัญชีเงินฝากธนาคาร และรายงานเงินคงเหลือ ตามแบบฟอร์มของวัด พิมพ์หรือบันทึกเป็น PDF มีช่องลงนามเจ้าอาวาสและไวยาวัจกร</p></article>
+      <article class="card"><h3>📥 นำเข้าทะเบียนวัดจาก Excel</h3><p>อัปโหลดไฟล์ .xlsx จาก binfo.onab.go.th ได้ตรง ๆ ระบบสร้างอำเภอ วัด และบัญชีแอดมินวัดให้ มีหน้าสรุปให้ตรวจก่อนบันทึกจริง ใช้กับจังหวัดอื่นได้</p></article>
+      <article class="card"><h3>👥 บุคลากรวัด</h3><p>เจ้าอาวาส พระลูกวัด ไวยาวัจกร เลขบัตรประชาชนเข้ารหัส แสดงแบบปิดบัง ต้องยืนยันความยินยอมตาม PDPA ก่อนบันทึก</p></article>
+      <article class="card"><h3>🔐 สิทธิ์และความปลอดภัย</h3><p>แอดมินหลัก · เจ้าคณะจังหวัด (ดูอย่างเดียว) · แอดมินอำเภอ · แอดมินวัด แต่ละคนเห็นเฉพาะส่วนของตน ยืนยันตัวตน 2 ชั้นทางอีเมล มีประวัติการใช้งาน (audit log)</p></article>
+      <article class="card"><h3>🛠️ ติดตั้งง่าย</h3><p>มีตัวช่วยติดตั้งบนเว็บ ตรวจความพร้อมของเซิร์ฟเวอร์ สร้างฐานข้อมูลและบัญชีแอดมินให้ ไม่ต้องรันคำสั่งเอง</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="screens" class="sec alt">
+  <div class="wrap">
+    <h2>ตัวอย่างหน้าจอ</h2>
+    <p class="sub">ภาพจากระบบจริงด้วยข้อมูลสมมติ (วัดและบุคคลในภาพไม่มีอยู่จริง)</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="dashboard">แดชบอร์ด</button>
+      <button role="tab" data-tab="statements">รายงานประจำเดือน</button>
+      <button role="tab" data-tab="receipt">อนุโมทนาบัตร</button>
+      <button role="tab" data-tab="temples">ข้อมูลวัด</button>
+      <button role="tab" data-tab="import">นำเข้า Excel</button>
+      <button role="tab" data-tab="adminhome">จัดการระบบ</button>
+    </div>
+    <div class="browser">
+      <div class="chrome"><i></i><i></i><i></i><span id="shot-url">dashboard.php</span></div>
+      <img id="shot" src="assets/shots/dashboard.webp" alt="" width="1600" height="1011">
+    </div>
+    <p class="cap" id="shot-cap"></p>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <h2>ใช้กับจังหวัดอื่นได้อย่างไร</h2>
+    <ol class="steps">
+      <li><b>ติดตั้ง</b><span>อัปโหลดไฟล์ขึ้นโฮสต์ เปิด <code>install.php</code> ทำตามขั้นตอน</span></li>
+      <li><b>นำเข้าทะเบียนวัด</b><span>ส่งออก Excel ของจังหวัดจาก binfo.onab.go.th แล้วอัปโหลดในหน้าจัดการระบบ</span></li>
+      <li><b>ระบบสร้างให้</b><span>อำเภอ วัด ชื่อจังหวัด และบัญชีแอดมินวัด (1 วัด 1 บัญชี)</span></li>
+      <li><b>ปรับแต่ง</b><span>เปลี่ยนโลโก้ระบบ ใส่โลโก้อำเภอ/วัด สร้างแอดมินอำเภอ แล้วเริ่มใช้งาน</span></li>
+    </ol>
+  </div>
+</section>
+
+<section id="download" class="sec dl">
+  <div class="wrap">
+    <h2>ดาวน์โหลด</h2>
+    <p class="sub">ชุดติดตั้งพร้อมใช้ — ไม่มีชุดทดสอบ รหัสผ่านเริ่มต้น หรือข้อมูลของเครื่องผู้พัฒนา</p>
+    <div class="dl-box">
+      <div>
+        <h3>ชุดติดตั้ง <span data-ver></span></h3>
+        <dl>
+          <dt>ไฟล์</dt><dd><code data-file>—</code></dd>
+          <dt>ขนาด</dt><dd data-size>—</dd>
+          <dt>วันที่สร้าง</dt><dd data-date>—</dd>
+          <dt>SHA-256</dt><dd><code class="hash" data-sha>—</code></dd>
+        </dl>
+        <p class="note">ตรวจไฟล์หลังดาวน์โหลด: <code>sha256sum -c</code> หรือเทียบค่าด้านบน</p>
+      </div>
+      <div class="dl-act">
+        <a class="btn btn-lg" id="dl-link" href="downloads/">⬇ ดาวน์โหลด .zip</a>
+        <a class="btn btn-ghost" href="#install">ดูวิธีติดตั้ง</a>
+      </div>
+    </div>
+    <div class="req">
+      <h3>สิ่งที่ต้องมีบนเซิร์ฟเวอร์</h3>
+      <ul>
+        <li>PHP 8.1 ขึ้นไป (ทดสอบบน 8.3) พร้อมส่วนขยาย <code>pdo_mysql</code> <code>sodium</code> <code>gd</code> <code>fileinfo</code> <code>mbstring</code> และ <code>zip</code> (สำหรับนำเข้า Excel)</li>
+        <li>MySQL / MariaDB (ทดสอบบน MariaDB 10.11)</li>
+        <li>Apache หรือ Nginx (มีตัวอย่างค่าตั้งค่ามาในชุด) และอีเมล SMTP สำหรับส่งรหัส 2FA</li>
+        <li>ไม่ต้องใช้ Node.js บนเซิร์ฟเวอร์ — ไฟล์ CSS คอมไพล์มาให้แล้ว</li>
+      </ul>
+    </div>
+    <p class="note" id="license-note">ข้อตกลงการใช้งาน/สัญญาอนุญาตของซอฟต์แวร์: โปรดติดต่อผู้พัฒนาก่อนนำไปใช้ในวงกว้าง</p>
+  </div>
+</section>
+
+<section id="install" class="sec">
+  <div class="wrap narrow">
+    <h2>ติดตั้งใน 5 ขั้นตอน</h2>
+    <ol class="how">
+      <li>แตกไฟล์ <code>.zip</code> แล้วอัปโหลดโฟลเดอร์ <code>tfms</code> ขึ้นโฮสต์ (ตั้ง document root ให้ชี้ที่โฟลเดอร์นี้)</li>
+      <li>สร้างฐานข้อมูลเปล่าและผู้ใช้ฐานข้อมูลในแผงควบคุมโฮสต์ (หรือให้ตัวช่วยติดตั้งสร้างให้ถ้ามีสิทธิ์)</li>
+      <li>เปิด <code>https://โดเมนของคุณ/install.php</code> — ตัวช่วยตรวจความพร้อม สร้างตาราง และตั้งรหัสผ่านแอดมินหลัก</li>
+      <li>เข้าสู่ระบบเป็นแอดมินหลัก ไปที่ <b>จัดการระบบ → นำเข้ารายชื่อวัด</b> แล้วอัปโหลดไฟล์ Excel ของจังหวัด</li>
+      <li>ตั้งค่า SMTP, เปลี่ยนโลโก้ <code>assets/img/logo.svg</code> และสำรอง <code>storage/app.key</code> ไว้ที่ปลอดภัย</li>
+    </ol>
+    <p class="note">รายละเอียดเต็มอยู่ใน <code>README.md</code> และ <code>UPGRADE.md</code> ในชุดติดตั้ง</p>
+  </div>
+</section>
+
+<section id="faq" class="sec alt">
+  <div class="wrap narrow">
+    <h2>คำถามที่พบบ่อย</h2>
+    <details><summary>ข้อมูลของวัดอยู่ที่ไหน?</summary><p>อยู่ในฐานข้อมูลบนเซิร์ฟเวอร์ของคุณเองทั้งหมด ไม่มีการส่งข้อมูลไปยังผู้พัฒนาหรือบริการภายนอก (ยกเว้นฟอนต์ Sarabun ที่โหลดจาก Google Fonts)</p></details>
+    <details><summary>เลขบัตรประชาชนของบุคลากรปลอดภัยแค่ไหน?</summary><p>เข้ารหัสด้วย libsodium ก่อนเก็บ แสดงแบบปิดบัง และดูเลขเต็มได้เฉพาะแอดมินหลักกับแอดมินวัดนั้น พร้อมบันทึกประวัติ ต้องสำรองไฟล์ <code>storage/app.key</code> เพราะถ้าหายจะถอดรหัสไม่ได้</p></details>
+    <details><summary>ใช้กับจังหวัดอื่นได้จริงหรือ?</summary><p>ได้ ระบบรับไฟล์ Excel ทะเบียนวัดรูปแบบเดียวกับ binfo.onab.go.th แล้วสร้างอำเภอและวัดให้ โควตาผู้ใช้ระดับจังหวัดปรับตามจำนวนอำเภอเอง แต่ตราสัญลักษณ์ระบบและข้อความบางส่วนยังเป็นของจังหวัดแพร่ ต้องเปลี่ยนเอง</p></details>
+    <details><summary>ถ้ามีเวอร์ชันใหม่ ต้องทำอย่างไร?</summary><p>ชุดติดตั้งมีไฟล์ <code>sql/migrations/</code> และเอกสาร <code>UPGRADE.md</code> บอกลำดับการอัปเกรดโดยไม่ลบข้อมูลเดิม</p></details>
+    <details><summary>ต้องมีความรู้ด้านเทคนิคแค่ไหน?</summary><p>ต้องอัปโหลดไฟล์ขึ้นโฮสต์และสร้างฐานข้อมูลเป็น หากโฮสต์รองรับ PHP และ MySQL ตัวช่วยติดตั้งจะพาทำส่วนที่เหลือ</p></details>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>ระบบบัญชีรายรับ-รายจ่ายวัด · พัฒนาโดย Kittiphun Ruttanakorn</p>
+    <p class="small">ภาพหน้าจอใช้ข้อมูลสมมติเพื่อการสาธิตเท่านั้น</p>
+  </div>
+</footer>
+<script src="assets/site.js"></script>
+</body>
+</html>
