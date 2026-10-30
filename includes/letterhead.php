@@ -4,9 +4,10 @@
 /**
  * @param int $templeId วัด (>0 = หัวเอกสารของวัด ใช้โลโก้วัด), ไม่งั้นดู $districtId (โลโก้อำเภอ), ไม่งั้นระดับจังหวัด
  * @param bool $printOnly true = แสดงเฉพาะตอนพิมพ์ (หน้าจอปกติซ่อนไว้)
+ * @param string $rightHtml (โหมด centered) เนื้อหาช่องขวาของหัวกระดาษ เช่น QR code — ว่าง = ช่องว่างขนาดเท่าโลโก้
  * @param bool $centered true = จัดสมมาตร (โลโก้ซ้าย + ช่องว่างขวาเท่ากัน ชื่อ/ที่อยู่อยู่กึ่งกลาง) ไม่แสดง "พิมพ์เมื่อ" — ใช้กับอนุโมทนาบัตร
  */
-function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, string $subtitle = '', bool $printOnly = false, bool $centered = false): string
+function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, string $subtitle = '', bool $printOnly = false, bool $centered = false, string $rightHtml = ''): string
 {
     global $CONFIG;
     $province = $CONFIG['province_name'] ?? 'แพร่';
@@ -56,7 +57,7 @@ function letterhead(PDO $pdo, int $templeId, int $districtId, string $title, str
             . '<div class="text-center"><div class="text-xl font-bold text-brand-800">' . e($name) . '</div>'
             . ($line2 !== '' ? '<div class="text-sm text-stone-700">' . e($line2) . '</div>' : '')
             . ($taxLine !== '' ? '<div class="text-sm text-stone-700">' . e($taxLine) . '</div>' : '')
-            . ($line3 !== '' ? '<div class="text-sm text-stone-700">' . e($line3) . '</div>' : '') . '</div><div class="rc-logo" aria-hidden="true"></div></div>'
+            . ($line3 !== '' ? '<div class="text-sm text-stone-700">' . e($line3) . '</div>' : '') . '</div>' . ($rightHtml !== '' ? $rightHtml : '<div class="rc-logo" aria-hidden="true"></div>') . '</div>'
             . ($title !== '' ? '<div class="rc-title">' . e($title) . '</div>' : '');
     }
     $h = $warn . '<div class="' . ($printOnly ? 'hidden print:block' : '') . ' mb-4">'

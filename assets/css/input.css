@@ -148,6 +148,11 @@
   .rc-sig-line { @apply mb-1 mt-14 border-b border-dotted border-stone-500; }   /* เว้นที่ว่างเหนือเส้นสำหรับเซ็นชื่อด้วยลายมือ */
   .rc-stamp { @apply flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-stone-400 text-center text-stone-500; font-size: 1.4rem; line-height: 1.8rem; }
   .rc-foot { @apply text-center; }
+  .rc-qr { @apply flex w-[8rem] flex-col items-center justify-self-end; }
+  .rc-qr-img { @apply h-[6.2rem] w-[6.2rem]; }
+  .rc-qr-img svg { @apply h-full w-full; }
+  .rc-qr-cap { @apply mt-0.5 text-center text-stone-600; font-size: 12px; line-height: 1.15; }
+  .rc-qr-code { font-family: ui-monospace, 'Courier New', monospace; font-size: 10px; letter-spacing: -.02em; }
 }
 @media print {
   @page receipt { size: B5 landscape; margin: 8mm; }
@@ -157,6 +162,10 @@
   .rc-page { height: 157mm; overflow: hidden; }
   .rc-title { font-size: 40px; line-height: 1.1; }
   .rc-logo { height: 6.4rem; width: 6.4rem; }
+  .rc-qr { width: 6.4rem; }
+  .rc-qr-img { height: 5.2rem; width: 5.2rem; }
+  .rc-qr-cap { font-size: 10px; }
+  .rc-qr-code { font-size: 8.5px; }
   .rc-head { grid-template-columns: 6.4rem 1fr 6.4rem; }
   .rc-sig-line { margin-top: 2.6rem; }
   .rc-stamp { height: 4.6rem; width: 4.6rem; font-size: 16px; line-height: 1.15; }

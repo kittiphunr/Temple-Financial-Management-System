@@ -73,3 +73,19 @@
     render(sel.getAttribute('data-selected'));
   });
 })();
+
+/* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
+(function () {
+  'use strict';
+  if (typeof qrcode === 'undefined') return;
+  document.querySelectorAll('[data-qr]').forEach(function (el) {
+    try {
+      var url = new URL(el.getAttribute('data-qr'), location.href).href;
+      var qr = qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      el.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
+      el.setAttribute('title', url);
+    } catch (e) { /* ไม่มี QR ก็ยังมีรหัสตรวจสอบเป็นตัวอักษรใต้ภาพ */ }
+  });
+})();

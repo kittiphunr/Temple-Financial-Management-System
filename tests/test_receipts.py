@@ -103,6 +103,33 @@ def _run(R, smtp, q, app):
     c, loc, _ = ta.req(f'/receipt.php?txn={x1}')
     check('R7b เปิดฟอร์มของรายการที่ออกแล้วพาไปดูใบเดิม', loc and f'id={rid}' in loc)
 
+    # ---- QR code ตรวจสอบใบ ----
+    import html as _html
+    vcode = q(f"SELECT verify_code FROM donation_receipts WHERE id={rid}")
+    c, _, pg = ta.req(f'/receipt.php?id={rid}')
+    check('Q1 ใบมีรหัสตรวจสอบสุ่ม 16 ตัว (A-Z, 2-7) และไม่ซ้ำกัน', bool(re.fullmatch(r'[A-Z2-7]{16}', vcode)) and q("SELECT COUNT(DISTINCT verify_code)=COUNT(*) FROM donation_receipts") == '1')
+    check('Q2 หน้าใบมี QR code (data-qr ชี้ verify.php?c=รหัส) โหลดไลบรารี qrcode.js จากเซิร์ฟเวอร์เอง และแสดงรหัสเป็นเลขอารบิก',
+          f'data-qr="' in pg and f'verify.php?c={vcode}' in pg and 'assets/vendor/qrcode.js' in pg and Client(base).raw('/assets/vendor/qrcode.js')[0] == 200
+          and f'{vcode[:4]}-{vcode[4:8]}-{vcode[8:12]}-{vcode[12:]}' in _html.unescape(pg))
+    anon = Client(base)
+    c, _, vp = anon.req(f'/verify.php?c={vcode}')
+    check('Q3 ตรวจสอบสาธารณะ (ไม่ต้องล็อกอิน): พบใบ แสดงวัด เลขที่ วันที่ จำนวนเงิน และสถานะใช้ได้', c == 200 and 'ตรวจสอบแล้ว' in vp and 'วัด' in vp and '1,250.50' in vp and f'1/{year}' in vp and 'ใช้ได้' in vp, str(c))
+    check('Q4 หน้าตรวจสอบปิดบังชื่อผู้บริจาค และไม่เปิดเผยที่อยู่/วัตถุประสงค์/ชื่อบุคลากร', 'นายสมชาย ใ***' in vp and 'ใจบุญ' not in vp and 'ยันตรกิจโกศล' not in vp and 'สร้างศาลา' not in vp and 'นายไวยา' not in vp)
+    check('Q5 รหัสพิมพ์เล็ก/มีขีดคั่นก็ตรวจได้', 'ตรวจสอบแล้ว' in anon.req(f'/verify.php?c={vcode.lower()}')[2] and 'ตรวจสอบแล้ว' in anon.req(f'/verify.php?c={vcode[:4]}-{vcode[4:8]}-{vcode[8:12]}-{vcode[12:]}')[2])
+    c1, _, v1 = anon.req('/verify.php?c=AAAAAAAAAAAAAAAA')
+    c2, _, v2 = anon.req('/verify.php?c=ABC')
+    c3, _, v3 = anon.req('/verify.php')
+    check('Q6 รหัสผิด/สั้น/ว่าง: ไม่พบ (404) ไม่เปิดเผยข้อมูลใด ๆ', (c1, c2, c3) == (404, 404, 404) and 'ไม่พบใบอนุโมทนา' in v1 and '1,250.50' not in v1)
+    hdr = anon.headers
+    check('Q7 หน้าตรวจสอบห้ามแคช/ห้ามดัชนีค้นหา', 'no-store' in (hdr.get('Cache-Control') or '') and 'noindex' in (hdr.get('X-Robots-Tag') or ''))
+    q(f"UPDATE donation_receipts SET verify_code = NULL WHERE id={rid}")
+    ta.req(f'/receipt.php?id={rid}')
+    check('Q8 ใบเก่าที่ยังไม่มีรหัส ได้รหัสอัตโนมัติเมื่อเปิดดู', bool(re.fullmatch(r'[A-Z2-7]{16}', q(f"SELECT COALESCE(verify_code,'') FROM donation_receipts WHERE id={rid}"))))
+    vcode = q(f"SELECT verify_code FROM donation_receipts WHERE id={rid}")
+    u1 = app.php('-r', "$CONFIG = require 'config.php'; require 'includes/receipts.php'; echo receipt_verify_url('ABC');", extra_env={'TFMS_APP_URL': 'https://wat.example.org/'}).stdout
+    u2 = app.php('-r', "$CONFIG = require 'config.php'; require 'includes/receipts.php'; echo receipt_verify_url('ABC') . '|' . receipt_mask_name('สมชาย');").stdout
+    check('Q9 ตั้ง app_url (TFMS_APP_URL) แล้ว QR ชี้โดเมนสาธารณะนั้น ไม่ตั้งใช้ที่อยู่สัมพัทธ์; ชื่อคำเดียวปิดบังท้าย', u1 == 'https://wat.example.org/verify.php?c=ABC' and u2 == '/verify.php?c=ABC|สมช***', u1 + ' ' + u2)
+
     # ---- ผูกกับรายการบัญชี ----
     c, _, b = ta.post('/transactions.php?type=income', {'action': 'delete', 'id': x1}, '/transactions.php?type=income')
     check('T2 ลบรายการที่ออกอนุโมทนาบัตรแล้วไม่ได้', q(f"SELECT is_deleted FROM transactions WHERE id={x1}") == '0')
@@ -148,6 +175,7 @@ def _run(R, smtp, q, app):
     ta.post('/receipt.php', {'action': 'void', 'id': rid, 'reason': 'พิมพ์ชื่อผิด'}, f'/receipt.php?id={rid}')
     check('N4 ยกเลิกสำเร็จพร้อมเหตุผล', q("SELECT status FROM donation_receipts WHERE id=" + rid) == 'void')
     c, _, b = ta.req(f'/receipt.php?id={rid}')
+    check('Q10 ใบที่ยกเลิกแล้ว ตรวจสอบสาธารณะเห็นว่ายกเลิก (และไม่แสดงเหตุผลที่ยกเลิก)', 'ถูกยกเลิกแล้ว' in anon.req(f'/verify.php?c={vcode}')[2] and 'พิมพ์ชื่อผิด' not in anon.req(f'/verify.php?c={vcode}')[2])
     check('N5 ใบที่ยกเลิกแสดง "ยกเลิก" และเหตุผล', 'พิมพ์ชื่อผิด' in b and 'ยกเลิกแล้ว' in b)
     ta.post('/receipt.php', {**form, 'donor_name': 'นายสมชาย ใจบุญ (แก้ชื่อ)'}, f'/receipt.php?txn={x1}')
     check('N6 ออกใหม่หลังยกเลิกได้ และเลขที่ไม่ถูกนำกลับมาใช้ (ได้ 3)', q(f"SELECT MAX(receipt_no) FROM donation_receipts WHERE transaction_id={x1}") == '3')

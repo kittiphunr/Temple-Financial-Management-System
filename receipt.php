@@ -114,6 +114,8 @@ if (!$r) {
 $tid = (int)$r['temple_id'];
 $t = temple_row($tid);
 $void = $r['status'] === 'void';
+$vcode = receipt_ensure_code($pdo, $r);
+$extraScripts = '<script src="' . BASE . 'assets/vendor/qrcode.js"></script>';
 $pageTitle = 'อนุโมทนาบัตร ' . receipt_label($r);
 require __DIR__ . '/includes/header.php';
 ?>
@@ -138,7 +140,11 @@ $box = fn(string $role, string $n) => '<div class="rc-sig"><div class="rc-sig-li
 ?>
 <article class="receipt-font rc-page relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
   <?php if ($void): ?><div class="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/20 -rotate-12">ยกเลิก</div><?php endif; ?>
-  <?= letterhead($pdo, $tid, 0, '', '', false, true) ?>
+  <?php
+  $qr = '<div class="rc-qr"><div class="rc-qr-img" data-qr="' . e(receipt_verify_url($vcode)) . '" role="img" aria-label="QR code ตรวจสอบใบอนุโมทนา"></div>'
+      . '<div class="rc-qr-cap">สแกนตรวจสอบ<br><span class="rc-qr-code">' . keep_ascii_digits(e(receipt_code_format($vcode))) . '</span></div></div>';
+  ?>
+  <?= letterhead($pdo, $tid, 0, '', '', false, true, $qr) ?>
   <div class="rc-row rc-titlerow"><div class="rc-cell">เล่มที่ <?= $fill($r['book_no']) ?></div><div class="rc-title">ใบอนุโมทนา</div><div class="rc-cell">เลขที่ <?= $fill((int)$r['receipt_no'] . '/' . (int)$r['receipt_year']) ?></div></div>
   <div class="rc-row rc-daterow"><span class="rc-gap"></span>วันที่ <?= $fill((string)$rd, 'w-day') ?> เดือน <?= $fill(TH_MONTHS[$rm], 'w-mon') ?> พ.ศ. <?= $fill((string)($ry + 543), 'w-yr') ?></div>
   <div class="rc-row">ชื่อ/Name <?= $fill($firstName) ?> ฉายา/นามสกุล/Surname <?= $fill($lastName) ?></div>
