@@ -11,6 +11,21 @@ from support import (App, Client, FakeSMTP, age_otps, notice, parse_creds_csv, p
 STAFF_PW = 'DistrictPass123'
 
 
+def webp_size(b):
+    """ขนาด (กว้าง, สูง) จากหัวไฟล์ WebP (VP8X / VP8L / VP8) · ไม่ใช่ WebP = (0, 0)"""
+    if b[:4] != b'RIFF' or b[8:12] != b'WEBP':
+        return 0, 0
+    kind = b[12:16]
+    if kind == b'VP8X':
+        return 1 + int.from_bytes(b[24:27], 'little'), 1 + int.from_bytes(b[27:30], 'little')
+    if kind == b'VP8L':
+        v = int.from_bytes(b[21:25], 'little')
+        return 1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff)
+    if kind == b'VP8 ':
+        return int.from_bytes(b[26:28], 'little') & 0x3fff, int.from_bytes(b[28:30], 'little') & 0x3fff
+    return 0, 0
+
+
 def run(db, R):
     smtp = FakeSMTP()
     name = db.new_database('people')
@@ -133,7 +148,7 @@ def _run(db, R, smtp, q, app):
     lid_a = q(f"SELECT logo_media_id FROM temples WHERE id={tid_a}")
     check('L2 อัปโหลดโลโก้สำเร็จ (เก็บเป็น WebP ในฐานข้อมูล)', lid_a != '' and q(f"SELECT CONCAT(kind,'/',mime) FROM media WHERE id={lid_a}") == 'logo/image/webp')
     code, hdr, body = ta.raw(f'/media.php?id={lid_a}')
-    w, h = struct.unpack('>II', body[16:24]) if body[:4] == b'\x89PNG' else (0, 0)
+    w, h = webp_size(body)
     check('L3 รูปถูกย่อ (ไม่เกิน 512px) และส่งพร้อมหัวความปลอดภัย',
           code == 200 and max(w, h) == 512 and hdr.get('X-Content-Type-Options') == 'nosniff' and "default-src 'none'" in (hdr.get('Content-Security-Policy') or ''), f'{code} {w}x{h} {dict(hdr)}')
     c, _, b = ta.req('/dashboard.php')
@@ -162,7 +177,7 @@ def _run(db, R, smtp, q, app):
     up_logo(ta, png_bytes(120, 120) + b'<?php system("id"); ?>')
     lid_a = q(f"SELECT logo_media_id FROM temples WHERE id={tid_a}")
     code, hdr, body = ta.raw(f'/media.php?id={lid_a}')
-    check('L7 PNG ที่แนบโค้ด PHP ต่อท้าย: ถูกแปลงใหม่ ข้อมูลแฝงหายไป', code == 200 and b'<?php' not in body and body[:4] == b'\x89PNG')
+    check('L7 PNG ที่แนบโค้ด PHP ต่อท้าย: ถูกแปลงใหม่ ข้อมูลแฝงหายไป', code == 200 and b'<?php' not in body and body[:4] == b'RIFF' and body[8:12] == b'WEBP')
 
     c, loc, _ = Client(base).req(f'/media.php?id={lid_a}')
     check('L8 ผู้ที่ยังไม่ล็อกอินเปิดรูปไม่ได้', c == 302 and 'login.php' in loc)
