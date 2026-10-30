@@ -30,6 +30,8 @@
     @apply inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800;
   }
   .badge-ok { @apply bg-emerald-100 text-emerald-800; }
+  .badge-err { @apply bg-red-100 text-red-800; }
+  .badge-mute { @apply bg-stone-200 text-stone-700; }
 
   .data-table { @apply w-full text-left; }
   .data-table th {

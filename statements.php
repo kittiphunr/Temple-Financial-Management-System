@@ -5,14 +5,25 @@ require __DIR__ . '/includes/statement_ui.php';
 $u = require_login();
 $pdo = db();
 
-$tid = $u['role'] === 'temple' ? (int)$u['temple_id'] : (int)($_GET['temple'] ?? 0);
+$tid = $u['role'] === 'temple' ? (int)$u['temple_id'] : (int)($_GET['temple'] ?? $_POST['temple'] ?? 0);
 $temple = $tid && people_can_view($tid) ? temple_row($tid) : null;
-$year = (int)($_GET['year'] ?? be_year());
-$month = (int)($_GET['month'] ?? (int)date('n'));
+$year = (int)($_GET['year'] ?? $_POST['year'] ?? be_year());
+$month = (int)($_GET['month'] ?? $_POST['month'] ?? (int)date('n'));
 $month = $month >= 1 && $month <= 12 ? $month : (int)date('n');
 $form = in_array($_GET['form'] ?? 'all', ['all', '1', '2', '3'], true) ? ($_GET['form'] ?? 'all') : 'all';
 $ceYear = $year - 543;
 $groups = temples_grouped();
+$canSubmit = $temple && report_available() && can_access_temple($tid) && $u['role'] !== 'province';
+
+if ($canSubmit && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submit_report') {
+    csrf_check();
+    [$ok, $msg] = report_submit($pdo, $tid, $year, $month, (int)$u['id'], (string)($_POST['note'] ?? ''));
+    if ($ok) {
+        audit('report_submit', 'temple', $tid, "$year/$month");
+    }
+    flash($msg, $ok ? 'ok' : 'err');
+    redirect('statements.php?' . http_build_query(['temple' => $tid, 'year' => $year, 'month' => $month, 'form' => $form]));
+}
 
 $pageTitle = 'รายงานแบบที่ 1–3 ประจำเดือน';
 require __DIR__ . '/includes/header.php';
@@ -44,6 +55,25 @@ require __DIR__ . '/includes/header.php';
 if (!$temple) {
     echo '<p class="text-stone-600">เลือกวัดและเดือนที่ต้องการออกรายงาน</p>';
 } else {
+    if (report_available()) {
+        $rep = report_row($pdo, $tid, $year, $month);
+        $now = report_snapshot($pdo, $tid, $year, $month);
+        $state = report_state($rep, $now, $year, $month);
+        [$stLabel, $stCls] = REPORT_STATE_LABEL[$state];
+        echo '<div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white p-3 print:hidden">'
+            . '<div><div class="text-sm text-stone-600">การส่งรายงานประจำเดือน' . e(TH_MONTHS[$month]) . ' ' . $year . ' (กำหนดส่ง ' . e(th_date(report_due_date($year, $month))) . ')</div>'
+            . '<div class="mt-1"><span class="badge ' . $stCls . '">' . e($stLabel) . '</span> '
+            . ($rep ? '<span class="text-sm text-stone-600">ส่งเมื่อ ' . e(th_datetime($rep['submitted_at'])) . ' โดย ' . e((string)($rep['by_name'] ?? '-')) . ($rep['revision'] > 1 ? ' (ครั้งที่ ' . (int)$rep['revision'] . ')' : '') . '</span>' : '')
+            . ($state === 'changed' ? '<div class="mt-1 text-sm text-amber-900">หลังส่งแล้วมีการแก้ไขรายการเดือนนี้ (ตอนส่ง ' . (int)$rep['txn_count'] . ' รายการ ตอนนี้ ' . $now['count'] . ' รายการ) — ตรวจแล้วส่งรายงานใหม่</div>' : '')
+            . '</div>';
+        if ($canSubmit && $state !== 'future') {
+            echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="' . e($rep ? 'ส่งรายงานเดือนนี้ใหม่?' : ($now['count'] === 0 ? 'เดือนนี้ไม่มีรายการ ยืนยันส่งรายงาน (ไม่มีรายการ)?' : 'ยืนยันส่งรายงานประจำเดือนนี้?')) . '">'
+                . csrf_field() . '<input type="hidden" name="action" value="submit_report"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
+                . '<input name="note" maxlength="255" placeholder="หมายเหตุ (ถ้ามี)" class="w-56 !py-1 text-sm">'
+                . '<button class="btn btn-sm">' . ($rep ? 'ส่งรายงานใหม่' : 'ส่งรายงานประจำเดือน') . '</button></form>';
+        }
+        echo '</div>';
+    }
     $c = stmt_context($pdo, $tid);
     $cash = ledger_account($pdo, ledger_cash_account($pdo, $tid));
     $needOpening = !$cash['opening_date'];

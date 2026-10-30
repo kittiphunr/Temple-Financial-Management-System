@@ -80,6 +80,17 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <?php endif; ?>
 
 <?= stat_cards($sum, $year, $temples, $scopeText) ?>
+<?php if ($u['role'] !== 'temple' && report_available()):
+    // สรุปการส่งรายงานประจำเดือนของเดือนที่แล้ว (เดือนที่ครบกำหนดส่งล่าสุด) ในขอบเขตของผู้ใช้
+    $rm = (int)date('n') === 1 ? 12 : (int)date('n') - 1;
+    $ry = (int)date('n') === 1 ? be_year() - 1 : be_year();
+    $rs = report_summary(report_list($pdo, $ry, $rm, ['district' => $dist]));
+    if ($rs['total']): ?>
+<a class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-3 no-underline shadow-sm hover:border-gold-500 print:hidden" href="report_status.php?year=<?= $ry ?>&month=<?= $rm ?><?= $dist ? '&district=' . $dist : '' ?>">
+  <span class="text-stone-800">รายงานประจำเดือน<?= e(TH_MONTHS[$rm]) ?> <?= $ry ?>: ส่งแล้ว <strong><?= $rs['sent'] ?></strong> จาก <?= $rs['total'] ?> วัด<?= $rs['late'] ? ' · <strong class="text-red-700">เกินกำหนด ' . $rs['late'] . ' วัด</strong>' : '' ?></span>
+  <span class="font-semibold text-brand-700">ติดตามรายงาน →</span>
+</a>
+<?php endif; endif; ?>
 
 <section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
     <div class="mb-2 flex flex-wrap items-center justify-between gap-2">

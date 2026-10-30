@@ -27,6 +27,9 @@ if (!$u) {
         $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     }
     $items .= nav_item('reports.php', 'รายงาน', in_array($cur, ['reports.php', 'statements.php', 'accounts.php'], true));
+    if ($role !== 'temple' && report_available()) {
+        $items .= nav_item('report_status.php', 'ติดตามรายงาน', $cur === 'report_status.php');
+    }
     if (!in_array($role, ['province', 'subdistrict'], true)) {
         $items .= nav_item('receipts.php', 'อนุโมทนาบัตร', in_array($cur, ['receipts.php', 'receipt.php'], true));
     }
