@@ -186,3 +186,28 @@ def _run(R, smtp, q, app):
     check('P4 แอดมินวัดตนเองบันทึกรายการเข้าบัญชีธนาคารของตนได้', mine.post('/transactions.php?type=income', {'action': 'save', 'id': '0', 'temple_id': tid, **be_date('txn_date', D(3, 9)), 'category_id': inc_cat, 'amount': '10', 'account_id': kbank, 'description': 'วัดทำเอง'}, '/transactions.php?type=income')[0] == 302
           and q(f"SELECT account_id FROM transactions WHERE description='วัดทำเอง'") == kbank)
     check('P5 ฟอร์มบันทึกรายการมีช่อง "บัญชี" และข้อมูลบัญชีธนาคารของวัด', 'name="account_id"' in mine.req('/transactions.php?type=income')[2] and 'กสิกรไทย' in mine.req('/transactions.php?type=income')[2])
+
+    # ---------- รายละเอียดบัญชีอยู่ในหน้า "ข้อมูลวัด" ของแต่ละวัด ----------
+    c, _, pf = mine.req('/profile.php')
+    check('K1 หน้าข้อมูลวัดมีส่วน "บัญชีของวัด": แสดงเงินสด และบัญชีธนาคาร (ธนาคาร สาขา เลขที่บัญชี ยอดยกมา)',
+          c == 200 and 'id="accounts"' in pf and 'เงินสด / เช็ค' in pf and 'กสิกรไทย' in pf and '000-0-00000-0' in pf and 'กรุงไทย' in pf and 'สาขาสมาธิ' in pf and 'เพิ่มบัญชีธนาคาร' in pf)
+    check('K2 รายการตรวจในหน้าข้อมูลวัดมีเรื่องบัญชี/ยอดยกมา/เลขผู้เสียภาษี/โทรศัพท์', all(x in pf for x in ('ยอดยกมาเงินสด/เช็ค', 'บัญชีเงินฝากธนาคาร', 'เลขประจำตัวผู้เสียภาษีของวัด', 'โทรศัพท์และที่อยู่วัด')))
+    # วัดอื่นที่ยังไม่กรอกบัญชีเลย
+    sid = q(f"SELECT id FROM temples WHERE temple_code='{other_cred[0]}'")
+    for pg in ('/dashboard.php', '/transactions.php?type=income'):
+        check(f'K3 แอดมินวัดที่ยังไม่ตั้งยอดยกมา เห็นแบนเนอร์ชวนกรอกบัญชีของวัด ({pg})', 'ยังไม่ได้ตั้ง' in stranger.req(pg)[2] and 'profile.php#accounts' in stranger.req(pg)[2])
+    c, loc, _ = stranger.post('/accounts.php', {'action': 'add_bank', 'back': 'profile', 'bank_name': 'ออมสิน', 'branch': 'แพร่', 'account_no': '020-1-23456-7', 'name': 'วัดทดสอบ',
+                                               'opening_balance': '1,500', **be_date('opening_date', date(2025, 1, 1))}, '/profile.php')
+    check('K4 เพิ่มบัญชีธนาคารจากหน้าข้อมูลวัด: บันทึกแล้วกลับมาหน้าข้อมูลวัด และเห็นบัญชีใหม่', loc == 'profile.php#accounts' and 'ออมสิน' in stranger.req('/profile.php')[2] and '020-1-23456-7' in stranger.req('/profile.php')[2]
+          and q(f"SELECT COUNT(*) FROM accounts WHERE temple_id={sid} AND kind='bank'") == '1')
+    cash_s = q(f"SELECT id FROM accounts WHERE temple_id={sid} AND kind='cash'")
+    stranger.post('/accounts.php', {'action': 'set_opening', 'back': 'profile', 'account_id': cash_s, 'opening_balance': '800', **be_date('opening_date', date(2025, 1, 1))}, '/profile.php')
+    check('K5 ตั้งยอดยกมาเงินสดจากหน้าข้อมูลวัด → แบนเนอร์หาย และรายการตรวจขึ้น ✓', 'profile.php#accounts' not in stranger.req('/dashboard.php')[2]
+          and q(f"SELECT opening_balance FROM accounts WHERE id={cash_s}") == '800.00')
+    # สิทธิ์: แอดมินวัดแก้บัญชีของวัดอื่นผ่านหน้าข้อมูลวัดไม่ได้
+    c, _, _ = stranger.post('/accounts.php', {'action': 'set_opening', 'back': 'profile', 'temple': tid, 'account_id': cash, 'opening_balance': '1', **be_date('opening_date', date(2025, 1, 1))}, '/profile.php')
+    check('K6 แอดมินวัดอื่นส่งฟอร์มแก้บัญชีของวัดนี้ไม่ได้ (บัญชีไม่เปลี่ยน)', q(f"SELECT opening_balance FROM accounts WHERE id={cash}") == '3000.00')
+    c, _, pa = adm.req(f'/profile.php?temple={tid}')
+    check('K7 แอดมินหลักเปิดข้อมูลของวัดใดก็ได้ (?temple=) เห็นบัญชีของวัดนั้นและบันทึกกลับมาหน้าเดิม', 'กสิกรไทย' in pa and f'value="{tid}"' in pa)
+    c, loc, _ = adm.post('/accounts.php', {'action': 'set_opening', 'back': 'profile', 'temple': tid, 'account_id': cash, 'opening_balance': '3000', **be_date('opening_date', date(2025, 1, 1))}, f'/profile.php?temple={tid}')
+    check('K8 แอดมินหลักบันทึกแล้วกลับหน้าข้อมูลวัดของวัดนั้น', loc == f'profile.php?temple={tid}#accounts')
