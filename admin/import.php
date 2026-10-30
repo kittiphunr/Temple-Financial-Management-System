@@ -15,6 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = import_temples_csv($pdo, $f['tmp_name'], isset($_POST['verified']), 'นำเข้า CSV');
     $ok = $result['ok'];
     $bad = $result['bad'];
+    // วัดที่เพิ่งนำเข้าได้บัญชีอัตโนมัติ (1 วัด = 1 บัญชี) รหัสผ่านเริ่มต้นดาวน์โหลดได้ครั้งเดียวที่หน้า บัญชีวัด
+    $created = provision_temple_accounts($pdo);
+    if ($created) {
+        $_SESSION['new_creds'] = array_merge($_SESSION['new_creds'] ?? [], $created);
+    }
+    $result['accounts'] = count($created);
     audit('import', 'temple', null, "ok=$ok bad=" . count($bad));
 }
 
@@ -23,7 +29,7 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <h2>นำเข้ารายชื่อวัด (CSV)</h2>
 <?php if ($result): ?>
-  <div class="mb-4 rounded-lg px-4 py-2.5 bg-emerald-50 text-emerald-900">นำเข้า/อัปเดตสำเร็จ <?= $result['ok'] ?> วัด</div>
+  <div class="mb-4 rounded-lg px-4 py-2.5 bg-emerald-50 text-emerald-900">นำเข้า/อัปเดตสำเร็จ <?= $result['ok'] ?> วัด<?php if ($result['accounts']): ?> · สร้างบัญชีใหม่ <?= (int)$result['accounts'] ?> บัญชี — <a class="font-semibold underline" href="temple_accounts.php">ไปดาวน์โหลดรหัสผ่านเริ่มต้นที่หน้า บัญชีวัด</a><?php endif; ?></div>
   <?php if ($result['bad']): ?><div class="mb-4 rounded-lg px-4 py-2.5 bg-red-50 text-red-900">ข้ามรายการที่ไม่ถูกต้อง <?= count($result['bad']) ?> บรรทัด:<br><?= e(implode(' | ', array_slice($result['bad'], 0, 20))) ?></div><?php endif; ?>
 <?php endif; ?>
 <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">

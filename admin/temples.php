@@ -25,7 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     audit('update', 'temple', $id, $f[1]);
                 } else {
                     $pdo->prepare('INSERT INTO temples (district_id,name,subdistrict,moo,abbot,phone,verified) VALUES (?,?,?,?,?,?,?)')->execute($f);
-                    audit('create', 'temple', (int)$pdo->lastInsertId(), $f[1]);
+                    $newId = (int)$pdo->lastInsertId();
+                    audit('create', 'temple', $newId, $f[1]);
+                    // เปิดบัญชีให้วัดใหม่อัตโนมัติ (1 วัด = 1 บัญชี)
+                    if ($acct = provision_temple_accounts($pdo, [$newId])) {
+                        [, , , $accUser, $accPass] = $acct[0];
+                        flash("บันทึกวัดแล้ว และสร้างบัญชีให้อัตโนมัติ: ชื่อผู้ใช้ $accUser รหัสผ่านเริ่มต้น  $accPass  (แสดงครั้งเดียว) — วัดนี้จะเข้าสู่ระบบได้เมื่อลงอีเมลที่เมนู บัญชีวัด");
+                        redirect('temples.php');
+                    }
                 }
                 flash('บันทึกข้อมูลวัดแล้ว');
             } catch (PDOException $ex) {

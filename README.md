@@ -23,6 +23,38 @@ php -S 127.0.0.1:8080                            # ทดลองใช้ง�
 บนเซิร์ฟเวอร์จริงให้ชี้ web root มาที่โฟลเดอร์นี้ (Apache/Nginx + PHP-FPM) ใช้ HTTPS
 และควรลบหรือห้ามเข้าถึง `setup.php`, `sql/`, `data/` จากภายนอก (`setup.php` ทำงานได้เฉพาะ CLI)
 
+## บัญชีวัดและการยืนยันตัวตนสองชั้น (2FA)
+- **1 วัด = 1 บัญชี** สร้างอัตโนมัติตอนติดตั้ง (`php setup.php`), ตอนนำเข้ารายชื่อวัด และตอนเพิ่มวัดใหม่ — ฐานข้อมูลกันบัญชีที่ 2 ของวัดเดียวกันด้วย unique key
+- **ชื่อผู้ใช้ถูกล็อก** ตั้งอัตโนมัติเป็น `wat` + รหัสวัด 11 หลัก (เช่น `wat03540118002`) ไม่มีหน้าจอใดแก้ชื่อผู้ใช้ได้ แม้แก้ชื่อวัดภายหลังก็ไม่เปลี่ยน
+- **รหัสผ่านเริ่มต้นสุ่ม** ให้แอดมินหลักดาวน์โหลดเป็น CSV **ได้ครั้งเดียว** หลังสร้างบัญชี (ในฐานข้อมูลเก็บเฉพาะแฮช) —
+  ตอนติดตั้งด้วย CLI จะเขียนไฟล์ `storage/temple_accounts_*.csv` (สิทธิ์ 0600) ให้นำไปแจกวัดแล้วลบทิ้ง
+- **แอดมินวัดเปลี่ยนรหัสผ่านตัวเองได้** ที่เมนู "บัญชีของฉัน" (ต้องกรอกรหัสเดิม) แต่เปลี่ยนชื่อผู้ใช้และอีเมลไม่ได้
+- **อีเมลวัด** แอดมินหลักเป็นคนสืบเสาะแล้วกรอกที่ จัดการระบบ → บัญชีวัด (กรอกทีละวัด หรือนำเข้า CSV `รหัสวัด,อีเมล`
+  โดยดาวน์โหลดแม่แบบจากหน้าเดียวกัน) แก้ไขได้เฉพาะแอดมินหลัก
+- **วัดที่ยังไม่มีอีเมลเข้าสู่ระบบไม่ได้** แม้รหัสผ่านถูก จนกว่าแอดมินหลักจะลงอีเมล
+- **ล็อกอินสองชั้น (เฉพาะบัญชีวัด):** หลังรหัสผ่านถูก ระบบส่งรหัส 6 หลักไปอีเมลวัด ต้องกรอกก่อนเข้าระบบ
+  รหัสใช้ได้ครั้งเดียว หมดอายุ 10 นาที กรอกผิดได้ 5 ครั้ง ขอรหัสใหม่ได้ทุก 60 วินาที (สูงสุด 5 ครั้ง/30 นาที) เก็บเฉพาะค่าแฮช
+  การเปลี่ยนหรือลบอีเมลทำให้รหัสที่ค้างอยู่ใช้ไม่ได้ทันที
+- รหัสผ่านผิดครบ 5 ครั้ง บัญชีถูกล็อก 15 นาที (แอดมินหลักรีเซ็ตรหัสผ่านเพื่อปลดล็อกได้)
+- แอดมินหลักและเจ้าหน้าที่อำเภอยังเข้าสู่ระบบด้วยรหัสผ่านอย่างเดียว (ไม่บังคับ 2FA)
+
+### ตั้งค่าการส่งอีเมล
+ตั้งตัวแปรสภาพแวดล้อม (หรือแก้ `config.php`) — ถ้าไม่ตั้ง SMTP วัดจะขอรหัสไม่ได้และเข้าสู่ระบบไม่ได้
+
+```bash
+TFMS_MAIL_DRIVER=smtp          # smtp | mail (PHP mail()) | log (ทดสอบเท่านั้น เขียน storage/mail.log)
+TFMS_SMTP_HOST=smtp.example.org
+TFMS_SMTP_PORT=587
+TFMS_SMTP_SECURE=tls           # tls (STARTTLS) | ssl | none
+TFMS_SMTP_USER=...  TFMS_SMTP_PASS=...
+TFMS_MAIL_FROM=no-reply@your-domain.org
+```
+อย่าใช้ driver `log` บนเซิร์ฟเวอร์จริง (รหัส 2FA จะถูกเขียนลงไฟล์) และบนเว็บเซิร์ฟเวอร์ต้องห้ามเข้าถึง `storage/`
+(มี `.htaccess` สำหรับ Apache แล้ว; Nginx ให้ `deny all` เอง)
+
+### ฐานข้อมูลที่ติดตั้งไว้ก่อนมีฟีเจอร์นี้
+รัน `sql/migrations/2026_temple_accounts.sql` แล้วกดปุ่ม "สร้างบัญชีให้วัดที่ยังไม่มี" ที่ จัดการระบบ → บัญชีวัด
+
 ## การจัดหน้า (Tailwind CSS)
 ทุกหน้าใช้ Tailwind CSS 3 จัดหน้า รองรับมือถือ/แท็บเล็ต/เดสก์ท็อป และพิมพ์รายงานได้ (`print:` variants)
 ไฟล์ `assets/css/tailwind.css` ที่ build แล้วถูก commit ไว้ ใช้งานบนเซิร์ฟเวอร์ PHP ได้เลยโดยไม่ต้องมี Node
@@ -56,9 +88,11 @@ npm run build:css      # หรือ npm run watch:css ระหว่างพ
 ## โครงสร้าง
 ```
 index.php  login.php  logout.php  temples.php  transactions.php  reports.php
-admin/     index, temples, import, users, categories, audit
-includes/  bootstrap (DB, auth, CSRF, scope), stats, header, footer
+admin/     index, temples, temple_accounts, import, users, categories, audit
+login.php  login_verify.php (2FA)  account.php (เปลี่ยนรหัสผ่านของตนเอง)
+includes/  bootstrap (DB, auth, CSRF, scope), accounts, twofactor, mailer, stats, header, footer
+storage/   ไฟล์ที่ห้ามเข้าถึงจากเว็บ (รหัสผ่านเริ่มต้น, mail.log)
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
-sql/       schema.sql, seed.sql      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
+sql/       schema.sql, seed.sql, migrations/      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
 tailwind.config.js  package.json
 ```

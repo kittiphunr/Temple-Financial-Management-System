@@ -9,4 +9,13 @@ return [
     'app_name' => 'ระบบบัญชีรายรับ-รายจ่ายวัด',
     'app_sub'  => 'สำหรับคณะสงฆ์จังหวัดแพร่',
     'timezone' => 'Asia/Bangkok',
+    // การส่งอีเมล (รหัส 2FA): smtp | mail (PHP mail()) | log (ทดสอบเท่านั้น เขียนลง storage/mail.log)
+    'mail_driver'    => getenv('TFMS_MAIL_DRIVER') ?: 'smtp',
+    'smtp_host'      => getenv('TFMS_SMTP_HOST') ?: '',
+    'smtp_port'      => (int)(getenv('TFMS_SMTP_PORT') ?: 587),
+    'smtp_secure'    => getenv('TFMS_SMTP_SECURE') ?: 'tls',   // tls (STARTTLS) | ssl | none
+    'smtp_user'      => getenv('TFMS_SMTP_USER') ?: '',
+    'smtp_pass'      => getenv('TFMS_SMTP_PASS') ?: '',
+    'mail_from'      => getenv('TFMS_MAIL_FROM') ?: 'no-reply@example.org',
+    'mail_from_name' => 'ระบบบัญชีวัด จังหวัดแพร่',
 ];

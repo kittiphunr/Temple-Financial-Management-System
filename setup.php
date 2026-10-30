@@ -29,6 +29,22 @@ require __DIR__ . '/includes/temple_import.php';
 $res = import_temples_csv($pdo, __DIR__ . '/data/temples_phrae.csv', true, 'ทะเบียนวัด พศ. (Report_Temple.xlsx)');
 echo "นำเข้าทะเบียนวัด {$res['ok']} วัด" . ($res['bad'] ? ' (ข้าม ' . count($res['bad']) . ' บรรทัด)' : '') . "\n";
 
+require __DIR__ . '/includes/mailer.php';
+require __DIR__ . '/includes/accounts.php';
+$created = provision_temple_accounts($pdo);
+echo 'สร้างบัญชีวัดอัตโนมัติ ' . count($created) . " บัญชี (1 วัด = 1 บัญชี)\n";
+if ($created) {
+    $dir = __DIR__ . '/storage';
+    is_dir($dir) || mkdir($dir, 0750, true);
+    $file = $dir . '/temple_accounts_' . date('Ymd_His') . '.csv';
+    $fh = fopen($file, 'w');
+    write_credentials_csv($fh, $created);
+    fclose($fh);
+    chmod($file, 0600);
+    echo "บันทึกชื่อผู้ใช้/รหัสผ่านเริ่มต้นไว้ที่ $file\n";
+    echo "→ นำไปแจกจ่ายให้วัด แล้วย้ายหรือลบไฟล์นี้ออกจากเซิร์ฟเวอร์ (ในฐานข้อมูลเก็บเฉพาะค่าแฮช)\n";
+}
+
 $st = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role) VALUES ('admin', ?, 'ผู้ดูแลระบบ', 'admin')
     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)");
 $st->execute([password_hash($pw, PASSWORD_DEFAULT)]);

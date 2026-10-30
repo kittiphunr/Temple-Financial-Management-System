@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS temples (
   moo VARCHAR(20) NULL,
   abbot VARCHAR(150) NULL,
   phone VARCHAR(50) NULL,
+  email VARCHAR(190) NULL COMMENT 'อีเมลวัด ใช้ส่งรหัส 2FA ตั้ง/แก้ได้เฉพาะแอดมินหลัก',
+  email_updated_at TIMESTAMP NULL,
   verified TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = ตรวจสอบกับทะเบียนวัดแล้ว',
   source VARCHAR(255) NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -41,7 +43,12 @@ CREATE TABLE IF NOT EXISTS users (
   district_id INT UNSIGNED NULL,
   temple_id INT UNSIGNED NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
+  failed_logins TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  locked_until DATETIME NULL,
+  last_login_at DATETIME NULL,
+  password_changed_at DATETIME NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_user_temple (temple_id), -- 1 วัด = 1 บัญชี (NULL ซ้ำได้สำหรับ admin/district)
   CONSTRAINT fk_user_district FOREIGN KEY (district_id) REFERENCES districts(id),
   CONSTRAINT fk_user_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
 ) ENGINE=InnoDB;
@@ -85,4 +92,18 @@ CREATE TABLE IF NOT EXISTS audit_log (
   ip VARCHAR(45) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_created (created_at)
+) ENGINE=InnoDB;
+
+-- รหัสยืนยัน 6 หลัก (2FA) ส่งทางอีเมลวัด เก็บเฉพาะค่าแฮช ใช้ได้ครั้งเดียว
+CREATE TABLE IF NOT EXISTS login_otps (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  code_hash CHAR(64) NOT NULL,
+  salt CHAR(16) NOT NULL,
+  attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_user_created (user_id, created_at),
+  CONSTRAINT fk_otp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
