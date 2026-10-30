@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS users (
   district_id INT UNSIGNED NULL,
   temple_id INT UNSIGNED NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
+  email VARCHAR(190) NULL COMMENT 'อีเมลรับรหัสยืนยัน/กู้รหัสผ่านของแอดมินหลัก/อำเภอ/เจ้าคณะจังหวัด (บัญชีวัดใช้อีเมลของวัด)',
+  email_verified_at DATETIME NULL,
   must_change_password TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน (หลังผ่าน 2FA)',
   failed_logins TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
@@ -151,6 +153,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE TABLE IF NOT EXISTS login_otps (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
+  purpose ENUM('login','reset','enroll') NOT NULL DEFAULT 'login',
   code_hash CHAR(64) NOT NULL,
   salt CHAR(16) NOT NULL,
   attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,

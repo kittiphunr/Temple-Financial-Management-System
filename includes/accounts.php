@@ -87,6 +87,34 @@ function mask_email(string $e): string
         . '@' . mb_substr($name, 0, 1) . str_repeat('*', max(2, strlen($name) - 1)) . $tld;
 }
 
+/** เปิดยืนยันตัวตนสองชั้นให้แอดมินหลัก/อำเภอ/เจ้าคณะจังหวัดหรือไม่ (ค่าเริ่มต้น = เปิด) */
+function staff_2fa_enabled(): bool
+{
+    global $CONFIG;
+    return !empty($CONFIG['staff_2fa']);
+}
+
+/** อีเมลที่ใช้รับรหัสของผู้ใช้: บัญชีวัด = อีเมลวัด, อื่น ๆ = อีเมลของผู้ใช้ (แถวต้องมี temple_email จาก JOIN) */
+function user_mail_address(array $row): string
+{
+    return trim((string)($row['role'] === 'temple' ? ($row['temple_email'] ?? '') : ($row['email'] ?? '')));
+}
+
+/** ตรวจรหัสผ่านใหม่ตามนโยบาย: ข้อความผิดพลาด หรือ '' ถ้าผ่าน (แอดมินหลัก/อำเภอ/เจ้าคณะต้องยาวกว่าและมีตัวอักษร+ตัวเลข) */
+function password_policy_error(string $new, string $username, string $role): string
+{
+    if ($role !== 'temple' && (mb_strlen($new) < 10 || !preg_match('/[A-Za-z]/', $new) || !preg_match('/\d/', $new))) {
+        return 'รหัสผ่านต้องยาวอย่างน้อย 10 ตัว และมีทั้งตัวอักษรและตัวเลข';
+    }
+    if (mb_strlen($new) < 8) {
+        return 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร';
+    }
+    if (strcasecmp($new, $username) === 0) {
+        return 'รหัสผ่านใหม่ต้องไม่เหมือนชื่อผู้ใช้';
+    }
+    return '';
+}
+
 // ---------- ล็อกอิน: นับครั้งที่ผิดและล็อกบัญชีชั่วคราว ----------
 function account_locked(array $userRow): bool
 {

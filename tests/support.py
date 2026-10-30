@@ -171,7 +171,7 @@ class FakeSMTP:
 
     def last_code(self):
         """รหัส 2FA 6 หลักจากอีเมลล่าสุด"""
-        return re.search(r'รหัสของคุณคือ: (\d{6})', self.messages[-1]['body']).group(1)
+        return re.search(r'รหัสของคุณคือ: (\d{6,8})', self.messages[-1]['body']).group(1)
 
     def stop(self):
         self.server.shutdown()
@@ -203,6 +203,7 @@ class App:
 
     def child_env(self, extra=None):
         base = {k: v for k, v in os.environ.items() if not k.startswith('TFMS_')}
+        base['TFMS_STAFF_2FA'] = '0'   # ชุดทดสอบทั่วไปล็อกอินแอดมินด้วยรหัสผ่านอย่างเดียว; ชุด auth เปิดเป็น '1'
         base.update(self.env)
         base.update(extra or {})
         return base

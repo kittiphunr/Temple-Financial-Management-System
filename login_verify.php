@@ -14,11 +14,12 @@ if (!$p || time() - (int)$p['t'] > OTP_PENDING_SECONDS) {
 }
 
 $st = $pdo->prepare("SELECT u.*, t.email AS temple_email, t.is_active AS temple_active
-    FROM users u JOIN temples t ON t.id = u.temple_id
-    WHERE u.id = ? AND u.is_active = 1 AND u.role = 'temple'");
+    FROM users u LEFT JOIN temples t ON t.id = u.temple_id
+    WHERE u.id = ? AND u.is_active = 1");
 $st->execute([(int)$p['uid']]);
 $row = $st->fetch();
-if (!$row || !$row['temple_active'] || trim((string)$row['temple_email']) === '') {
+$mailTo = $row ? user_mail_address($row) : '';
+if (!$row || ($row['role'] === 'temple' && !$row['temple_active']) || $mailTo === '' || ($row['role'] !== 'temple' && !staff_2fa_enabled())) {
     unset($_SESSION['pending_2fa']);
     flash('ไม่สามารถยืนยันตัวตนได้ กรุณาติดต่อผู้ดูแลระบบ', 'err');
     redirect('login.php');
@@ -35,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('login.php');
     }
     if ($action === 'resend') {
-        [$sent, $why] = otp_issue($pdo, $row, $row['temple_email']);
-        $sent ? flash('ส่งรหัสใหม่ไปยังอีเมลของวัดแล้ว') : flash($why, 'err');
+        [$sent, $why] = otp_issue($pdo, $row, $mailTo);
+        $sent ? flash('ส่งรหัสใหม่ไปยังอีเมลที่ลงทะเบียนไว้แล้ว') : flash($why, 'err');
         $sent && audit('otp_sent', 'user', $uid);
         redirect('login_verify.php');
     }
@@ -69,8 +70,8 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="mx-auto my-10 max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
   <h2>ยืนยันตัวตนสองชั้น</h2>
-  <p class="mb-4 text-stone-600">ระบบส่งรหัส 6 หลักไปที่อีเมลของวัด <strong class="whitespace-nowrap"><?= e(mask_email($row['temple_email'])) ?></strong>
-    รหัสใช้ได้ครั้งเดียวและหมดอายุใน <?= OTP_TTL_SECONDS / 60 ?> นาที</p>
+  <p class="mb-4 text-stone-600">ระบบส่งรหัส 6 หลักไปที่อีเมล <strong class="whitespace-nowrap"><?= e(mask_email($mailTo)) ?></strong>
+    รหัสใช้ได้ครั้งเดียวและหมดอายุใน <?= OTP_PURPOSES['login']['ttl'] / 60 ?> นาที</p>
   <?php if ($error): ?><div class="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-red-900"><?= e($error) ?></div><?php endif; ?>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="verify">
