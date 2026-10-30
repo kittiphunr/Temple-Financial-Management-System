@@ -10,6 +10,10 @@ $st = $pdo->prepare('SELECT u.*, t.name AS temple_name, t.email AS temple_email,
 $st->execute([$u['id']]);
 $me = $st->fetch();
 
+// ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน (ดูจากฐานข้อมูลเป็นหลัก แล้วซิงก์กับ session)
+$forced = (bool)$me['must_change_password'];
+$_SESSION['user']['must_change'] = $forced;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     // หมายเหตุ: ชื่อผู้ใช้และอีเมลแก้จากหน้านี้ไม่ได้ (ไม่รับค่าจากฟอร์ม) — ชื่อผู้ใช้ถูกล็อก อีเมลแก้ได้โดยแอดมินหลักเท่านั้น
@@ -27,23 +31,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($new !== $confirm) {
         flash('รหัสผ่านใหม่และการยืนยันไม่ตรงกัน', 'err');
     } elseif ($new === $cur) {
-        flash('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม', 'err');
+        flash('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม' . ($forced ? ' (รหัสผ่านเริ่มต้นที่ผู้ดูแลระบบเตรียมไว้ให้)' : ''), 'err');
+    } elseif (strcasecmp($new, $me['username']) === 0) {
+        flash('รหัสผ่านใหม่ต้องไม่เหมือนชื่อผู้ใช้', 'err');
     } else {
-        $pdo->prepare('UPDATE users SET password_hash = ?, password_changed_at = NOW(), failed_logins = 0 WHERE id = ?')
+        $pdo->prepare('UPDATE users SET password_hash = ?, password_changed_at = NOW(), must_change_password = 0, failed_logins = 0 WHERE id = ?')
             ->execute([password_hash($new, PASSWORD_DEFAULT), $me['id']]);
         session_regenerate_id(true);
-        audit('change_password', 'user', (int)$me['id']);
+        audit($forced ? 'first_password_change' : 'change_password', 'user', (int)$me['id']);
+        $_SESSION['user']['must_change'] = false;
+        if ($forced) {
+            flash('ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว เริ่มใช้งานระบบได้เลย');
+            redirect('index.php');
+        }
         flash('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
     }
     redirect('account.php');
 }
 
 $roleTh = ['admin' => 'ผู้ดูแลระบบหลัก', 'district' => 'เจ้าหน้าที่อำเภอ', 'temple' => 'ผู้ดูแลวัด'];
-$pageTitle = 'บัญชีของฉัน';
+$pageTitle = $forced ? 'ตั้งรหัสผ่านใหม่' : 'บัญชีของฉัน';
 require __DIR__ . '/includes/header.php';
 ?>
-<h2>บัญชีของฉัน</h2>
-<div class="grid gap-4 lg:grid-cols-2">
+<h2><?= $forced ? 'ตั้งรหัสผ่านใหม่ก่อนเริ่มใช้งาน' : 'บัญชีของฉัน' ?></h2>
+<?php if ($forced): ?>
+<div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+  <p class="font-bold">ยืนยันตัวตนทางอีเมลสำเร็จแล้ว — ขั้นตอนสุดท้ายคือตั้งรหัสผ่านของคุณเอง</p>
+  <p class="mt-1 text-sm">รหัสผ่านที่ใช้เข้าสู่ระบบครั้งนี้เป็นรหัสเริ่มต้นที่ผู้ดูแลระบบหลักเตรียมไว้ให้ จึงต้องเปลี่ยนก่อนใช้งานส่วนอื่นของระบบ
+    กรอกรหัสผ่านเริ่มต้นในช่อง "รหัสผ่านเดิม" แล้วตั้งรหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร และต้องไม่ซ้ำกับรหัสเดิมหรือชื่อผู้ใช้)</p>
+</div>
+<?php endif; ?>
+<div class="grid gap-4 <?= $forced ? 'mx-auto max-w-xl' : 'lg:grid-cols-2' ?>">
+  <?php if (!$forced): ?>
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
     <h3>ข้อมูลบัญชี</h3>
     <dl class="grid grid-cols-[8rem_1fr] gap-y-2">
@@ -61,15 +80,16 @@ require __DIR__ . '/includes/header.php';
     </p>
     <?php endif; ?>
   </div>
+  <?php endif; ?>
 
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-    <h3>เปลี่ยนรหัสผ่าน</h3>
+    <h3><?= $forced ? 'ตั้งรหัสผ่านใหม่' : 'เปลี่ยนรหัสผ่าน' ?></h3>
     <form method="post" class="grid gap-3">
       <?= csrf_field() ?>
-      <div><label>รหัสผ่านเดิม</label><input type="password" name="current_password" required autocomplete="current-password" class="w-full"></div>
+      <div><label><?= $forced ? 'รหัสผ่านเดิม (รหัสเริ่มต้นที่ได้รับ)' : 'รหัสผ่านเดิม' ?></label><input type="password" name="current_password" required autocomplete="current-password" class="w-full"></div>
       <div><label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><input type="password" name="new_password" required minlength="8" autocomplete="new-password" class="w-full"></div>
       <div><label>ยืนยันรหัสผ่านใหม่</label><input type="password" name="confirm_password" required minlength="8" autocomplete="new-password" class="w-full"></div>
-      <div><button class="btn">บันทึกรหัสผ่านใหม่</button></div>
+      <div><button class="btn"><?= $forced ? 'บันทึกและเริ่มใช้งาน' : 'บันทึกรหัสผ่านใหม่' ?></button></div>
     </form>
   </div>
 </div>

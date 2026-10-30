@@ -76,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute([$uid]);
         if ($u = $st->fetch()) {
             $pw = gen_password();
-            $pdo->prepare('UPDATE users SET password_hash = ?, password_changed_at = NOW(), failed_logins = 0, locked_until = NULL WHERE id = ?')
+            $pdo->prepare('UPDATE users SET password_hash = ?, password_changed_at = NOW(), must_change_password = 1, failed_logins = 0, locked_until = NULL WHERE id = ?')
                 ->execute([password_hash($pw, PASSWORD_DEFAULT), $uid]);
             otp_invalidate_all($pdo, $uid);
             audit('reset_password', 'user', $uid);
-            flash("รหัสผ่านใหม่ของ {$u['name']} ({$u['username']}) คือ  $pw  — แสดงครั้งเดียว กรุณาจดและแจ้งวัด");
+            flash("รหัสผ่านใหม่ของ {$u['name']} ({$u['username']}) คือ  $pw  — แสดงครั้งเดียว กรุณาจดและแจ้งวัด (วัดต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรก)");
         }
     } elseif ($act === 'toggle') {
         $uid = (int)($_POST['user_id'] ?? 0);

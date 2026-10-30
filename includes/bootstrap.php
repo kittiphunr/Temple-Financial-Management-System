@@ -10,6 +10,13 @@ session_start();
 // เส้นทางสัมพัทธ์ไปยังโฟลเดอร์หลัก (หน้าใน admin/ ต้องถอยขึ้น 1 ระดับ)
 define('BASE', basename(dirname($_SERVER['SCRIPT_FILENAME'])) === 'admin' ? '../' : '');
 
+// ยังไม่ได้ติดตั้ง: ส่งไปตัวช่วยติดตั้ง (เหมือน WordPress)
+require_once __DIR__ . '/install_lib.php';
+if (!is_installed($CONFIG) && basename($_SERVER['SCRIPT_NAME']) !== 'install.php') {
+    header('Location: ' . BASE . 'install.php');
+    exit;
+}
+
 function db(): PDO
 {
     static $pdo = null;
@@ -184,3 +191,9 @@ function temples_grouped(): array
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/accounts.php';
 require_once __DIR__ . '/twofactor.php';
+
+// ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน: ทุกหน้า (ยกเว้นหน้าเปลี่ยนรหัสผ่านและออกจากระบบ) ถูกส่งไปหน้าเปลี่ยนรหัสผ่าน
+if (!empty($_SESSION['user']['must_change'])
+    && !in_array(basename($_SERVER['SCRIPT_NAME']), ['account.php', 'logout.php'], true)) {
+    redirect(BASE . 'account.php');
+}

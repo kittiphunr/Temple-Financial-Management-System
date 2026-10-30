@@ -45,8 +45,9 @@ function provision_temple_accounts(PDO $pdo, array $templeIds = []): array
     $st = $pdo->prepare($sql);
     $st->execute($params);
 
-    $ins = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role, temple_id, password_changed_at)
-                          VALUES (?,?,?,'temple',?,NOW())");
+    // รหัสผ่านเริ่มต้นที่แอดมินหลักเตรียมไว้ให้: บังคับเปลี่ยนในการเข้าสู่ระบบครั้งแรก (หลังยืนยันอีเมล)
+    $ins = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role, temple_id, password_changed_at, must_change_password)
+                          VALUES (?,?,?,'temple',?,NOW(),1)");
     $rows = [];
     foreach ($st->fetchAll() as $t) {
         $pw = gen_password();
@@ -107,6 +108,7 @@ function complete_login(PDO $pdo, array $row): void
     $_SESSION['user'] = [
         'id' => (int)$row['id'], 'username' => $row['username'], 'full_name' => $row['full_name'],
         'role' => $row['role'], 'district_id' => $row['district_id'], 'temple_id' => $row['temple_id'],
+        'must_change' => !empty($row['must_change_password']),
     ];
     $pdo->prepare('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = NOW() WHERE id = ?')->execute([$row['id']]);
     audit('login', 'user', (int)$row['id']);
