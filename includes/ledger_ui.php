@@ -21,6 +21,7 @@ function ledger_accounts_panel(PDO $pdo, array $temple, bool $canEdit, string $b
       </div>
       <div class="text-right"><div class="text-xs text-stone-500">ยอดคงเหลือวันนี้</div><div class="text-xl font-bold <?= $bal < 0 ? 'text-red-700' : 'text-emerald-700' ?>"><?= money($bal) ?> บาท</div></div>
     </div>
+    <?php if ($isBank && reconcile_available()): ?><div class="mt-2"><a class="btn btn-sm btn-outline" href="<?= BASE ?>reconcile.php?temple=<?= $tid ?>&account=<?= (int)$a['id'] ?>">กระทบยอดกับ statement</a></div><?php endif; ?>
     <?php if ($canEdit): ?>
     <form method="post" action="<?= BASE ?>accounts.php" class="mt-3 flex flex-wrap items-end gap-3 border-t border-stone-100 pt-3">
       <?= csrf_field() ?><input type="hidden" name="back" value="<?= e($back) ?>"><input type="hidden" name="action" value="set_opening"><input type="hidden" name="account_id" value="<?= (int)$a['id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>">
