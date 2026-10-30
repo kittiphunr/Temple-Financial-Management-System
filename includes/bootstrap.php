@@ -182,7 +182,7 @@ function require_admin(): array
 
 /**
  * เงื่อนไข SQL จำกัดขอบเขตข้อมูลตามบทบาท
- * admin = ทุกวัด, district = วัดในอำเภอตนเอง, temple = เฉพาะวัดตนเอง
+ * admin = ทุกวัด, province = ทุกวัด (ดูอย่างเดียว), district = วัดในอำเภอตนเอง, subdistrict = วัดในตำบลที่ดูแล (ดูอย่างเดียว), temple = เฉพาะวัดตนเอง
  * @return array{0:string,1:array} [sql ที่ขึ้นต้นด้วย AND, params]
  */
 function scope_sql(string $templeAlias = 't'): array
@@ -194,6 +194,9 @@ function scope_sql(string $templeAlias = 't'): array
     }
     if ($u['role'] === 'district') {
         return [" AND $templeAlias.district_id = ?", [(int)$u['district_id']]];
+    }
+    if ($u['role'] === 'subdistrict') {   // เจ้าคณะตำบล: เฉพาะวัดในตำบลที่ได้รับมอบหมาย (ดูอย่างเดียว)
+        return subdistrict_scope_sql($templeAlias, (int)$u['id']);
     }
     return [" AND $templeAlias.id = ?", [(int)$u['temple_id']]];
 }
@@ -213,8 +216,8 @@ function can_access_temple(int $templeId): bool
     if ($u['role'] === 'admin') {
         return true;
     }
-    if ($u['role'] === 'province') {
-        return false; // เจ้าคณะจังหวัดดูข้อมูลได้อย่างเดียว
+    if (in_array($u['role'], ['province', 'subdistrict'], true)) {
+        return false; // เจ้าคณะจังหวัด/เจ้าคณะตำบลดูข้อมูลได้อย่างเดียว
     }
     return $u['role'] === 'district'
         ? (int)$row['district_id'] === (int)$u['district_id']
@@ -260,6 +263,7 @@ require_once __DIR__ . '/crypto.php';
 require_once __DIR__ . '/images.php';
 require_once __DIR__ . '/people.php';
 require_once __DIR__ . '/staff.php';
+require_once __DIR__ . '/subdistricts.php';
 require_once __DIR__ . '/letterhead.php';
 require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/about.php';

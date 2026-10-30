@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(150) NOT NULL,
-  role ENUM('admin','province','district','temple') NOT NULL DEFAULT 'temple',
+  role ENUM('admin','province','district','subdistrict','temple') NOT NULL DEFAULT 'temple',
   district_id INT UNSIGNED NULL,
   temple_id INT UNSIGNED NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -83,6 +83,16 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE KEY uq_user_district (district_id), -- 1 อำเภอ = 1 แอดมินประจำอำเภอ
   CONSTRAINT fk_user_district FOREIGN KEY (district_id) REFERENCES districts(id),
   CONSTRAINT fk_user_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
+) ENGINE=InnoDB;
+
+-- ตำบลที่เจ้าคณะตำบลดูแล (1 บัญชีดูได้หลายตำบล ดูข้อมูลอย่างเดียว ไม่นับในโควตาผู้ใช้ระดับจังหวัด/อำเภอ)
+CREATE TABLE IF NOT EXISTS user_subdistricts (
+  user_id INT UNSIGNED NOT NULL,
+  district_id INT UNSIGNED NOT NULL,
+  subdistrict VARCHAR(100) NOT NULL,
+  PRIMARY KEY (user_id, district_id, subdistrict),
+  CONSTRAINT fk_us_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_us_district FOREIGN KEY (district_id) REFERENCES districts(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS categories (

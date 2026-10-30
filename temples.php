@@ -14,8 +14,8 @@ $districts = db()->query('SELECT name FROM districts ORDER BY sort_order')->fetc
 $pageTitle = 'ข้อมูลวัด';
 require __DIR__ . '/includes/header.php';
 ?>
-<h2>ข้อมูลวัดจังหวัดแพร่ แยกตามอำเภอ</h2>
-<p class="text-stone-500">ข้อมูลจากทะเบียนวัดจังหวัดแพร่ ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงวัดที่เพิ่มเองและยังไม่ได้เทียบกับทะเบียนทางการ</p>
+<h2>ข้อมูลวัดจังหวัด<?= e(province_name()) ?> แยกตามอำเภอ</h2>
+<p class="text-stone-500">ข้อมูลจากทะเบียนวัดจังหวัด<?= e(province_name()) ?> ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงวัดที่เพิ่มเองและยังไม่ได้เทียบกับทะเบียนทางการ</p>
 <?php foreach ($districts as $dn): $list = $groups[$dn] ?? []; ?>
   <h3 class="mb-2 mt-7 rounded-md border-l-4 border-gold-500 bg-gold-100 px-3 py-1.5 !text-lg !font-semibold">อำเภอ<?= e($dn) ?> <small class="text-stone-500">(<?= count($list) ?> วัด)</small></h3>
   <?php if (!$list): ?>

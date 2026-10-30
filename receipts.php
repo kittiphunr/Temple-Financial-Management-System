@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/includes/bootstrap.php';
 $u = require_login();
-if ($u['role'] === 'province') {
+if (in_array($u['role'], ['province', 'subdistrict'], true)) {
     redirect('dashboard.php');
 }
 $pdo = db();

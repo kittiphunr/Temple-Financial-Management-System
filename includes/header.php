@@ -22,12 +22,12 @@ if (!$u) {
     $items .= nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
 } elseif (!$forced) {
     $items .= nav_item('dashboard.php', 'แดชบอร์ด', $cur === 'dashboard.php');
-    if (in_array($role, ['admin', 'district', 'temple'], true)) {   // เจ้าคณะจังหวัดดูข้อมูลได้อย่างเดียว ไม่มีเมนูบันทึกบัญชี
+    if (in_array($role, ['admin', 'district', 'temple'], true)) {   // เจ้าคณะจังหวัด/ตำบลดูข้อมูลได้อย่างเดียว ไม่มีเมนูบันทึกบัญชี
         $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
         $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     }
     $items .= nav_item('reports.php', 'รายงาน', in_array($cur, ['reports.php', 'statements.php', 'accounts.php'], true));
-    if ($role !== 'province') {
+    if (!in_array($role, ['province', 'subdistrict'], true)) {
         $items .= nav_item('receipts.php', 'อนุโมทนาบัตร', in_array($cur, ['receipts.php', 'receipt.php'], true));
     }
     $items .= $role === 'temple'
