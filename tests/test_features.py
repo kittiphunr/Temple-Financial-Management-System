@@ -6,7 +6,7 @@
 import datetime
 import re
 
-from support import Client, FakeSMTP, App, age_otps, hash_password, notice, parse_creds_csv
+from support import Client, FakeSMTP, App, age_otps, be_date, hash_password, notice, parse_creds_csv
 
 
 def run(db, R):
@@ -237,7 +237,7 @@ def _run(db, R, smtp, name, q, app):
     exp_cat = q("SELECT id FROM categories WHERE type='expense' ORDER BY id LIMIT 1")
 
     def add_txn(kind, temple, amount):
-        adm.post(f'/transactions.php?type={kind}', {'action': 'save', 'id': '0', 'temple_id': temple, 'txn_date': today.isoformat(),
+        adm.post(f'/transactions.php?type={kind}', {'action': 'save', 'id': '0', 'temple_id': temple, **be_date('txn_date', today),
                                                     'category_id': inc_cat if kind == 'income' else exp_cat, 'amount': amount,
                                                     'doc_no': '', 'description': 'ทดสอบแดชบอร์ด'}, f'/transactions.php?type={kind}')
 

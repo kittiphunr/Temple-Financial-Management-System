@@ -17,7 +17,7 @@ if (($_GET['download'] ?? '') === 'creds') {
         redirect('temple_accounts.php');
     }
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="temple-accounts-' . date('Ymd-His') . '.csv"');
+    header('Content-Disposition: attachment; filename="temple-accounts-' . ((int)date('Y') + 543) . date('md-His') . '.csv"');
     header('Cache-Control: no-store');
     write_credentials_csv(fopen('php://output', 'w'), $rows);
     audit('download_credentials', 'user', null, count($rows) . ' accounts');

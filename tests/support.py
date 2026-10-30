@@ -310,6 +310,11 @@ class Client:
 
 
 # ---------- ตัวช่วยอื่น ----------
+def be_date(name, d):
+    """ช่องวันที่แบบ พ.ศ. ของฟอร์ม (วัน/เดือน/ปี พ.ศ.) จาก datetime.date"""
+    return {f'{name}_d': str(d.day), f'{name}_m': str(d.month), f'{name}_y': str(d.year + 543)}
+
+
 def notice(html):
     """ข้อความแจ้งเตือน (flash/notice) บนหน้า"""
     m = re.search(r'<div class="mb-4 rounded-lg[^>]*>(.*?)</div>', html, re.S)

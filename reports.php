@@ -36,7 +36,7 @@ if (($_GET['export'] ?? '') === 'csv') {
         foreach (['district', 'temple', 'category', 'doc_no', 'description'] as $k) {
             if (isset($r[$k]) && preg_match('/^[=+\-@\t\r]/', $r[$k])) $r[$k] = "'" . $r[$k];
         }
-        fputcsv($out, [$r['txn_date'], $r['district'], $r['temple'], $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย', $r['category'], $r['doc_no'], $r['description'], $r['amount']]);
+        fputcsv($out, [th_date_short($r['txn_date']), $r['district'], $r['temple'], $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย', $r['category'], $r['doc_no'], $r['description'], $r['amount']]);
     }
     audit('export', 'report', null, "year $year");
     exit;

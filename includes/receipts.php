@@ -72,14 +72,14 @@ function receipt_issue(PDO $pdo, int $txnId, array $in, ?int $userId): array
     $book = trim($in['book_no'] ?? '');
     $rname = trim($in['receiver_name'] ?? '');
     $rpos = trim($in['receiver_position'] ?? '');
-    $date = $in['receipt_date'] ?? '';
+    $date = date_be_parse($in, 'receipt_date') ?? '';
     $errs = [];
     if (mb_strlen($donor) < 2 || mb_strlen($donor) > 200) $errs[] = 'กรุณากรอกชื่อผู้บริจาค (2–200 ตัวอักษร)';
     if (mb_strlen($addr) > 500) $errs[] = 'ที่อยู่ผู้บริจาคยาวเกินไป';
     if (mb_strlen($purpose) > 255) $errs[] = 'วัตถุประสงค์ยาวเกินไป';
     if (!preg_match('/^[0-9A-Za-zก-๙\-\/]{1,20}$/u', $book)) $errs[] = 'เล่มที่ใช้ได้เฉพาะตัวอักษร ตัวเลข - / ไม่เกิน 20 ตัว';
     if (mb_strlen($rname) > 200 || mb_strlen($rpos) > 100) $errs[] = 'ชื่อ/ตำแหน่งผู้รับเงินยาวเกินไป';
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date) || $date > date('Y-m-d')) $errs[] = 'วันที่ออกไม่ถูกต้อง (ห้ามเป็นวันในอนาคต)';
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date) || $date > date('Y-m-d')) $errs[] = 'วันที่ออกไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ. ห้ามเป็นวันในอนาคต)';
     if ($errs) {
         return [null, implode(', ', $errs)];
     }
