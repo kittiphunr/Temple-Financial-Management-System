@@ -1,0 +1,12 @@
+{
+  "name": "tfms-phrae",
+  "private": true,
+  "description": "ระบบบัญชีรายรับ-รายจ่ายวัด จังหวัดแพร่ — สร้าง CSS ด้วย Tailwind",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i assets/css/input.css -o assets/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i assets/css/input.css -o assets/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

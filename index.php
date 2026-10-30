@@ -6,23 +6,41 @@ $u = user();
 $year = (int)($_GET['year'] ?? be_year());
 $pageTitle = 'หน้าแรก';
 require __DIR__ . '/includes/header.php';
+
+$features = [
+    ['จัดการบัญชีรายรับ', 'บันทึกรายรับจากการบริจาค การทำบุญ และรายได้อื่น ๆ ของวัด', 'transactions.php?type=income', 'bg-emerald-100 text-emerald-700', '＋'],
+    ['จัดการบัญชีรายจ่าย', 'บันทึกค่าบูรณปฏิสังขรณ์ ค่าสาธารณูปโภค และค่าใช้จ่ายอื่น ๆ', 'transactions.php?type=expense', 'bg-red-100 text-red-700', '－'],
+    ['ดูรายงานและสรุปผล', 'สรุปรายรับ-รายจ่าย รายเดือน รายปี แยกตามอำเภอและวัด', 'reports.php', 'bg-sky-100 text-sky-700', '▤'],
+    ['พิมพ์และส่งออกเอกสาร', 'พิมพ์รายงาน และส่งออกไฟล์ CSV (เปิดด้วย Excel ได้)', 'reports.php?export=csv', 'bg-amber-100 text-amber-700', '⇩'],
+];
 ?>
-<section class="hero">
-  <img class="logo" src="<?= BASE ?>assets/img/logo.svg" alt="ตราสัญลักษณ์">
-  <h1><?= e($CONFIG['app_name']) ?></h1>
-  <p><?= e($CONFIG['app_sub']) ?></p>
-  <div class="pill"><span>จัดเก็บข้อมูลบัญชี</span><span>·</span><span>ตรวจสอบได้</span><span>·</span><span>พิมพ์และส่งออกเอกสารได้</span></div>
-  <div class="actions">
-    <a class="btn" href="<?= $u ? 'transactions.php?type=income' : 'login.php' ?>">เริ่มใช้งาน</a>
-    <a class="btn btn-outline" href="<?= $u ? 'reports.php' : 'login.php' ?>">ดูรายงาน</a>
+<section class="relative overflow-hidden rounded-3xl border border-gold-200 bg-gradient-to-b from-[#fff6dc] via-[#f8dfb4] to-[#e9b98c] px-6 pb-10 pt-12 text-center text-brand-900 shadow-sm">
+  <div class="absolute inset-y-0 left-0 w-6 bg-[repeating-linear-gradient(135deg,#9b1c1c_0_10px,#b8892e_10px_14px)] sm:w-20"></div>
+  <div class="absolute inset-y-0 right-0 w-6 bg-[repeating-linear-gradient(135deg,#9b1c1c_0_10px,#b8892e_10px_14px)] sm:w-20"></div>
+  <div class="relative">
+    <img class="mx-auto h-28 w-28 drop-shadow" src="<?= BASE ?>assets/img/logo.svg" alt="ตราสัญลักษณ์">
+    <h1 class="mt-3 text-3xl font-bold text-brand-700 sm:text-5xl"><?= e($CONFIG['app_name']) ?></h1>
+    <p class="mt-1 text-lg sm:text-xl"><?= e($CONFIG['app_sub']) ?></p>
+    <div class="mx-auto mt-5 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-1 rounded-full bg-white/80 px-6 py-2.5 font-semibold">
+      <span>จัดเก็บข้อมูลบัญชี</span><span class="text-gold-500">•</span><span>ตรวจสอบได้</span><span class="text-gold-500">•</span><span>พิมพ์และส่งออกเอกสารได้</span>
+    </div>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <a class="btn px-7 py-2.5 text-white" href="<?= $u ? 'transactions.php?type=income' : 'login.php' ?>">เริ่มใช้งาน →</a>
+      <a class="btn btn-outline bg-white/70 px-7 py-2.5" href="<?= $u ? 'reports.php' : 'login.php' ?>">ดูรายงาน</a>
+    </div>
   </div>
 </section>
 
-<div class="grid grid-4">
-  <a class="card feature" href="<?= $u ? 'transactions.php?type=income' : 'login.php' ?>"><div class="ttl">จัดการบัญชีรายรับ</div>บันทึกรายรับจากการบริจาค การทำบุญ และรายได้อื่น ๆ ของวัด</a>
-  <a class="card feature" href="<?= $u ? 'transactions.php?type=expense' : 'login.php' ?>"><div class="ttl">จัดการบัญชีรายจ่าย</div>บันทึกค่าบูรณปฏิสังขรณ์ ค่าสาธารณูปโภค และค่าใช้จ่ายอื่น ๆ</a>
-  <a class="card feature" href="<?= $u ? 'reports.php' : 'login.php' ?>"><div class="ttl">ดูรายงานและสรุปผล</div>สรุปรายรับ-รายจ่าย รายเดือน รายปี แยกตามอำเภอและวัด</a>
-  <a class="card feature" href="<?= $u ? 'reports.php?export=csv' : 'login.php' ?>"><div class="ttl">พิมพ์และส่งออกเอกสาร</div>พิมพ์รายงาน และส่งออกไฟล์ CSV (เปิดด้วย Excel ได้)</a>
+<div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <?php foreach ($features as [$ttl, $desc, $href, $iconCls, $icon]): ?>
+  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? $href : 'login.php' ?>">
+    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold <?= $iconCls ?>"><?= $icon ?></span>
+    <span>
+      <span class="block font-bold text-brand-700"><?= e($ttl) ?></span>
+      <span class="text-sm text-stone-600"><?= e($desc) ?></span>
+    </span>
+  </a>
+  <?php endforeach; ?>
 </div>
 
 <?php if ($u):
@@ -31,36 +49,40 @@ require __DIR__ . '/includes/header.php';
     $max = 1;
     foreach ($rows as $r) { $max = max($max, $r['income'], $r['expense']); }
 ?>
-<form class="toolbar" method="get">
-  <div><label>ปี พ.ศ.</label>
-    <select name="year" onchange="this.form.submit()">
+<div class="mb-3 mt-8 flex flex-wrap items-end justify-between gap-3">
+  <h2 class="!my-0">ภาพรวมบัญชีวัด (ปี พ.ศ. <?= $year ?>)</h2>
+  <form method="get">
+    <label class="sr-only" for="year">ปี พ.ศ.</label>
+    <select id="year" name="year" onchange="this.form.submit()">
       <?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?>
-        <option value="<?= $y ?>" <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option>
+        <option value="<?= $y ?>" <?= $y === $year ? 'selected' : '' ?>>ปี พ.ศ. <?= $y ?></option>
       <?php endfor; ?>
-    </select></div>
-</form>
-<h2>ภาพรวมบัญชีวัด (ปี พ.ศ. <?= $year ?>)</h2>
-<div class="grid grid-4">
-  <div class="card stat"><div class="label">รายรับรวม</div><div class="num inc"><?= money($sum['income']) ?> บาท</div><div class="muted">รายการทั้งหมด <?= $sum['n_income'] ?> รายการ</div></div>
-  <div class="card stat"><div class="label">รายจ่ายรวม</div><div class="num exp"><?= money($sum['expense']) ?> บาท</div><div class="muted">รายการทั้งหมด <?= $sum['n_expense'] ?> รายการ</div></div>
-  <div class="card stat"><div class="label">ยอดคงเหลือ</div><div class="num bal"><?= money($sum['balance']) ?> บาท</div><div class="muted">รายรับ − รายจ่าย</div></div>
-  <div class="card stat"><div class="label">จำนวนวัดในระบบ</div><div class="num"><?= temple_count() ?> วัด</div><div class="muted">ในสังกัดจังหวัดแพร่</div></div>
+    </select>
+  </form>
+</div>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายการทั้งหมด <?= $sum['n_income'] ?> รายการ</div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายจ่ายรวม</div><div class="text-2xl font-bold text-red-700"><?= money($sum['expense']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายการทั้งหมด <?= $sum['n_expense'] ?> รายการ</div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยอดคงเหลือ</div><div class="text-2xl font-bold text-sky-800"><?= money($sum['balance']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายรับ − รายจ่าย</div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">จำนวนวัดในระบบ</div><div class="text-2xl font-bold text-violet-800"><?= temple_count() ?> <span class="text-base font-semibold">วัด</span></div><div class="text-sm text-stone-500">ในสังกัดจังหวัดแพร่</div></div>
 </div>
 
-<h2>สรุปตามอำเภอ</h2>
-<div class="table-wrap"><table>
-  <tr><th>อำเภอ</th><th class="r">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="r">คงเหลือ</th></tr>
+<h2 class="mt-8">สรุปตามอำเภอ</h2>
+<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <thead><tr><th>อำเภอ</th><th class="text-right">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
+  <tbody>
   <?php foreach ($rows as $r): ?>
   <tr>
-    <td><a href="reports.php?year=<?= $year ?>&district=<?= (int)$r['id'] ?>"><?= e($r['name']) ?></a></td>
-    <td class="r"><?= (int)$r['temples'] ?></td>
-    <td><div class="bar"><i style="width:<?= round($r['income'] / $max * 100) ?>%"></i></div><span class="inc"><?= money($r['income']) ?></span></td>
-    <td><div class="bar e"><i style="width:<?= round($r['expense'] / $max * 100) ?>%"></i></div><span class="exp"><?= money($r['expense']) ?></span></td>
-    <td class="r bal"><?= money($r['income'] - $r['expense']) ?></td>
+    <td><a class="font-semibold" href="reports.php?year=<?= $year ?>&district=<?= (int)$r['id'] ?>"><?= e($r['name']) ?></a></td>
+    <td class="text-right"><?= (int)$r['temples'] ?></td>
+    <td class="min-w-[160px]"><div class="h-2.5 overflow-hidden rounded-full bg-stone-200"><i class="block h-full bg-emerald-600" style="width:<?= round($r['income'] / $max * 100) ?>%"></i></div><span class="text-emerald-700"><?= money($r['income']) ?></span></td>
+    <td class="min-w-[160px]"><div class="h-2.5 overflow-hidden rounded-full bg-stone-200"><i class="block h-full bg-red-600" style="width:<?= round($r['expense'] / $max * 100) ?>%"></i></div><span class="text-red-700"><?= money($r['expense']) ?></span></td>
+    <td class="whitespace-nowrap text-right font-semibold text-sky-800"><?= money($r['income'] - $r['expense']) ?></td>
   </tr>
   <?php endforeach; ?>
+  </tbody>
 </table></div>
 <?php else: ?>
-<p class="muted" style="margin-top:20px">กรุณาเข้าสู่ระบบเพื่อดูข้อมูลบัญชี</p>
+<p class="mt-6 text-center text-stone-500">กรุณาเข้าสู่ระบบเพื่อดูข้อมูลบัญชี</p>
 <?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

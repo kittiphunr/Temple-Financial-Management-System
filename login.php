@@ -33,14 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'เข้าสู่ระบบ';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="card login-box">
+<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm mx-auto my-10 max-w-sm">
   <h2>เข้าสู่ระบบ</h2>
-  <?php if ($error): ?><div class="alert alert-err"><?= e($error) ?></div><?php endif; ?>
-  <form method="post" class="form-grid">
+  <?php if ($error): ?><div class="mb-4 rounded-lg px-4 py-2.5 bg-red-50 text-red-900"><?= e($error) ?></div><?php endif; ?>
+  <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?>
-    <div class="full"><label>ชื่อผู้ใช้</label><input name="username" required autofocus></div>
-    <div class="full"><label>รหัสผ่าน</label><input type="password" name="password" required></div>
-    <div class="full"><button class="btn" type="submit">เข้าสู่ระบบ</button></div>
+    <div class="col-span-full"><label>ชื่อผู้ใช้</label><input name="username" required autofocus></div>
+    <div class="col-span-full"><label>รหัสผ่าน</label><input type="password" name="password" required></div>
+    <div class="col-span-full"><button class="btn" type="submit">เข้าสู่ระบบ</button></div>
   </form>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

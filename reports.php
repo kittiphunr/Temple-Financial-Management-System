@@ -60,7 +60,7 @@ $pageTitle = 'รายงาน';
 require __DIR__ . '/includes/header.php';
 ?>
 <h2>รายงานสรุปรายรับ-รายจ่าย ปี พ.ศ. <?= $year ?></h2>
-<form class="toolbar" method="get">
+<form class="my-4 flex flex-wrap items-end gap-3 print:hidden" method="get">
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <div><label>อำเภอ</label><select name="district"><option value="0">ทุกอำเภอ</option>
     <?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>" <?= $dist === (int)$d['id'] ? 'selected' : '' ?>><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
@@ -71,39 +71,39 @@ require __DIR__ . '/includes/header.php';
   <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
 </form>
 
-<div class="grid grid-4">
-  <div class="card stat"><div class="label">รายรับรวม</div><div class="num inc"><?= money($sum['income']) ?></div></div>
-  <div class="card stat"><div class="label">รายจ่ายรวม</div><div class="num exp"><?= money($sum['expense']) ?></div></div>
-  <div class="card stat"><div class="label">คงเหลือ</div><div class="num bal"><?= money($sum['balance']) ?></div></div>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?></div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายจ่ายรวม</div><div class="text-2xl font-bold text-red-700"><?= money($sum['expense']) ?></div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">คงเหลือ</div><div class="text-2xl font-bold text-sky-800"><?= money($sum['balance']) ?></div></div>
 </div>
 
-<h3>รายเดือน</h3>
-<div class="table-wrap"><table>
-  <tr><th>เดือน</th><th class="r">รายรับ</th><th class="r">รายจ่าย</th><th class="r">คงเหลือ</th></tr>
+<h3 class="mt-6">รายเดือน</h3>
+<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <tr><th>เดือน</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th><th class="text-right whitespace-nowrap">คงเหลือ</th></tr>
   <?php foreach ($mon as $m => $v): ?>
-  <tr><td><?= TH_MONTHS[$m] ?></td><td class="r inc"><?= money($v['inc']) ?></td><td class="r exp"><?= money($v['exp']) ?></td><td class="r bal"><?= money($v['inc'] - $v['exp']) ?></td></tr>
+  <tr><td><?= TH_MONTHS[$m] ?></td><td class="text-right whitespace-nowrap text-emerald-700"><?= money($v['inc']) ?></td><td class="text-right whitespace-nowrap text-red-700"><?= money($v['exp']) ?></td><td class="text-right whitespace-nowrap text-sky-800"><?= money($v['inc'] - $v['exp']) ?></td></tr>
   <?php endforeach; ?>
 </table></div>
 
-<div class="grid grid-2">
+<div class="grid gap-4 lg:grid-cols-2">
   <div>
-    <h3>แยกตามหมวด</h3>
-    <div class="table-wrap"><table>
-      <tr><th>ประเภท</th><th>หมวด</th><th class="r">รวม</th></tr>
+    <h3 class="mt-6">แยกตามหมวด</h3>
+    <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+      <tr><th>ประเภท</th><th>หมวด</th><th class="text-right whitespace-nowrap">รวม</th></tr>
       <?php foreach ($byCat as $r): ?>
-      <tr><td><?= $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></td><td><?= e($r['name']) ?></td><td class="r"><?= money($r['total']) ?></td></tr>
+      <tr><td><?= $r['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></td><td><?= e($r['name']) ?></td><td class="text-right whitespace-nowrap"><?= money($r['total']) ?></td></tr>
       <?php endforeach; ?>
-      <?php if (!$byCat): ?><tr><td colspan="3" class="muted">ไม่มีข้อมูล</td></tr><?php endif; ?>
+      <?php if (!$byCat): ?><tr><td colspan="3" class="text-stone-500">ไม่มีข้อมูล</td></tr><?php endif; ?>
     </table></div>
   </div>
   <div>
-    <h3>แยกตามวัด (จัดกลุ่มตามอำเภอ)</h3>
-    <div class="table-wrap"><table>
-      <tr><th>อำเภอ</th><th>วัด</th><th class="r">รายรับ</th><th class="r">รายจ่าย</th></tr>
+    <h3 class="mt-6">แยกตามวัด (จัดกลุ่มตามอำเภอ)</h3>
+    <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+      <tr><th>อำเภอ</th><th>วัด</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th></tr>
       <?php foreach ($byTemple as $r): ?>
-      <tr><td><?= e($r['district']) ?></td><td><?= e($r['temple']) ?></td><td class="r inc"><?= money($r['inc']) ?></td><td class="r exp"><?= money($r['exp']) ?></td></tr>
+      <tr><td><?= e($r['district']) ?></td><td><?= e($r['temple']) ?></td><td class="text-right whitespace-nowrap text-emerald-700"><?= money($r['inc']) ?></td><td class="text-right whitespace-nowrap text-red-700"><?= money($r['exp']) ?></td></tr>
       <?php endforeach; ?>
-      <?php if (!$byTemple): ?><tr><td colspan="4" class="muted">ไม่มีข้อมูล</td></tr><?php endif; ?>
+      <?php if (!$byTemple): ?><tr><td colspan="4" class="text-stone-500">ไม่มีข้อมูล</td></tr><?php endif; ?>
     </table></div>
   </div>
 </div>

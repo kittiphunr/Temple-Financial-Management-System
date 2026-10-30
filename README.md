@@ -23,6 +23,18 @@ php -S 127.0.0.1:8080                            # ทดลองใช้ง�
 บนเซิร์ฟเวอร์จริงให้ชี้ web root มาที่โฟลเดอร์นี้ (Apache/Nginx + PHP-FPM) ใช้ HTTPS
 และควรลบหรือห้ามเข้าถึง `setup.php`, `sql/`, `data/` จากภายนอก (`setup.php` ทำงานได้เฉพาะ CLI)
 
+## การจัดหน้า (Tailwind CSS)
+ทุกหน้าใช้ Tailwind CSS 3 จัดหน้า รองรับมือถือ/แท็บเล็ต/เดสก์ท็อป และพิมพ์รายงานได้ (`print:` variants)
+ไฟล์ `assets/css/tailwind.css` ที่ build แล้วถูก commit ไว้ ใช้งานบนเซิร์ฟเวอร์ PHP ได้เลยโดยไม่ต้องมี Node
+ถ้าแก้ class ใน `*.php` หรือ `assets/css/input.css` / `tailwind.config.js` ให้ build ใหม่:
+
+```bash
+npm install
+npm run build:css      # หรือ npm run watch:css ระหว่างพัฒนา
+```
+
+ธีมสี `brand` (แดง) และ `gold` (ทอง) กำหนดใน `tailwind.config.js` ฟอนต์ Sarabun โหลดจาก Google Fonts
+
 ## ข้อมูลวัดจังหวัดแพร่
 `setup.php` โหลดทะเบียนวัดจริง 381 วัด จาก `data/temples_phrae.csv` (แปลงจาก `Report_Temple.xlsx`
 ทะเบียนวัดของสำนักงานพระพุทธศาสนา) พร้อมตำบล หมู่ที่ รหัสวัด 11 หลัก ประเภทวัด และนิกาย ทุกวัดมีสถานะ "ตรวจสอบแล้ว"
@@ -47,5 +59,6 @@ index.php  login.php  logout.php  temples.php  transactions.php  reports.php
 admin/     index, temples, import, users, categories, audit
 includes/  bootstrap (DB, auth, CSRF, scope), stats, header, footer
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
-sql/       schema.sql, seed.sql      assets/  css, logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
+sql/       schema.sql, seed.sql      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
+tailwind.config.js  package.json
 ```

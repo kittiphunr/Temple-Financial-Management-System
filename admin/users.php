@@ -46,9 +46,9 @@ $pageTitle = 'ผู้ใช้งาน';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>ผู้ใช้งาน</h2>
-<div class="card">
+<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <h3>เพิ่มผู้ใช้</h3>
-  <form method="post" class="form-grid">
+  <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="create">
     <div><label>ชื่อผู้ใช้</label><input name="username" required></div>
     <div><label>ชื่อ-นามสกุล</label><input name="full_name" required></div>
@@ -57,10 +57,10 @@ require __DIR__ . '/../includes/header.php';
     <div><label>อำเภอ (สำหรับเจ้าหน้าที่อำเภอ)</label><select name="district_id"><option value="0">-</option><?php foreach ($districts as $d): ?><option value="<?= (int)$d['id'] ?>"><?= e($d['name']) ?></option><?php endforeach; ?></select></div>
     <div><label>วัด (สำหรับเจ้าหน้าที่วัด)</label><select name="temple_id"><option value="0">-</option>
       <?php foreach ($groups as $dn => $list): ?><optgroup label="อำเภอ<?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>"><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
-    <div class="full"><button class="btn">เพิ่มผู้ใช้</button></div>
+    <div class="col-span-full"><button class="btn">เพิ่มผู้ใช้</button></div>
   </form>
 </div>
-<div class="table-wrap" style="margin-top:16px"><table>
+<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
   <tr><th>ผู้ใช้</th><th>ชื่อ</th><th>บทบาท</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
@@ -69,10 +69,10 @@ require __DIR__ . '/../includes/header.php';
     <td><?= $r['is_active'] ? 'ใช้งาน' : 'ปิดใช้งาน' ?></td>
     <td>
       <?php if ((int)$r['id'] !== $me['id']): ?>
-      <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิด' : 'เปิด' ?></button></form>
+      <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิด' : 'เปิด' ?></button></form>
       <?php endif; ?>
-      <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="reset"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <input type="password" name="password" placeholder="รหัสผ่านใหม่" minlength="8" style="width:130px"><button class="btn btn-sm btn-outline">เปลี่ยนรหัส</button></form>
+      <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="reset"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+        <input type="password" name="password" placeholder="รหัสผ่านใหม่" minlength="8" class="w-32"><button class="btn btn-sm btn-outline ml-1">เปลี่ยนรหัส</button></form>
     </td>
   </tr>
   <?php endforeach; ?>
