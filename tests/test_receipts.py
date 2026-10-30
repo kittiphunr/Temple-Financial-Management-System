@@ -1,4 +1,5 @@
 """ชุดที่ 4: อนุโมทนาบัตร (ใบอนุโมทนาบัตรสำหรับรายรับประเภทบริจาค) + ตราคณะสงฆ์จังหวัดแพร่เป็นโลโก้ระบบ"""
+import re
 from datetime import date, timedelta
 
 from support import App, Client, FakeSMTP, age_otps, be_date, notice, parse_creds_csv
@@ -91,7 +92,12 @@ def _run(R, smtp, q, app):
     year = date.today().year + 543
     check('R6 หน้าอนุโมทนาบัตรแสดงชื่อ จำนวนเงิน ตัวอักษร เลขที่ และช่องลงนาม',
           c == 200 and 'นายสมชาย ใจบุญ' in b and '๑,๒๕๐.๕๐' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
-    check('R6b อนุโมทนาบัตรใช้ฟอนต์ Charmonman จาก Google Fonts (โหลดเฉพาะหน้านี้) และฟอนต์ระบบสำรองเป็น Sarabun', 'family=Charmonman' in b and 'receipt-font' in b and 'family=Charmonman' not in ta.req('/receipts.php')[2])
+    css = Client(base).raw('/assets/css/tailwind.css')[2].decode('utf-8', 'ignore')
+    fc, _, fb = Client(base).raw('/assets/fonts/JS-Chanok-Normal.ttf')
+    check('R6b อนุโมทนาบัตรใช้ฟอนต์ JS Chanok จากไฟล์ในระบบ (ไม่โหลดจากภายนอก): @font-face + ไฟล์ .ttf เปิดได้',
+          'receipt-font' in b and 'Charmonman' not in b
+          and 'JS Chanok' in css and 'JS-Chanok-Normal.ttf' in css and fc == 200 and len(fb) > 10000 and fb[:4] in (b'\x00\x01\x00\x00', b'true', b'OTTO'), str(fc))
+    check('R6c พิมพ์อนุโมทนาบัตรเป็นกระดาษ B5 แนวนอน (CSS @page size: B5 landscape)', re.search(r'@page\s+receipt\s*\{[^}]*size:\s*B5\s+landscape', css) is not None)
     c, loc, b = ta.post('/receipt.php', form, f'/receipt.php?txn={x1}')
     check('R7 รายการเดียวออกซ้ำไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '1')
     c, loc, _ = ta.req(f'/receipt.php?txn={x1}')

@@ -115,8 +115,6 @@ $tid = (int)$r['temple_id'];
 $t = temple_row($tid);
 $void = $r['status'] === 'void';
 $pageTitle = 'อนุโมทนาบัตร ' . receipt_label($r);
-// ฟอนต์ Charmonman (Google Fonts) เฉพาะตัวเอกสารอนุโมทนาบัตร
-$extraHead = '<link href="https://fonts.googleapis.com/css2?family=Charmonman:wght@400;700&display=swap" rel="stylesheet">';
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="mb-3 flex flex-wrap items-center gap-2 print:hidden">
