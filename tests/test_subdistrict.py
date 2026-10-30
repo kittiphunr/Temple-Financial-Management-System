@@ -142,7 +142,7 @@ def _run(R, q, app):
     c, _, b = t.req(f'/reports.php?year={be}')
     check('S7 หน้ารายงานสรุปรวม 3,000 ไม่รวม 50,000', c == 200 and '3,000.00' in b and '53,000' not in b)
     c, _, b = t.req(f'/statements.php?temple={tA}&year={be}&month=6&form=1')
-    check('S8 ดูรายงานแบบที่ 1 ของวัดในตำบลได้ และไม่มีลิงก์ตั้งยอดยกมา/แก้บัญชี', c == 200 and nameOf(tA) in b and 'accounts.php' not in b, b[:0])
+    check('S8 ดูรายงานแบบที่ 1 ของวัดในตำบลได้ และไม่มีลิงก์ตั้งยอดยกมา/แก้บัญชี', c == 200 and nameOf(tA) in b and 'accounts.php' not in re.sub(r'<header.*?</header>', '', b, flags=re.S), b[:0])   # เมนูบนหัวหน้ามีลิงก์ดูบัญชีได้ แต่เนื้อหารายงานต้องไม่มีลิงก์ตั้งยอดยกมา
     c, _, b = t.req(f'/statements.php?temple={tC}&year={be}&month=6&form=1')
     check('S9 รายงานแบบที่ 1 ของวัดนอกตำบล → ไม่แสดงข้อมูลวัดนั้น', nameOf(tC) not in b and 'จ่ายตรวจสอบ' not in b and '50000' not in b)
     c, _, b = t.req(f'/people.php?temple={tA}')

@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @layer base {
+  /* ขนาดมาตรฐานของตัวควบคุมทั้งระบบ: ช่องกรอก/ตัวเลือก/ปุ่ม สูงเท่ากัน (2.75rem) ขอบมนเท่ากัน (rounded-xl) · ปุ่มเล็ก 2.25rem ขอบ rounded-lg */
+  :root { --ctl-h: 2.75rem; --ctl-h-sm: 2.25rem; }
   body { @apply bg-[#fbf8f3] font-sans text-stone-800 antialiased; }
   a { @apply text-brand-600; }
   h2 { @apply mb-3 mt-2 text-2xl font-bold leading-snug text-brand-700; }
@@ -11,22 +13,38 @@
   input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']),
   select,
   textarea {
-    @apply max-w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800
+    @apply max-w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-stone-800
       focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200;
   }
+  :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select) { min-height: var(--ctl-h); }
+  textarea { min-height: calc(var(--ctl-h) * 2); }
+  input[type='file'] {
+    @apply max-w-full rounded-xl border border-stone-300 bg-white p-1 text-sm text-stone-600;
+    height: var(--ctl-h);
+  }
+  input[type='file']::file-selector-button {
+    @apply mr-3 h-full cursor-pointer rounded-lg border-0 bg-gold-100 px-3 font-semibold text-stone-800 transition hover:bg-gold-200;
+  }
+  input[type='checkbox'], input[type='radio'] { accent-color: #9b1c1c; }
   code { @apply rounded bg-stone-100 px-1 text-sm; }
   summary::-webkit-details-marker { display: none; }
 }
 
 @layer components {
+  /* ปุ่ม: สูงเท่าช่องกรอก ขอบโปร่งใสกว้างเท่าปุ่มขอบ (outline) จึงสูงเท่ากันทุกแบบ · จัดไอคอน+ข้อความกึ่งกลางด้วย inline-flex */
   .btn {
-    @apply inline-block cursor-pointer rounded-xl bg-brand-600 px-5 py-2 font-semibold text-white no-underline transition hover:bg-brand-700;
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-transparent bg-brand-600 px-5 py-2 font-semibold leading-snug text-white no-underline transition hover:bg-brand-700;
+    min-height: var(--ctl-h);
   }
   .btn-outline {
-    @apply border-[1.5px] border-brand-600 bg-transparent text-brand-600 hover:bg-gold-100 hover:text-brand-700;
+    @apply border-brand-600 bg-transparent text-brand-600 hover:bg-gold-100 hover:text-brand-700;
   }
-  .btn-danger { @apply bg-red-700 hover:bg-red-800; }
-  .btn-sm { @apply rounded-lg px-3 py-1 text-sm; }
+  .btn-danger { @apply border-transparent bg-red-700 text-white hover:bg-red-800; }
+  .btn-sm { @apply rounded-lg px-3 py-1 text-sm; min-height: var(--ctl-h-sm); }
+  /* ฟอร์มขนาดใหญ่ (หน้าบันทึกด่วนบนมือถือ): ช่องกรอก ตัวเลือก และปุ่ม สูงเท่ากันที่ 3.5rem */
+  .form-lg :is(input:not([type='checkbox'], [type='radio'], [type='hidden'], [type='file']), select) { min-height: 3.5rem; font-size: 1.125rem; }
+  .form-lg .btn { min-height: 3.5rem; font-size: 1.25rem; }
+  .btn:disabled, .btn[disabled] { @apply cursor-not-allowed opacity-50; }
   .icon {
     @apply inline-block h-[1.15em] w-[1.15em] shrink-0 align-[-0.2em];
     fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
@@ -69,6 +87,7 @@
 /* หน้าต่าง "เกี่ยวกับ" (SweetAlert2) และปรับธีมกล่องแจ้งเตือนให้เข้ากับระบบ */
 @layer components {
   .swal2-popup { @apply font-sans; font-family: inherit; }
+  .swal2-popup .swal2-styled { border-radius: 0.75rem; min-height: var(--ctl-h); padding: 0.5rem 1.25rem; font-weight: 600; }
   .swal2-popup.about-popup { @apply rounded-3xl p-2 text-left sm:p-4; }
   .swal2-html-container.about-body { @apply m-0 px-3 pb-4 pt-2 text-left text-base text-stone-800; }
   .about-head { @apply flex items-center gap-4 border-b border-stone-200 pb-4; }

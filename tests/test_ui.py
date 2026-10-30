@@ -120,6 +120,31 @@ def _run(R, q, app):
                 padded.append(f'{f.name}: {" ".join(v)[:70]}')
     check('U23 การ์ดไม่กำหนด padding เอง (padding มาจาก .card เท่ากันทุกด้าน)', not padded, '; '.join(padded[:5]))
 
+    # ================= ตัวควบคุมฟอร์ม: ความสูงและขอบมนสมดุลกัน =================
+    check('U24 CSS ตัวควบคุม: ช่องกรอก/ตัวเลือก/ปุ่ม ใช้ความสูงมาตรฐานเดียวกัน (--ctl-h) ขอบมน 0.75rem เท่ากัน และปุ่มเล็ก/ฟอร์มใหญ่มีขนาดของตัวเอง',
+          '--ctl-h:2.75rem' in css.replace(' ', '') and 'min-height:var(--ctl-h)' in css and 'min-height:var(--ctl-h-sm)' in css and '.form-lg' in css and 'border-radius:.75rem' in css.replace(' ', ''))
+    odd = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'<(input|select|textarea|button class="btn[^"]*)([^>]*)>', f.read_text(encoding='utf-8')):
+            tag = m.group(0).split('<?')[0]
+            if re.search(r'(?<![\w-])(rounded(-[a-z0-9\[\]]+)?|h-\d+|min-h-\d+|!min-h-\d+)(?![\w-])', tag) and 'type="checkbox"' not in tag and 'type="radio"' not in tag:
+                odd.append(f'{f.name}: {tag[:80]}')
+    check('U25 ช่องกรอก/ตัวเลือก/ปุ่มไม่กำหนดความสูงหรือรัศมีขอบเอง (ใช้ค่ากลางของระบบ)', not odd, '; '.join(odd[:4]))
+    import shutil, subprocess as sp
+    has_pw = shutil.which('node') and sp.run(['node', '-e', "require('playwright')"], capture_output=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()}).returncode == 0
+    if has_pw:
+        t0 = q("SELECT id FROM temples ORDER BY id LIMIT 1")
+        js = """const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+        await p.goto('%s/login.php');await p.fill('input[name=username]','admin');await p.fill('input[name=password]','Test12345pw');await p.click('form button');await p.waitForLoadState('networkidle');
+        const out={};for(const pg of ['/accounts.php?temple=%s','/funds.php?temple=%s','/assets.php?temple=%s&new=1']){await p.goto('%s'+pg);await p.waitForLoadState('networkidle');
+        const r=await p.evaluate(()=>{const o=[];document.querySelectorAll('main input:not([type=checkbox]):not([type=radio]):not([type=hidden]),main select,main .btn:not(.btn-sm)').forEach(e=>{if(!e.offsetParent)return;const c=getComputedStyle(e);o.push(Math.round(e.getBoundingClientRect().height)+'/'+c.borderTopLeftRadius)});return [...new Set(o)]});out[pg]=r}
+        console.log(JSON.stringify(out));await b.close()})()""" % (base, t0, t0, t0, base)
+        r = sp.run(['node', '-e', js], capture_output=True, text=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()})
+        sizes = {x for v in __import__('json').loads(r.stdout.strip().splitlines()[-1]).values() for x in v} if r.returncode == 0 else {'error'}
+        check('U26 ในเบราว์เซอร์จริง ช่องกรอก/ตัวเลือก/ปุ่มทุกตัวสูง 44px และขอบมน 12px เท่ากัน', sizes == {'44/12px'}, f'{sizes} {r.stderr[-200:]}')
+    else:
+        check('U26 (ข้าม: ไม่มี Node/Playwright ในเครื่องนี้) ตรวจขนาดตัวควบคุมในเบราว์เซอร์จริง', True)
+
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================
     today = date.today()
     be = today.year + 543
