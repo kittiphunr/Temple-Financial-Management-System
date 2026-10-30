@@ -2,6 +2,9 @@
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/stats.php';
 $u = require_login();
+if ($u['role'] === 'province') {   // เจ้าคณะจังหวัดดูข้อมูลได้อย่างเดียว
+    redirect('dashboard.php');
+}
 
 $type = ($_GET['type'] ?? 'income') === 'expense' ? 'expense' : 'income';
 $label = $type === 'income' ? 'รายรับ' : 'รายจ่าย';
@@ -111,7 +114,9 @@ function temple_options(array $groups, int $sel): string
     return $h;
 }
 ?>
-<h2>บัญชี<?= $label ?></h2>
+<?php $lhTemple = $fTemple ?: ($u['role'] === 'temple' ? (int)$u['temple_id'] : 0); ?>
+<?= $lhTemple ? letterhead($pdo, $lhTemple, 0, 'บัญชี' . $label, 'ปี พ.ศ. ' . $year, true) : '' ?>
+<h2 class="print:hidden">บัญชี<?= $label ?></h2>
 
 <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:hidden">
   <h3><?= $edit ? "แก้ไขรายการ$label" : "เพิ่มรายการ$label" ?></h3>

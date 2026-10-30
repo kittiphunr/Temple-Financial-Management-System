@@ -185,7 +185,7 @@ def free_port():
 
 
 # ---------- แอป (สำเนาชั่วคราว + php -S) ----------
-_IGNORED = {'.git', 'node_modules', 'tests', 'config.local.php', 'installed.lock', 'mail.log'}
+_IGNORED = {'.git', 'node_modules', 'tests', 'config.local.php', 'installed.lock', 'mail.log', 'app.key'}
 
 
 def _ignore(_dir, names):
@@ -284,17 +284,28 @@ class Client:
         data['csrf'] = self.csrf(page or path)
         return self.req(path, data)
 
-    def upload(self, path, fields, filename, content, page=None):
-        """POST แบบ multipart (ไฟล์ CSV) ใช้ชื่อฟิลด์ 'csv'"""
+    def upload(self, path, fields, filename, content, page=None, field='csv', content_type='text/csv'):
+        """POST แบบ multipart พร้อมไฟล์ 1 ไฟล์ (ชื่อฟิลด์ไฟล์เริ่มต้น 'csv'; รูป: field='logo'/'photo')
+        filename=None = ไม่แนบไฟล์ (ส่งเฉพาะฟิลด์ข้อความ)"""
         fields = dict(fields)
         fields['csrf'] = self.csrf(page or path)
         bd = uuid.uuid4().hex
         body = b''
         for k, v in fields.items():
             body += f'--{bd}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode()
-        body += (f'--{bd}\r\nContent-Disposition: form-data; name="csv"; filename="{filename}"\r\n'
-                 f'Content-Type: text/csv\r\n\r\n').encode() + content + f'\r\n--{bd}--\r\n'.encode()
+        if filename is not None:
+            body += (f'--{bd}\r\nContent-Disposition: form-data; name="{field}"; filename="{filename}"\r\n'
+                     f'Content-Type: {content_type}\r\n\r\n').encode() + content + b'\r\n'
+        body += f'--{bd}--\r\n'.encode()
         return self.req(path, raw=body, headers={'Content-Type': 'multipart/form-data; boundary=' + bd})
+
+    def raw(self, path):
+        """GET แบบไบนารี (รูป) -> (รหัส, headers, bytes)"""
+        try:
+            resp = self.opener.open(urllib.request.Request(self.base + path))
+            return resp.status, resp.headers, resp.read()
+        except urllib.error.HTTPError as e:
+            return e.code, e.headers, e.read()
 
 
 # ---------- ตัวช่วยอื่น ----------
@@ -316,3 +327,31 @@ def age_otps(q, where='1=1'):
 
 def hash_password(app, password):
     return app.php('-r', f'echo password_hash({json.dumps(password)}, PASSWORD_DEFAULT);').stdout.strip()
+
+
+# ---------- ข้อมูลทดสอบ ----------
+def thai_id(prefix12):
+    """เลขบัตรประชาชน 13 หลักที่หลักตรวจสอบถูกต้อง จาก 12 หลักแรก"""
+    total = sum(int(d) * (13 - i) for i, d in enumerate(prefix12))
+    return prefix12 + str((11 - total % 11) % 10)
+
+
+def png_bytes(w, h, rgba=(200, 30, 30, 255), extra=b'', noise=False):
+    """สร้าง PNG ถูกต้องด้วย stdlib (noise=True ให้ไฟล์บีบอัดไม่ลง ใช้ทดสอบขนาดใหญ่)"""
+    import struct
+    import zlib
+    row = (lambda: b'\x00' + os.urandom(w * 4)) if noise else (lambda: b'\x00' + bytes(rgba) * w)
+    raw = b''.join(row() for _ in range(h))
+
+    def chunk(t, d):
+        return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'') + extra)
+
+
+def jpeg_bytes(app, w=640, h=800):
+    """สร้าง JPEG ด้วย GD ของ PHP (stdlib ของ Python ไม่มีตัวเข้ารหัส JPEG)"""
+    code = (f'$im=imagecreatetruecolor({w},{h});imagefill($im,0,0,imagecolorallocate($im,30,90,160));'
+            'ob_start();imagejpeg($im,null,90);echo base64_encode(ob_get_clean());')
+    return base64.b64decode(app.php('-r', code).stdout)

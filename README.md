@@ -9,7 +9,14 @@
   แอดมินหลักเลือกอำเภอหรือทั้งจังหวัดได้ เจ้าหน้าที่อำเภอเห็นเฉพาะอำเภอตน แอดมินวัดเห็นเฉพาะวัดตน
 - สรุปภาพรวมรายปี (พ.ศ.) รายเดือน รายหมวด รายวัด จัดกลุ่มตามอำเภอ
 - พิมพ์รายงาน / บันทึกเป็น PDF ผ่านเบราว์เซอร์ และส่งออก CSV (เปิดด้วย Excel ได้)
-- บทบาทผู้ใช้: `admin` (ทุกวัด), `district` (เฉพาะอำเภอ), `temple` (เฉพาะวัดตนเอง)
+- บทบาทผู้ใช้: `admin` แอดมินหลัก (ทุกวัด), `province` เจ้าคณะจังหวัด (ดูได้ทั้งจังหวัด อ่านอย่างเดียว), `district` แอดมินอำเภอ (เฉพาะอำเภอ), `temple` แอดมินวัด (เฉพาะวัดตนเอง)
+- **โควตาผู้ใช้ระดับจังหวัด**: แอดมินอำเภอ (1 คน/อำเภอ) + แอดมินหลัก + เจ้าคณะจังหวัด = จำนวนอำเภอ + 2 (แพร่ 8 อำเภอ = **10 คน**) คำนวณจากตาราง `districts` จึงใช้กับจังหวัดอื่นได้เมื่อเปลี่ยนรายการอำเภอ — จัดการที่ จัดการระบบ → ผู้ใช้
+- **โลโก้**: แอดมินวัดอัปโหลดโลโก้วัดที่ "ข้อมูลวัดของฉัน" (ระบบเตือนด้วยแบนเนอร์จนกว่าจะใส่); โลโก้อำเภอเป็นหน้าที่ของแอดมินหลักที่ จัดการระบบ → โลโก้อำเภอ ใช้เป็นหัวกระดาษและช่องลงนามในรายงาน/เอกสารพิมพ์
+- **บุคลากรวัด** (`people.php`): เจ้าอาวาส พระลูกวัด ไวยาวัจกร เพิ่มได้ไม่จำกัด พร้อมเลขบัตรประชาชน ที่อยู่ตามภูมิลำเนาเดิม รูปถ่าย เบอร์โทร
+  - เลขบัตรประชาชนเข้ารหัส (libsodium) ตรวจหลักตรวจสอบ แสดงแบบปิดบัง ดูเลขเต็มได้เฉพาะแอดมินหลักและแอดมินวัดนั้น (บันทึก audit); แอดมินอำเภอ/เจ้าคณะจังหวัดเห็นเฉพาะข้อมูลที่ปิดบัง ไม่เห็นที่อยู่
+  - รูปเก็บในฐานข้อมูล แปลงใหม่ด้วย GD (ตัด EXIF) และเสิร์ฟผ่าน `media.php` ที่ตรวจสิทธิ์เท่านั้น
+  - ต้องติ๊กยืนยันว่าได้รับความยินยอมจากเจ้าของข้อมูล (PDPA) ก่อนเพิ่มบุคคล
+- **ต้องสำรอง `storage/app.key`** (กุญแจเข้ารหัสเลขบัตร) ไว้ที่ปลอดภัย — ถ้าหาย เลขบัตรที่บันทึกไว้จะถอดรหัสไม่ได้ (หรือกำหนดเองผ่าน config `app_key` / env `TFMS_APP_KEY`) ต้องเปิดส่วนขยาย PHP `sodium`, `gd`, `fileinfo`
 - ระบบจัดการ (`admin/`): วัด, นำเข้ารายชื่อวัด CSV, ผู้ใช้, หมวดบัญชี, ประวัติการใช้งาน (audit log)
 - ความปลอดภัย: PDO prepared statements, CSRF token, `password_hash`, จำกัดสิทธิ์ตามขอบเขต, กัน CSV formula injection
 
@@ -73,7 +80,8 @@ TFMS_MAIL_FROM=no-reply@your-domain.org
 (มี `.htaccess` สำหรับ Apache แล้ว; Nginx ให้ `deny all` เอง)
 
 ### ฐานข้อมูลที่ติดตั้งไว้ก่อนมีฟีเจอร์นี้
-รัน `sql/migrations/2026_temple_accounts.sql` และ `sql/migrations/2026_must_change_password.sql` (บัญชีวัดที่มีอยู่จะถูกขอให้ตั้งรหัสผ่านใหม่หนึ่งครั้ง) แล้วกดปุ่ม "สร้างบัญชีให้วัดที่ยังไม่มี" ที่ จัดการระบบ → บัญชีวัด
+รัน `sql/migrations/2026_temple_accounts.sql` และ `sql/migrations/2026_must_change_password.sql` (บัญชีวัดที่มีอยู่จะถูกขอให้ตั้งรหัสผ่านใหม่หนึ่งครั้ง)
+ส่วนโลโก้/บุคลากร/โควตาผู้ใช้ รัน `sql/migrations/2026_logos_people_staff.sql` (ตรวจก่อนว่าไม่มีแอดมินอำเภอซ้ำในอำเภอเดียวกัน) แล้วกดปุ่ม "สร้างบัญชีให้วัดที่ยังไม่มี" ที่ จัดการระบบ → บัญชีวัด
 
 ## การทดสอบ
 ```bash
@@ -116,9 +124,10 @@ npm run build:css      # หรือ npm run watch:css ระหว่างพ
 ```
 install.php (ตัวช่วยติดตั้ง)  setup.php (ติดตั้งผ่าน CLI)
 index.php  dashboard.php  login.php  logout.php  temples.php  transactions.php  reports.php
-admin/     index, temples, temple_accounts, import, users, categories, audit
+admin/     index, temples, temple_accounts, districts (โลโก้), import, users (โควตา), categories, audit
+profile.php (ข้อมูล/โลโก้วัด)  people.php  person.php (บุคลากร)  media.php (เสิร์ฟรูปแบบตรวจสิทธิ์)
 login.php  login_verify.php (2FA)  account.php (เปลี่ยนรหัสผ่านของตนเอง)
-includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, mailer, stats, dashboard_ui, header, footer
+includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, mailer, crypto, images, people, staff, letterhead, stats, dashboard_ui, header, footer
 storage/   ไฟล์ที่ห้ามเข้าถึงจากเว็บ (รหัสผ่านเริ่มต้น, mail.log)
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
 sql/       schema.sql, seed.sql, migrations/      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)

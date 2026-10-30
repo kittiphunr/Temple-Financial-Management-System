@@ -34,7 +34,7 @@ $features = [
 
 <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($features as [$ttl, $desc, $href, $iconCls, $icon]): ?>
-  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? $href : 'login.php' ?>">
+  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? (($u['role'] === 'province' && str_starts_with($href, 'transactions')) ? 'dashboard.php' : $href) : 'login.php' ?>">
     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold <?= $iconCls ?>"><?= $icon ?></span>
     <span>
       <span class="block font-bold text-brand-700"><?= e($ttl) ?></span>

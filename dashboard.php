@@ -10,7 +10,7 @@ $districts = $pdo->query('SELECT id, name FROM districts ORDER BY sort_order')->
 $byId = array_column($districts, 'name', 'id');
 
 // สิทธิ์: แอดมินหลักเลือกอำเภอ/ทั้งจังหวัดได้ — เจ้าหน้าที่อำเภอและแอดมินวัดเห็นได้เฉพาะอำเภอของตน
-if ($u['role'] === 'admin') {
+if (in_array($u['role'], ['admin', 'province'], true)) {
     $dist = (int)($_GET['district'] ?? 0);
     if (!isset($byId[$dist])) {
         $dist = 0;
@@ -42,6 +42,10 @@ $q = fn(array $o = []) => http_build_query(array_merge(['district' => $dist, 'ye
 $pageTitle = $title;
 require __DIR__ . '/includes/header.php';
 ?>
+<?php
+$lhTemple = $u['role'] === 'temple' ? (int)$u['temple_id'] : 0;
+echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพรวมบัญชีรายรับ-รายจ่าย', 'ปี พ.ศ. ' . $year, true);
+?>
 <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0"><?= e($title) ?> <span class="text-xl font-semibold text-stone-600">(ปี พ.ศ. <?= $year ?>)</span></h2>
@@ -59,7 +63,7 @@ require __DIR__ . '/includes/header.php';
   </form>
 </div>
 
-<?php if ($u['role'] === 'admin'): ?>
+<?php if (in_array($u['role'], ['admin', 'province'], true)): ?>
 <nav class="mb-4 flex flex-wrap gap-1.5 print:hidden" aria-label="เลือกอำเภอ">
   <?php foreach ([0 => 'ทั้งจังหวัด'] + $byId as $id => $nm):
       $on = $id === $dist; ?>

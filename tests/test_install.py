@@ -203,7 +203,7 @@ def _run(db, R, smtp, wiz, full, app):
         check(f'F6 เปลี่ยนรหัสไม่ผ่าน: {label}', msg in n_ and q(f"SELECT must_change_password FROM users WHERE username='{u}'") == '1', n_)
     new_pw = 'MyOwnPassw0rd#1'
     c, loc, b = t.post('/account.php', {'current_password': p, 'new_password': new_pw, 'confirm_password': new_pw}, '/account.php')
-    check('F7 ตั้งรหัสผ่านใหม่สำเร็จ → ไปหน้าแรก', c == 302 and loc == 'index.php')
+    check('F7 ตั้งรหัสผ่านใหม่สำเร็จ → ไปหน้าใส่โลโก้วัดต่อ (ยังไม่มีโลโก้)', c == 302 and loc == 'profile.php#logo', f'{c} {loc}')
     check('F7b ธงบังคับถูกล้างในฐานข้อมูล', q(f"SELECT must_change_password FROM users WHERE username='{u}'") == '0')
     for path in ['/index.php', '/transactions.php?type=income', '/reports.php']:
         check(f'F8 หลังเปลี่ยนรหัส {path} ใช้งานได้', t.req(path)[0] == 200)

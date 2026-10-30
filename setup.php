@@ -10,6 +10,8 @@ require __DIR__ . '/includes/install_lib.php';
 require __DIR__ . '/includes/mailer.php';
 require __DIR__ . '/includes/accounts.php';
 require __DIR__ . '/includes/temple_import.php';
+require __DIR__ . '/includes/crypto.php';
+$CONFIG = $cfg;   // crypto.php อ่านค่ากุญแจจากตัวแปร $CONFIG
 
 $pw = $argv[1] ?? bin2hex(random_bytes(6));
 if (strlen($pw) < 8) {
@@ -51,4 +53,6 @@ $st = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role
     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)");
 $st->execute([password_hash($pw, PASSWORD_DEFAULT)]);
 mark_installed();
+app_key();
+echo "กุญแจเข้ารหัสข้อมูลส่วนบุคคลอยู่ที่ storage/app.key — สำรองไว้ในที่ปลอดภัย (ถ้าสูญหายจะถอดรหัสเลขบัตรประชาชนไม่ได้)\n";
 echo "สร้างผู้ใช้ admin แล้ว รหัสผ่าน: $pw\n(กรุณาเปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ)\n";

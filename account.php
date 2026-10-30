@@ -41,6 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit($forced ? 'first_password_change' : 'change_password', 'user', (int)$me['id']);
         $_SESSION['user']['must_change'] = false;
         if ($forced) {
+            // แอดมินวัดที่ยังไม่ได้ใส่โลโก้ → พาไปใส่ต่อทันที (จำเป็นสำหรับการออกเอกสาร)
+            if ($me['role'] === 'temple' && !temple_checklist($pdo, (int)$me['temple_id'])['logo']) {
+                flash('ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว ขั้นต่อไป: ใส่โลโก้วัดเพื่อใช้ในเอกสารที่ออกจากระบบ');
+                redirect('profile.php#logo');
+            }
             flash('ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว เริ่มใช้งานระบบได้เลย');
             redirect('index.php');
         }
@@ -49,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('account.php');
 }
 
-$roleTh = ['admin' => 'ผู้ดูแลระบบหลัก', 'district' => 'เจ้าหน้าที่อำเภอ', 'temple' => 'ผู้ดูแลวัด'];
+$roleTh = ['admin' => 'ผู้ดูแลระบบหลัก', 'province' => 'เจ้าคณะจังหวัด (ดูข้อมูลอย่างเดียว)', 'district' => 'แอดมินประจำอำเภอ', 'temple' => 'ผู้ดูแลวัด'];
 $pageTitle = $forced ? 'ตั้งรหัสผ่านใหม่' : 'บัญชีของฉัน';
 require __DIR__ . '/includes/header.php';
 ?>
