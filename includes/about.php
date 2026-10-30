@@ -44,7 +44,10 @@ function about_html(): string
         . '</dl>'
         . '<h4>เกี่ยวกับเว็บไซต์</h4>'
         . '<p>' . e($CONFIG['app_name']) . ' ' . e(app_subtitle()) . ' — บันทึก สรุป และออกเอกสารบัญชีของวัดทุกแห่งในจังหวัด' . e(province_name()) . ' ในที่เดียว</p>'
-        . '<ul>' . $li . '</ul></div>';
+        . '<ul>' . $li . '</ul>'
+        . '<h4>ฟอนต์และสัญญาอนุญาต</h4>'
+        . '<p>อนุโมทนาบัตรใช้ฟอนต์ <strong>JS Chanok</strong> ซึ่งเผยแพร่ภายใต้สัญญาอนุญาต GNU General Public License เวอร์ชัน 2 (GPL v2) — '
+        . '<a href="' . e(BASE) . 'assets/fonts/GPL-License-JS.pdf" target="_blank" rel="noopener noreferrer">อ่านข้อความสัญญาอนุญาตของฟอนต์ (PDF)</a></p></div>';
 }
 
 /** ข้อความแจ้งเตือนที่แสดงด้วย SweetAlert2 (ไม่มี JS จะเป็นแถบข้อความบนหน้า) type: ok | err | info */

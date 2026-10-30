@@ -60,7 +60,9 @@ def _run(R, q, app):
     check('U9 หน้าต่างเกี่ยวกับมีผู้พัฒนา อีเมล โทร GitHub เว็บไซต์ และคำอธิบายเว็บไซต์',
           all(x in tpl for x in ('ผู้พัฒนา', 'Kittiphun Ruttanakorn', 'mailto:kittiphun.rut@mcu.ac.th', 'tel:0899554194', 'github.com/kittiphunr', 'kittiphunr.github.io', 'เกี่ยวกับเว็บไซต์')))
     check('U9b หัวหน้าต่างเป็นชื่อระบบและตราคณะสงฆ์จังหวัดแพร่ (ไม่ใช่ชื่อหน่วยงานของผู้พัฒนา)', 'เกี่ยวกับ ระบบบัญชีรายรับ-รายจ่ายวัด' in tpl and 'assets/img/logo.svg' in tpl and 'เกี่ยวกับ มหาวิทยาลัย' not in tpl)
-    check('U10 ลิงก์ภายนอกเปิดแท็บใหม่แบบปลอดภัย (noopener noreferrer)', len(re.findall(r'target="_blank" rel="noopener noreferrer"', tpl)) == 2)
+    check('U10 ลิงก์ภายนอกเปิดแท็บใหม่แบบปลอดภัย (noopener noreferrer)', len(re.findall(r'target="_blank" rel="noopener noreferrer"', tpl)) == 3)
+    check('U10b หน้าต่างเกี่ยวกับระบุฟอนต์ JS Chanok + GPL v2 และลิงก์ไฟล์สัญญาอนุญาต',
+          'JS Chanok' in tpl and 'GPL v2' in tpl and 'assets/fonts/GPL-License-JS.pdf' in tpl and Client(base).raw('/assets/fonts/GPL-License-JS.pdf')[0] == 200)
     check('U11 หน้าสาธารณะ (ก่อนเข้าสู่ระบบ) ก็มีหน้าต่างเกี่ยวกับ', 'id="about-template"' in Client(base).req('/')[2] or 'id="about-template"' in Client(base).req('/login.php')[2])
 
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================

@@ -45,7 +45,7 @@ for bad in config.local.php storage/app.key storage/installed.lock tests tools n
   [ -e "$OUT/$bad" ] && { echo "พบไฟล์ที่ไม่ควรอยู่ในชุดติดตั้ง: $bad" >&2; fail=1; }
 done
 ls "$OUT"/storage/*.csv "$OUT"/storage/*.log >/dev/null 2>&1 && { echo "พบไฟล์ข้อมูลใน storage/" >&2; fail=1; }
-[ -s "$OUT/assets/vendor/sweetalert2.all.min.js" ] && [ -s "$OUT/assets/js/app.js" ] && [ -s "$OUT/assets/fonts/JS-Chanok-Normal.ttf" ] || { echo "ไม่พบ assets/vendor/sweetalert2.all.min.js หรือ assets/js/app.js" >&2; fail=1; }
+[ -s "$OUT/assets/vendor/sweetalert2.all.min.js" ] && [ -s "$OUT/assets/js/app.js" ] && [ -s "$OUT/assets/fonts/JS-Chanok-Normal.ttf" ] && [ -s "$OUT/assets/fonts/GPL-License-JS.pdf" ] || { echo "ไม่พบ assets/vendor/sweetalert2.all.min.js หรือ assets/js/app.js" >&2; fail=1; }
 [ -s "$OUT/assets/css/tailwind.css" ] || { echo "ไม่พบ assets/css/tailwind.css (รัน npm run build:css ก่อน)" >&2; fail=1; }
 [ "$fail" = 0 ] || { echo "สร้างชุดติดตั้งไม่สำเร็จ" >&2; exit 1; }
 
