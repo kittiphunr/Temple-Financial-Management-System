@@ -107,7 +107,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <?php if ($detail): $txns = asset_transactions($pdo, (int)$detail['id']); ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= e($detail['name']) ?> · <?= e($temple['name']) ?></h2>
-  <span class="flex gap-2"><?php if ($canEdit): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>">แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>">กลับ</a></span></div>
+  <span class="flex gap-2"><?php if ($canEdit): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>"><?= icon('edit-2') ?> แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
 <div class="grid gap-4 lg:grid-cols-[1fr_16rem]">
   <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
     <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -159,7 +159,7 @@ require __DIR__ . '/includes/header.php';
 </form>
 <?php else: ?>
 <div class="flex flex-wrap items-center justify-between gap-2 print:hidden"><h2>ทะเบียนทรัพย์สิน<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
-  <?php if ($canEdit): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>">+ เพิ่มทรัพย์สิน</a><?php endif; ?></div>
+  <?php if ($canEdit): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>"><?= icon('plus') ?> เพิ่มทรัพย์สิน</a><?php endif; ?></div>
 <?php if ($u['role'] !== 'temple'): ?>
 <form method="get" class="my-3 flex flex-wrap items-end gap-3 print:hidden">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
@@ -177,8 +177,8 @@ require __DIR__ . '/includes/header.php';
   <div><label>สภาพ</label><select name="status"><option value="">ทั้งหมด</option><?php foreach (ASSET_STATUS as $k => $lab): ?><option value="<?= $k ?>" <?= $filters['status'] === $k ? 'selected' : '' ?>><?= e($lab) ?></option><?php endforeach; ?></select></div>
   <div><label>ค้นหา</label><input name="q" value="<?= e($filters['q']) ?>" placeholder="ชื่อ/เลขทะเบียน/ผู้ดูแล"></div>
   <button class="btn" type="submit">แสดง</button>
-  <a class="btn btn-outline" href="<?= e($url(array_filter($filters) + ['export' => 'csv'])) ?>">ส่งออก CSV</a>
-  <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ทะเบียน</button>
+  <a class="btn btn-outline" href="<?= e($url(array_filter($filters) + ['export' => 'csv'])) ?>"><?= icon('download') ?> ส่งออก CSV</a>
+  <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ทะเบียน</button>
 </form>
 <?php if ($sumByCat): ?><div class="mb-3 flex flex-wrap gap-2 text-sm"><?php foreach ($sumByCat as $k => $s): ?><span class="rounded-lg border border-stone-200 bg-white px-3 py-1"><?= e(ASSET_CATEGORIES[$k]) ?> <strong><?= $s['n'] ?></strong> รายการ · <?= money($s['v']) ?> บาท</span><?php endforeach; ?>
   <span class="rounded-lg border border-gold-500 bg-white px-3 py-1">รวม <strong><?= array_sum(array_column($sumByCat, 'n')) ?></strong> รายการ · <?= money(array_sum(array_column($sumByCat, 'v'))) ?> บาท</span></div><?php endif; ?>

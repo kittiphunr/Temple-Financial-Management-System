@@ -66,7 +66,7 @@ require __DIR__ . '/includes/header.php';
     <option value="3" <?= $form === '3' ? 'selected' : '' ?>>แบบที่ 3 รายงานเงินคงเหลือ</option>
   </select></div>
   <button class="btn" type="submit">แสดง</button>
-  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button><?php endif; ?>
+  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ / บันทึก PDF</button><?php endif; ?>
 </form>
 <?php
 if (!$temple) {
@@ -86,7 +86,7 @@ if (!$temple) {
         $closed = $rep && !empty($rep['closed_at']);
         $evs = $closed || ($rep && month_close_available()) ? report_close_events($pdo, $tid, $year, $month) : [];
         if ($closed) {
-            echo '<div class="basis-full text-sm"><span class="badge badge-ok">🔒 ปิดงวดแล้ว</span> <span class="text-stone-600">' . e(th_datetime($rep['closed_at'])) . ' — แก้ไข/เพิ่ม/ลบรายการของเดือนนี้ไม่ได้</span></div>';
+            echo '<div class="basis-full text-sm"><span class="badge badge-ok">' . icon('lock') . ' ปิดงวดแล้ว</span> <span class="text-stone-600">' . e(th_datetime($rep['closed_at'])) . ' — แก้ไข/เพิ่ม/ลบรายการของเดือนนี้ไม่ได้</span></div>';
         }
         if ($canSubmit && $state !== 'future' && !$closed) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="' . e($rep ? 'ส่งรายงานเดือนนี้ใหม่?' : ($now['count'] === 0 ? 'เดือนนี้ไม่มีรายการ ยืนยันส่งรายงาน (ไม่มีรายการ)?' : 'ยืนยันส่งรายงานประจำเดือนนี้?')) . '">'
@@ -97,7 +97,7 @@ if (!$temple) {
         if ($canClose && !$closed && $state === 'ok') {
             echo '<form method="post" data-confirm="ปิดงวดเดือนนี้? หลังปิดแล้วแก้ไข/เพิ่ม/ลบรายการของเดือนนี้ไม่ได้ จนกว่าแอดมินหลักหรือแอดมินอำเภอจะเปิดงวด">' . csrf_field()
                 . '<input type="hidden" name="action" value="close_month"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
-                . '<button class="btn btn-sm btn-outline">🔒 ปิดงวดเดือนนี้</button></form>';
+                . '<button class="btn btn-sm btn-outline">' . icon('lock') . ' ปิดงวดเดือนนี้</button></form>';
         }
         if ($canReopen && $closed) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="เปิดงวดเดือนนี้ให้แก้ไขรายการได้?">' . csrf_field()

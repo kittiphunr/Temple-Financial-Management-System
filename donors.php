@@ -58,7 +58,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <?php if ($detail): $rcs = donor_receipts($pdo, (int)$detail['id']); $sum = 0.0; ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2><?= e($detail['name']) ?> · <?= e($temple['name']) ?></h2>
-  <span class="flex gap-2"><?php if (!$detail['withdrawn_at']): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>">แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>">กลับ</a></span></div>
+  <span class="flex gap-2"><?php if (!$detail['withdrawn_at']): ?><a class="btn btn-outline btn-sm" href="<?= e($url(['edit' => (int)$detail['id']])) ?>"><?= icon('edit-2') ?> แก้ไข</a><?php endif; ?><a class="btn btn-outline btn-sm" href="<?= e($url()) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
 <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <?php if ($detail['withdrawn_at']): ?>
     <p class="rounded-lg border border-stone-300 bg-stone-50 p-3">ผู้บริจาคถอนความยินยอมเมื่อ <?= e(th_date(substr($detail['withdrawn_at'], 0, 10))) ?> — ข้อมูลส่วนบุคคลในทะเบียนถูกลบแล้ว (ใบอนุโมทนาที่ออกไปแล้วยังเก็บสำเนาตามหลักฐานทางบัญชี)</p>
@@ -102,7 +102,7 @@ require __DIR__ . '/includes/header.php';
 </form>
 <?php else: ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>ทะเบียนผู้บริจาค<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
-  <?php if ($temple): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>">+ เพิ่มผู้บริจาค</a><?php endif; ?></div>
+  <?php if ($temple): ?><a class="btn btn-sm" href="<?= e($url(['new' => 1])) ?>"><?= icon('plus') ?> เพิ่มผู้บริจาค</a><?php endif; ?></div>
 <?php if ($u['role'] !== 'temple'): ?>
 <form method="get" class="my-3 flex flex-wrap items-end gap-3">
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>

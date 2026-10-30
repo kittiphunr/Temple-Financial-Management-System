@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('create', 'transaction', (int)$pdo->lastInsertId(), "$type $amount");
         }
         $bw = $type === 'expense' ? budget_warning($pdo, $templeId, $catId, $date) : '';
-        flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — ⚠️ $bw" : ''));
+        flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — คำเตือน: $bw" : ''));
         redirect($backTo ?? "transactions.php?type=$type");
     }
 }
@@ -223,7 +223,7 @@ function temple_options(array $groups, int $sel): string
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <div><label>วัด</label><select name="temple"><option value="0">ทุกวัด</option><?= temple_options($groups, $fTemple) ?></select></div>
   <button class="btn" type="submit">แสดง</button>
-  <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์</button>
+  <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
 </form>
 
 <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
@@ -232,22 +232,22 @@ function temple_options(array $groups, int $sel): string
   <tr>
     <td><?= e(th_date($r['txn_date'])) ?></td>
     <td><?= e($r['temple']) ?><br><small class="text-stone-500">อ.<?= e($r['district']) ?></small></td>
-    <td><?= e($r['category']) ?><?= !empty($r['fund_name']) ? '<br><small class="text-stone-500">🏛️ ' . e($r['fund_name']) . '</small>' : '' ?><?= !empty($r['asset_name']) ? '<br><small class="text-stone-500">🛠️ ' . e($r['asset_name']) . ' (' . e(ASSET_KINDS[$r['asset_kind']] ?? '') . ')</small>' : '' ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
+    <td><?= e($r['category']) ?><?= !empty($r['fund_name']) ? '<br><small class="text-stone-500">' . icon('layers') . ' ' . e($r['fund_name']) . '</small>' : '' ?><?= !empty($r['asset_name']) ? '<br><small class="text-stone-500">' . icon('tool') . ' ' . e($r['asset_name']) . ' (' . e(ASSET_KINDS[$r['asset_kind']] ?? '') . ')</small>' : '' ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
       <?php if (attachments_available()): ?>
-        <a class="btn btn-sm btn-outline" href="attachments.php?txn=<?= (int)$r['id'] ?>" title="หลักฐานแนบ (ใบเสร็จ/สลิป)">📎<?= $r['att_n'] ? ' ' . (int)$r['att_n'] : '' ?></a>
+        <a class="btn btn-sm btn-outline" href="attachments.php?txn=<?= (int)$r['id'] ?>" title="หลักฐานแนบ (ใบเสร็จ/สลิป)" aria-label="หลักฐานแนบ"><?= icon('paperclip') ?><?= $r['att_n'] ? ' ' . (int)$r['att_n'] : '' ?></a>
       <?php endif; ?>
       <?php if ($type === 'income' && $r['is_donation']): ?>
         <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
       <?php endif; ?>
       <?php if (!empty($r['locked'])): ?>
-        <span class="badge badge-mute" title="ปิดงวดแล้ว แก้ไขไม่ได้ (แอดมินหลัก/อำเภอเปิดงวดได้ที่หน้ารายงานประจำเดือน)">🔒 ปิดงวด</span>
+        <span class="badge badge-mute" title="ปิดงวดแล้ว แก้ไขไม่ได้ (แอดมินหลัก/อำเภอเปิดงวดได้ที่หน้ารายงานประจำเดือน)"><?= icon('lock') ?> ปิดงวด</span>
       <?php else: ?>
-      <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
+      <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>"><?= icon('edit-2') ?> แก้ไข</a>
       <form method="post" class="inline" data-confirm="ยืนยันการลบรายการนี้?">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <button class="btn btn-sm btn-danger">ลบ</button></form>
+        <button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form>
       <?php endif; ?>
     </td>
   </tr>

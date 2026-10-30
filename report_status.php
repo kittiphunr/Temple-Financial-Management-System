@@ -73,7 +73,7 @@ require __DIR__ . '/includes/header.php';
     <h2 class="!my-0">ติดตามการส่งรายงานประจำเดือน</h2>
     <p class="mt-1 text-sm text-stone-600"><?= e(TH_MONTHS[$month]) ?> พ.ศ. <?= $year ?> · กำหนดส่งภายใน <?= e(th_date($due)) ?></p>
   </div>
-  <a class="btn btn-outline btn-sm" href="<?= e($self . '&export=csv') ?>">ส่งออก CSV (Excel)</a>
+  <a class="btn btn-outline btn-sm" href="<?= e($self . '&export=csv') ?>"><?= icon('download') ?> ส่งออก CSV (Excel)</a>
 </div>
 
 <form method="get" class="mb-4 flex flex-wrap items-end gap-3">
@@ -95,7 +95,7 @@ require __DIR__ . '/includes/header.php';
   <div class="rounded-2xl border border-stone-200 bg-white p-4"><div class="text-sm text-stone-600">ยังไม่ส่ง</div><div class="text-3xl font-bold"><?= $sum['unsent'] ?> <span class="text-base font-semibold">วัด</span></div></div>
   <div class="rounded-2xl border border-red-200 bg-red-50 p-4"><div class="text-sm text-red-900">เกินกำหนด</div><div class="text-3xl font-bold text-red-800"><?= $sum['late'] ?> <span class="text-base font-semibold">วัด</span></div></div>
   <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm text-amber-900">แก้ไขหลังส่ง</div><div class="text-3xl font-bold text-amber-800"><?= $sum['changed'] ?> <span class="text-base font-semibold">วัด</span></div></div>
-  <?php if (month_close_available()): ?><div class="rounded-2xl border border-stone-200 bg-stone-50 p-4"><div class="text-sm text-stone-700">🔒 ปิดงวดแล้ว</div><div class="text-3xl font-bold text-stone-800"><?= $sum['closed'] ?> <span class="text-base font-semibold">วัด</span></div></div><?php endif; ?>
+  <?php if (month_close_available()): ?><div class="rounded-2xl border border-stone-200 bg-stone-50 p-4"><div class="text-sm text-stone-700"><?= icon('lock') ?> ปิดงวดแล้ว</div><div class="text-3xl font-bold text-stone-800"><?= $sum['closed'] ?> <span class="text-base font-semibold">วัด</span></div></div><?php endif; ?>
 </div>
 
 <?php if ($canRemind || $u['role'] === 'admin'): ?>
@@ -121,7 +121,7 @@ require __DIR__ . '/includes/header.php';
   <tr>
     <td><?= e($r['district']) ?></td>
     <td class="font-semibold"><?= e($r['name']) ?><?php if ($r['subdistrict']): ?><div class="text-xs font-normal text-stone-500"><?= e(abbr_subdistrict()) ?><?= e($r['subdistrict']) ?></div><?php endif; ?></td>
-    <td><span class="badge <?= $cls ?>"><?= e($lab) ?></span><?php if (!empty($r['closed_at'])): ?> <span class="badge badge-mute" title="ปิดงวดเมื่อ <?= e(th_datetime($r['closed_at'])) ?>">🔒 ปิดงวด</span><?php endif; ?><?php if ((int)($r['revision'] ?? 0) > 1): ?><div class="text-xs text-stone-500">ส่งครั้งที่ <?= (int)$r['revision'] ?></div><?php endif; ?></td>
+    <td><span class="badge <?= $cls ?>"><?= e($lab) ?></span><?php if (!empty($r['closed_at'])): ?> <span class="badge badge-mute" title="ปิดงวดเมื่อ <?= e(th_datetime($r['closed_at'])) ?>"><?= icon('lock') ?> ปิดงวด</span><?php endif; ?><?php if ((int)($r['revision'] ?? 0) > 1): ?><div class="text-xs text-stone-500">ส่งครั้งที่ <?= (int)$r['revision'] ?></div><?php endif; ?></td>
     <td class="whitespace-nowrap text-sm"><?= $r['submitted_at'] ? e(th_datetime($r['submitted_at'])) . '<div class="text-xs text-stone-500">' . e((string)$r['by_name']) . '</div>' : '—' ?></td>
     <td class="text-right"><?= (int)$r['n_count'] ?><?php if ($r['state'] === 'changed'): ?><div class="text-xs text-amber-800">ตอนส่ง <?= (int)$r['r_count'] ?></div><?php endif; ?></td>
     <td class="text-right"><?= money($r['n_income']) ?></td>

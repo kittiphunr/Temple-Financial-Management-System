@@ -53,7 +53,7 @@ $pageTitle = 'หลักฐานแนบรายการ';
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>หลักฐานแนบรายการ</h2>
-  <a class="btn btn-outline btn-sm" href="<?= e($back) ?>">กลับ</a></div>
+  <a class="btn btn-outline btn-sm" href="<?= e($back) ?>"><?= icon('arrow-left') ?> กลับ</a></div>
 <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
   <p><b><?= $x['type'] === 'income' ? 'รายรับ' : 'รายจ่าย' ?></b> · <?= e($x['temple']) ?> · <?= e(th_date($x['txn_date'])) ?> · <?= e($x['category']) ?> · <?= money($x['amount']) ?> บาท</p>
   <?php if ($x['description'] !== ''): ?><p class="text-stone-600"><?= e($x['description']) ?></p><?php endif; ?>
@@ -64,16 +64,16 @@ require __DIR__ . '/includes/header.php';
   <ul class="divide-y divide-stone-100">
   <?php foreach ($list as $a): $pdf = $a['mime'] === 'application/pdf'; ?>
     <li class="flex flex-wrap items-center justify-between gap-2 py-2">
-      <span><?= $pdf ? '📄' : '🖼️' ?> <a class="underline" href="attachment.php?id=<?= (int)$a['id'] ?>" <?= $pdf ? '' : 'target="_blank" rel="noopener"' ?>><?= e($a['filename']) ?></a>
+      <span><?= icon($pdf ? 'file-text' : 'image') ?> <a class="underline" href="attachment.php?id=<?= (int)$a['id'] ?>" <?= $pdf ? '' : 'target="_blank" rel="noopener"' ?>><?= e($a['filename']) ?></a>
         <small class="text-stone-500">(<?= number_format($a['size'] / 1024, 0) ?> KB · <?= e($a['created_at']) ?>)</small></span>
       <?php if ($canEdit && $lock === ''): ?>
-      <form method="post" data-confirm="ยืนยันการลบไฟล์แนบนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="txn" value="<?= $txnId ?>"><input type="hidden" name="aid" value="<?= (int)$a['id'] ?>"><button class="btn btn-sm btn-danger">ลบ</button></form>
+      <form method="post" data-confirm="ยืนยันการลบไฟล์แนบนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="txn" value="<?= $txnId ?>"><input type="hidden" name="aid" value="<?= (int)$a['id'] ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form>
       <?php endif; ?>
     </li>
     <?php if (!$pdf): ?><li class="py-2"><img class="max-h-96 rounded border border-stone-200" alt="<?= e($a['filename']) ?>" src="attachment.php?id=<?= (int)$a['id'] ?>"></li><?php endif; ?>
   <?php endforeach; ?>
   </ul>
-  <?php if ($canEdit && $lock !== ''): ?><p class="mt-3 text-amber-700">🔒 <?= e($lock) ?></p>
+  <?php if ($canEdit && $lock !== ''): ?><p class="mt-3 text-amber-700"><?= icon('lock') ?> <?= e($lock) ?></p>
   <?php elseif ($canEdit && count($list) < ATT_MAX_PER_TXN): ?>
   <form method="post" enctype="multipart/form-data" class="mt-3 flex flex-wrap items-end gap-3">
     <?= csrf_field() ?><input type="hidden" name="action" value="upload"><input type="hidden" name="txn" value="<?= $txnId ?>">

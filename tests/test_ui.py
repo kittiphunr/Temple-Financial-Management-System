@@ -2,9 +2,12 @@
 ทดสอบฝั่งเซิร์ฟเวอร์ (HTML ที่ส่งออก + ไฟล์ที่ต้องโหลด) — พฤติกรรมในเบราว์เซอร์ตรวจด้วยตา"""
 import glob
 import re
+from pathlib import Path
 from datetime import date
 
 from support import App, Client, be_date, notice
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def run(db, R):
@@ -75,6 +78,29 @@ def _run(R, q, app):
     _, _, b3 = Client(base).req('/login.php')
     check('U14 version.json ผิดรูปแบบ/แฝงโค้ดถูกเมินเฉย (ใช้ค่าจาก VERSION)', f'เวอร์ชัน {ver}' in b3 and '<script>' not in re.search(r'<template id="about-template">(.*?)</template>', b3, re.S).group(1))
     (app.dir / 'version.json').unlink()
+
+    # ================= เมนูและไอคอน (Feather Icons) =================
+    sprite = (ROOT / 'assets' / 'vendor' / 'feather-sprite.svg').read_text(encoding='utf-8')
+    have = set(re.findall(r'<symbol id="([a-z0-9-]+)"', sprite))
+    used = set()
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        used |= set(re.findall(r"icon\('([a-z0-9-]+)'", f.read_text(encoding='utf-8')))
+    used |= set(re.findall(r"nav_(?:link|group)\([^)]*?'([a-z0-9-]+)'(?:, [^)]*)?\)", (ROOT / 'includes' / 'header.php').read_text(encoding='utf-8')))
+    check('U15 ไอคอนทุกชื่อที่เรียกใช้ในโค้ดมีอยู่จริงใน Feather sprite', used and used <= have, str(sorted(used - have)))
+    check('U16 ไฟล์ sprite และสัญญาอนุญาต MIT ของ Feather ถูกส่งออกจากเซิร์ฟเวอร์ได้ และมีเครดิต Cole Bemis',
+          g.raw('/assets/vendor/feather-sprite.svg')[0] == 200 and b'Cole Bemis' in g.raw('/assets/vendor/feather.LICENSE')[2] and 'Cole Bemis' in tpl)
+    ad = Client(base)
+    ad.post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
+    _, _, bd = ad.req('/dashboard.php')
+    desk = re.search(r'<nav class="hidden[^>]*>(.*?)</nav>', bd, re.S).group(1)
+    mob = re.search(r'<details class="nav-mobile.*?<nav[^>]*>(.*?)</nav>', bd, re.S).group(1)
+    groups = re.findall(r'<details class="nav-group[^>]*><summary[^>]*>.*?<span>(.*?)</span>', desk, re.S)
+    check('U17 เมนูแอดมินหลักแบ่งเป็นกลุ่ม dropdown (บันทึกบัญชี/การเงิน/รายงาน/ทะเบียน) พร้อมลิงก์เดี่ยว แดชบอร์ด และ จัดการระบบ', groups == ['บันทึกบัญชี', 'การเงิน', 'รายงาน', 'ทะเบียน'] and 'แดชบอร์ด' in desk and 'จัดการระบบ' in desk, str(groups))
+    hrefs_d = re.findall(r'<a class="[^"]*" href="([^"]+)"', desk)
+    check('U18 เมนูแถบแนวนอนไม่มีลิงก์ซ้ำ และเมนูมือถือมีลิงก์ชุดเดียวกัน (แยกเป็นหัวกลุ่ม)', len(hrefs_d) == len(set(hrefs_d)) and sorted(re.findall(r'<a class="[^"]*" href="([^"]+)"', mob)) == sorted(hrefs_d))
+    check('U19 รายการที่อยู่ในกลุ่มมีไอคอนทุกรายการ และมีขนาดเมนูกระชับ (ลิงก์ระดับบนสุดไม่เกิน 8 ข้อ)', desk.count('<svg class="icon') >= len(hrefs_d) and len(re.findall(r'<details class="nav-group', desk)) + len(re.findall(r'</details><a|^<a', desk)) <= 8)
+    check('U20 กล่องแจ้งเตือนมีไอคอน และบัญชีของฉัน/ออกจากระบบแสดงแต่ไอคอนบนแถบแคบ (มี title และข้อความสำหรับโปรแกรมอ่านหน้าจอ)',
+          'sr-only 2xl:not-sr-only' in desk and 'title="ออกจากระบบ"' in desk and 'aria-hidden="true"' in desk)
 
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================
     today = date.today()

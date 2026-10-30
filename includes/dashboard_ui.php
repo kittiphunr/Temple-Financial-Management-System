@@ -1,17 +1,5 @@
 <?php
-/** ส่วนประกอบหน้าแดชบอร์ด: ไอคอน, การ์ดสถิติ 4 ใบ (ตามแบบเดโม่), กราฟรายเดือน (SVG) */
-
-function icon(string $name, string $cls = 'h-6 w-6'): string
-{
-    $paths = [
-        'coins' => '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
-        'doc' => '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/>',
-        'scale' => '<path d="M12 4v16M7 20h10M4 8h16"/><path d="M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>',
-        'temple' => '<path d="M12 2v3"/><path d="M12 5l4 4H8z"/><path d="M7 9h10l1 4H6z"/><path d="M5 13h14v8H5z"/><path d="M10 21v-4h4v4"/>',
-    ];
-    return '<svg class="' . $cls . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        . ($paths[$name] ?? '') . '</svg>';
-}
+/** ส่วนประกอบหน้าแดชบอร์ด: การ์ดสถิติ (ไอคอน Feather จาก includes/icons.php) 4 ใบ (ตามแบบเดโม่), กราฟรายเดือน (SVG) */
 
 /**
  * การ์ดสถิติ 4 ใบ: รายรับรวม / รายจ่ายรวม / ยอดคงเหลือ / จำนวนวัด
@@ -27,10 +15,10 @@ function stat_cards(array $sum, int $beYear, int $temples, string $scopeText): s
             . '<span class="block text-sm text-stone-500">' . e($note) . '</span></span></div>';
     };
     return '<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">'
-        . $card('coins', 'bg-emerald-100 text-emerald-700', 'รายรับรวม', 'text-emerald-700', money($sum['income']), 'text-emerald-800', 'บาท', 'รายการทั้งหมด ' . number_format($sum['n_income']) . ' รายการ')
-        . $card('doc', 'bg-red-100 text-red-700', 'รายจ่ายรวม', 'text-red-700', money($sum['expense']), 'text-red-700', 'บาท', 'รายการทั้งหมด ' . number_format($sum['n_expense']) . ' รายการ')
-        . $card('scale', 'bg-sky-100 text-sky-700', 'ยอดคงเหลือ', 'text-sky-700', money($sum['balance']), 'text-sky-800', 'บาท', 'ณ วันที่ ' . balance_as_of($beYear))
-        . $card('temple', 'bg-violet-100 text-violet-700', 'จำนวนวัดในระบบ', 'text-violet-700', number_format($temples), 'text-violet-800', 'วัด', $scopeText)
+        . $card('trending-up', 'bg-emerald-100 text-emerald-700', 'รายรับรวม', 'text-emerald-700', money($sum['income']), 'text-emerald-800', 'บาท', 'รายการทั้งหมด ' . number_format($sum['n_income']) . ' รายการ')
+        . $card('trending-down', 'bg-red-100 text-red-700', 'รายจ่ายรวม', 'text-red-700', money($sum['expense']), 'text-red-700', 'บาท', 'รายการทั้งหมด ' . number_format($sum['n_expense']) . ' รายการ')
+        . $card('briefcase', 'bg-sky-100 text-sky-700', 'ยอดคงเหลือ', 'text-sky-700', money($sum['balance']), 'text-sky-800', 'บาท', 'ณ วันที่ ' . balance_as_of($beYear))
+        . $card('home', 'bg-violet-100 text-violet-700', 'จำนวนวัดในระบบ', 'text-violet-700', number_format($temples), 'text-violet-800', 'วัด', $scopeText)
         . '</div>';
 }
 

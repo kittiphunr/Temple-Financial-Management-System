@@ -96,8 +96,8 @@ require __DIR__ . '/../includes/header.php';
     <tr><th>ไฟล์</th><th>สร้างเมื่อ</th><th class="text-right">ขนาด</th><th></th></tr>
     <?php foreach ($list as $b): ?>
     <tr><td class="font-mono text-sm"><?= e($b['name']) ?></td><td class="whitespace-nowrap"><?= e(th_datetime(date('Y-m-d H:i:s', $b['mtime']))) ?></td><td class="text-right"><?= number_format($b['size'] / 1024, 1) ?> KB</td>
-      <td class="whitespace-nowrap"><a class="btn btn-sm btn-outline" href="backup.php?download=<?= e(rawurlencode($b['name'])) ?>">ดาวน์โหลด</a>
-        <form method="post" class="inline" data-confirm="ลบไฟล์สำรองนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="name" value="<?= e($b['name']) ?>"><button class="btn btn-sm btn-danger">ลบ</button></form></td></tr>
+      <td class="whitespace-nowrap"><a class="btn btn-sm btn-outline" href="backup.php?download=<?= e(rawurlencode($b['name'])) ?>"><?= icon('download') ?> ดาวน์โหลด</a>
+        <form method="post" class="inline" data-confirm="ลบไฟล์สำรองนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="name" value="<?= e($b['name']) ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form></td></tr>
     <?php endforeach; ?>
     <?php if (!$list): ?><tr><td colspan="4" class="text-stone-500">ยังไม่มีไฟล์สำรอง</td></tr><?php endif; ?>
   </table></div>

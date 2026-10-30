@@ -5,61 +5,100 @@ $cur = basename($_SERVER['SCRIPT_NAME']);
 $type = $_GET['type'] ?? '';
 $inAdmin = basename(dirname($_SERVER['SCRIPT_FILENAME'])) === 'admin';
 
-function nav_item(string $href, string $label, bool $active): string
+/** ลิงก์เดี่ยวบนแถบเมนู: ['href'=>, 'label'=>, 'icon'=>, 'active'=>bool] */
+function nav_link(string $href, string $label, string $icon, bool $active): array
 {
-    $cls = $active
-        ? 'bg-brand-600 text-white'
-        : 'text-stone-700 hover:bg-gold-100';
-    return '<a class="whitespace-nowrap rounded-lg px-2 py-2 font-semibold no-underline 2xl:px-3 ' . $cls . '" href="' . e(BASE . $href) . '">' . e($label) . '</a>';
+    return ['href' => $href, 'label' => $label, 'icon' => $icon, 'active' => $active];
+}
+
+/** กลุ่มเมนู (dropdown): ['label'=>, 'icon'=>, 'children'=>[nav_link...]] — ไม่มีรายการลูกให้ใช้เลย */
+function nav_group(string $label, string $icon, array $children): ?array
+{
+    $children = array_values(array_filter($children));
+    return $children ? ['label' => $label, 'icon' => $icon, 'children' => $children, 'active' => (bool)array_filter($children, fn($c) => $c['active'])] : null;
+}
+
+/** เรนเดอร์เมนู: $mobile=false = แถบแนวนอน (กลุ่มเป็น dropdown) · true = รายการแนวตั้งแบ่งหัวกลุ่ม */
+function nav_render(array $menu, bool $mobile): string
+{
+    $link = function (array $it, bool $inPanel) use ($mobile): string {
+        $cls = $it['active'] ? 'bg-brand-600 text-white' : 'text-stone-700 hover:bg-gold-100';
+        $compact = !$mobile && !$inPanel && !empty($it['compact']);   // แถบแนวนอน: แสดงแต่ไอคอนจนกว่าจอจะกว้างมาก
+        return '<a class="flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 font-semibold no-underline ' . $cls . '" href="' . e(BASE . $it['href']) . '"' . ($it['active'] ? ' aria-current="page"' : '') . ($compact ? ' title="' . e($it['label']) . '"' : '') . '>'
+            . icon($it['icon']) . '<span' . ($compact ? ' class="sr-only 2xl:not-sr-only"' : '') . '>' . e($it['label']) . '</span></a>';
+    };
+    $h = '';
+    foreach ($menu as $m) {
+        if (isset($m['children'])) {
+            $kids = implode('', array_map(fn($c) => $link($c, true), $m['children']));
+            if ($mobile) {
+                $h .= '<div class="mt-1 border-t border-stone-100 pt-1"><div class="flex items-center gap-2 px-3 py-1 text-xs font-bold uppercase tracking-wide text-stone-500">' . icon($m['icon']) . e($m['label']) . '</div>' . $kids . '</div>';
+            } else {
+                $cls = $m['active'] ? 'bg-brand-600 text-white' : 'text-stone-700 hover:bg-gold-100';
+                $h .= '<details class="nav-group relative"><summary class="flex cursor-pointer list-none items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 font-semibold ' . $cls . '">'
+                    . icon($m['icon']) . '<span>' . e($m['label']) . '</span>' . icon('chevron-down', 'opacity-70') . '</summary>'
+                    . '<div class="absolute left-0 top-full z-20 mt-1 flex w-64 flex-col gap-0.5 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg">' . $kids . '</div></details>';
+            }
+        } else {
+            $h .= $link($m, false);
+        }
+    }
+    return $h;
 }
 
 $forced = !empty($u['must_change']);
 $role = $u['role'] ?? '';
-$items = '';
+$canWrite = in_array($role, ['admin', 'district', 'temple'], true);   // เจ้าคณะจังหวัด/ตำบลดูข้อมูลได้อย่างเดียว
+$menu = [];
 if (!$u) {
     // ผู้เยี่ยมชม: หน้าแรก + ข้อมูลวัด (ผู้ล็อกอินกดโลโก้เพื่อกลับหน้าแรก)
-    $items .= nav_item('index.php', 'หน้าแรก', $cur === 'index.php' && !$inAdmin);
-    $items .= nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
+    $menu[] = nav_link('index.php', 'หน้าแรก', 'home', $cur === 'index.php' && !$inAdmin);
+    $menu[] = nav_link('temples.php', 'ข้อมูลวัด', 'map-pin', $cur === 'temples.php');
 } elseif (!$forced) {
-    $items .= nav_item('dashboard.php', 'แดชบอร์ด', $cur === 'dashboard.php');
-    if (in_array($role, ['admin', 'district', 'temple'], true)) {   // เจ้าคณะจังหวัด/ตำบลดูข้อมูลได้อย่างเดียว ไม่มีเมนูบันทึกบัญชี
-        $items .= nav_item('quick.php', 'บันทึกด่วน', $cur === 'quick.php');
-        $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
-        $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
+    $menu[] = nav_link('dashboard.php', 'แดชบอร์ด', 'grid', $cur === 'dashboard.php');
+    if ($canWrite) {
+        $menu[] = nav_group('บันทึกบัญชี', 'edit-3', [
+            nav_link('quick.php', 'บันทึกด่วน', 'zap', $cur === 'quick.php'),
+            nav_link('transactions.php?type=income', 'บัญชีรายรับ', 'trending-up', $cur === 'transactions.php' && $type === 'income'),
+            nav_link('transactions.php?type=expense', 'บัญชีรายจ่าย', 'trending-down', $cur === 'transactions.php' && $type === 'expense'),
+            nav_link('receipts.php', 'อนุโมทนาบัตร', 'award', in_array($cur, ['receipts.php', 'receipt.php'], true)),
+            donor_available() ? nav_link('donors.php', 'ผู้บริจาค', 'heart', $cur === 'donors.php') : null,
+        ]);
     }
-    $items .= nav_item('reports.php', 'รายงาน', in_array($cur, ['reports.php', 'statements.php', 'accounts.php', 'annual.php'], true));
-    if ($role !== 'temple' && report_available()) {
-        $items .= nav_item('report_status.php', 'ติดตามรายงาน', $cur === 'report_status.php');
-    }
-    if (donor_available() && in_array($role, ['admin', 'district', 'temple'], true)) {
-        $items .= nav_item('donors.php', 'ผู้บริจาค', $cur === 'donors.php');
-    }
-    if (asset_available()) {
-        $items .= nav_item('assets.php', 'ทรัพย์สิน', $cur === 'assets.php');
-    }
-    if (fund_available()) {
-        $items .= nav_item('funds.php', 'กองทุน/โครงการ', $cur === 'funds.php');
-    }
-    if (budget_available()) {
-        $items .= nav_item('budget.php', 'งบประมาณ', $cur === 'budget.php');
-    }
-    if (!in_array($role, ['province', 'subdistrict'], true)) {
-        $items .= nav_item('receipts.php', 'อนุโมทนาบัตร', in_array($cur, ['receipts.php', 'receipt.php'], true));
-    }
-    $items .= $role === 'temple'
-        ? nav_item('profile.php', 'ข้อมูลวัดของฉัน', $cur === 'profile.php')
-        : nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
-    $items .= nav_item('people.php', 'บุคลากร', in_array($cur, ['people.php', 'person.php'], true));
+    $menu[] = nav_group('การเงิน', 'credit-card', [
+        nav_link('accounts.php', 'เงินสด / ธนาคาร', 'credit-card', $cur === 'accounts.php'),
+        $canWrite ? nav_link('bank_import.php', 'นำเข้าจากไฟล์ธนาคาร', 'upload', $cur === 'bank_import.php') : null,
+        reconcile_available() ? nav_link('reconcile.php', 'กระทบยอดธนาคาร', 'check-square', $cur === 'reconcile.php') : null,
+        budget_available() ? nav_link('budget.php', 'งบประมาณ', 'target', $cur === 'budget.php') : null,
+        fund_available() ? nav_link('funds.php', 'กองทุน/โครงการ', 'layers', $cur === 'funds.php') : null,
+    ]);
+    $menu[] = nav_group('รายงาน', 'bar-chart-2', [
+        nav_link('reports.php', 'รายงานภาพรวม', 'pie-chart', $cur === 'reports.php'),
+        nav_link('annual.php', 'งบรายรับ-รายจ่ายประจำปี', 'file-text', $cur === 'annual.php'),
+        nav_link('statements.php', 'รายงานแบบที่ 1–3', 'file', $cur === 'statements.php'),
+        ($role !== 'temple' && report_available()) ? nav_link('report_status.php', 'ติดตามการส่งรายงาน', 'clipboard', $cur === 'report_status.php') : null,
+    ]);
+    $menu[] = nav_group('ทะเบียน', 'book-open', [
+        $role === 'temple' ? nav_link('profile.php', 'ข้อมูลวัดของฉัน', 'home', $cur === 'profile.php') : nav_link('temples.php', 'ข้อมูลวัด', 'map-pin', $cur === 'temples.php'),
+        nav_link('people.php', 'บุคลากร', 'users', in_array($cur, ['people.php', 'person.php'], true)),
+        asset_available() ? nav_link('assets.php', 'ทรัพย์สิน', 'package', $cur === 'assets.php') : null,
+    ]);
     if ($role === 'admin') {
-        $items .= nav_item('admin/index.php', 'จัดการระบบ', $inAdmin);
+        $menu[] = nav_link('admin/index.php', 'จัดการระบบ', 'settings', $inAdmin);
     }
 }
-if ($u) {
-    $items .= nav_item('account.php', $forced ? 'เปลี่ยนรหัสผ่าน' : 'บัญชีของฉัน', $cur === 'account.php');
-}
-$items .= $u
-    ? '<a class="btn btn-outline btn-sm ml-1 whitespace-nowrap" href="' . BASE . 'logout.php">ออกจากระบบ</a>'
-    : '<a class="btn btn-outline btn-sm ml-1 whitespace-nowrap" href="' . BASE . 'login.php">เข้าสู่ระบบ</a>';
+$menu = array_values(array_filter($menu));
+// เมนูผู้ใช้ (ชิดขวา): บัญชีของฉัน + ออกจากระบบ
+$userMenu = $u
+    ? [nav_link('account.php', $forced ? 'เปลี่ยนรหัสผ่าน' : 'บัญชีของฉัน', 'user', $cur === 'account.php') + ['compact' => true]]
+    : [];
+$authLabel = $u ? 'ออกจากระบบ' : 'เข้าสู่ระบบ';
+$authHref = BASE . ($u ? 'logout.php' : 'login.php');
+$authIcon = icon($u ? 'log-out' : 'log-in');
+$authBtn = '<a class="btn btn-outline btn-sm ml-1 inline-flex items-center gap-1.5 whitespace-nowrap" href="' . $authHref . '">' . $authIcon . $authLabel . '</a>';
+$authBtnBar = '<a class="btn btn-outline btn-sm ml-1 inline-flex items-center gap-1.5 whitespace-nowrap" href="' . $authHref . '" title="' . $authLabel . '">' . $authIcon . '<span class="sr-only 2xl:not-sr-only">' . $authLabel . '</span></a>';
+$navDesktop = nav_render(array_merge($menu, $userMenu), false) . $authBtnBar;
+$navMobile = nav_render(array_merge($menu, $userMenu), true) . '<div class="mt-1 border-t border-stone-100 pt-2">' . $authBtn . '</div>';
 ?>
 <!doctype html>
 <html lang="th">
@@ -83,10 +122,10 @@ $items .= $u
         <small class="text-sm text-stone-700"><?= e(app_subtitle()) ?></small>
       </span>
     </a>
-    <nav class="hidden items-center justify-end gap-1 xl:flex"><?= $items ?></nav>
-    <details class="relative xl:hidden">
-      <summary class="btn btn-outline btn-sm list-none">เมนู ☰</summary>
-      <nav class="absolute right-0 mt-2 flex w-60 flex-col gap-1 rounded-xl border border-stone-200 bg-white p-2 shadow-lg"><?= $items ?></nav>
+    <nav class="hidden items-center justify-end gap-0.5 xl:flex" aria-label="เมนูหลัก"><?= $navDesktop ?></nav>
+    <details class="nav-mobile relative xl:hidden">
+      <summary class="btn btn-outline btn-sm flex list-none items-center gap-1.5"><?= icon('menu') ?>เมนู</summary>
+      <nav class="absolute right-0 z-20 mt-2 flex max-h-[80vh] w-72 flex-col gap-0.5 overflow-y-auto rounded-xl border border-stone-200 bg-white p-2 shadow-lg" aria-label="เมนูหลัก"><?= $navMobile ?></nav>
     </details>
   </div>
 </header>

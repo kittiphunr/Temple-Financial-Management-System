@@ -46,7 +46,7 @@ require __DIR__ . '/includes/header.php';
   <?php endif; ?>
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <button class="btn" type="submit">แสดง</button>
-  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button><?php endif; ?>
+  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ / บันทึก PDF</button><?php endif; ?>
   <a class="btn btn-outline" href="reports.php?year=<?= $year ?>">รายงานภาพรวม</a>
 </form>
 <?php if (!$temple): ?>

@@ -82,13 +82,13 @@ def _run(R, q, app, smtp):
     r = q(f"SELECT CONCAT(statement_balance,'|',book_balance,'|',outstanding_in,'|',outstanding_out,'|',difference) FROM bank_reconciliations WHERE account_id={bank}")
     check('C2 ติ๊กฝาก+โอน เช็คค้าง 200 → statement 1,800 ตรงกัน (ส่วนต่าง 0)', r == '1800.00|1600.00|0.00|200.00|0.00', r)
     _, _, pg = ca.req(url)
-    check('C3 หน้าแสดงผล "ตรงกัน" และติ๊กไว้ 2 รายการ', '✅ ตรงกัน' in pg and len(re.findall(r'name="cleared\[\]"[^>]*checked', pg)) == 2)
+    check('C3 หน้าแสดงผล "ตรงกัน" และติ๊กไว้ 2 รายการ', '#check-circle' in pg and 'ไม่ตรงกัน' not in pg and 'ตรงกัน' in pg and len(re.findall(r'name="cleared\[\]"[^>]*checked', pg)) == 2)
 
     save(ca, '1750', [t_dep, t_xf], note='ลองผิด')
     r = q(f"SELECT difference FROM bank_reconciliations WHERE account_id={bank}")
     check('C4 statement ผิด 50 → ส่วนต่าง -50.00 และถูกบันทึกทับเดือนเดิม', r == '-50.00' and q(f"SELECT COUNT(*) FROM bank_reconciliations WHERE account_id={bank}") == '1', r)
     _, _, pg = ca.req(url)
-    check('C5 หน้าแสดง "ไม่ตรงกัน" พร้อมส่วนต่าง', '❌ ไม่ตรงกัน' in pg and '50.00' in pg)
+    check('C5 หน้าแสดง "ไม่ตรงกัน" พร้อมส่วนต่าง', '#x-circle' in pg and 'ไม่ตรงกัน' in pg and '50.00' in pg)
 
     save(ca, '1800', [t_dep, t_xf])
     # ผลเสีย: ไม่ติ๊กอะไรเลย → ค้างฝาก 800 → expected 800 -> diff 1000

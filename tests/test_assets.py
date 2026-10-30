@@ -111,7 +111,7 @@ def _run(R, q, app, smtp):
     _, _, pg = ca.req(f'/assets.php?asset={aid}')
     check('H13 รายจ่ายที่ลบแล้วไม่นับ (ซ่อมเหลือ 2,500)', '2,500.00' in pg and '3,200.00' not in pg)
     _, _, pg = ca.req('/transactions.php?type=expense')
-    check('H14 รายการรายจ่ายแสดงชื่อทรัพย์สินและประเภท (ซ่อมบำรุง)', '🛠️ เครื่องเสียงชุดใหญ่' in pg and 'ซ่อมบำรุง' in pg)
+    check('H14 รายการรายจ่ายแสดงชื่อทรัพย์สินและประเภท (ซ่อมบำรุง)', re.search(r'#tool"></use></svg> เครื่องเสียงชุดใหญ่', pg) is not None and 'ซ่อมบำรุง' in pg)
 
     # ทรัพย์สินวัดอื่น / รายรับ / จำหน่ายแล้ว
     add(cb, name='ของวัดอื่น', no='ข-001')

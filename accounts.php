@@ -169,7 +169,7 @@ require __DIR__ . '/includes/header.php';
   <?php foreach ($transfers as $t): ?>
   <tr><td class="whitespace-nowrap"><?= e(th_date($t['txn_date'])) ?></td><td><?= e($label($t['from_id'])) ?></td><td><?= e($label($t['to_id'])) ?></td><td><?= e($t['description']) ?></td>
     <td class="text-right whitespace-nowrap"><?= money($t['amount']) ?></td>
-    <td><?php if ($canEdit): ?><form method="post" data-confirm="ลบรายการโอน/ฝาก-ถอนนี้ (ทั้งสองบัญชี)?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_transfer"><input type="hidden" name="transfer_id" value="<?= (int)$t['transfer_id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>"><button class="btn btn-sm btn-danger">ลบ</button></form><?php endif; ?></td></tr>
+    <td><?php if ($canEdit): ?><form method="post" data-confirm="ลบรายการโอน/ฝาก-ถอนนี้ (ทั้งสองบัญชี)?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_transfer"><input type="hidden" name="transfer_id" value="<?= (int)$t['transfer_id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form><?php endif; ?></td></tr>
   <?php endforeach; ?>
 </table></section>
 <?php endif; ?>

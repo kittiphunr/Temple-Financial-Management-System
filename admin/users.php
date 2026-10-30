@@ -161,7 +161,7 @@ require __DIR__ . '/../includes/header.php';
     <?php foreach ($extras as $x): ?>
     <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2"><span><span class="font-mono"><?= e($x['username']) ?></span> — <?= e($x['full_name']) ?> (<?= e($x['role']) ?>)</span>
       <?php if ((int)$x['id'] !== $me['id']): ?>
-      <form method="post" data-confirm="ลบผู้ใช้นี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_extra"><input type="hidden" name="id" value="<?= (int)$x['id'] ?>"><button class="btn btn-sm btn-danger">ลบ</button></form>
+      <form method="post" data-confirm="ลบผู้ใช้นี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_extra"><input type="hidden" name="id" value="<?= (int)$x['id'] ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form>
       <?php endif; ?></li>
     <?php endforeach; ?>
   </ul>

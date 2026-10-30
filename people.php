@@ -120,11 +120,11 @@ require __DIR__ . '/includes/header.php';
         <?php if (!$p['is_active']): ?><span class="badge mt-1">พ้นตำแหน่ง</span><?php endif; ?>
         <?php if ($canEdit): ?>
         <div class="mt-2 flex flex-wrap gap-1">
-          <a class="btn btn-outline btn-sm" href="person.php?id=<?= (int)$p['id'] ?>">แก้ไข</a>
+          <a class="btn btn-outline btn-sm" href="person.php?id=<?= (int)$p['id'] ?>"><?= icon('edit-2') ?> แก้ไข</a>
           <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
             <button class="btn btn-outline btn-sm"><?= $p['is_active'] ? 'พ้นตำแหน่ง' : 'กลับเข้าตำแหน่ง' ?></button></form>
           <form method="post" class="inline" data-confirm="ลบข้อมูลบุคคลนี้ถาวร (รวมเลขบัตรและรูปถ่าย)?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-            <button class="btn btn-danger btn-sm">ลบ</button></form>
+            <button class="btn btn-danger btn-sm"><?= icon('trash-2') ?> ลบ</button></form>
         </div>
         <?php endif; ?>
       </div>

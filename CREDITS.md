@@ -19,6 +19,7 @@
 | ฟอนต์ JS Chanok | ตัวอักษรบนอนุโมทนาบัตร (ฝังในระบบ) | ไม่ระบุชื่อในไฟล์สัญญาอนุญาตที่ได้รับ | GNU GPL v2 ([ไฟล์สัญญาอนุญาต](assets/fonts/GPL-License-JS.pdf)) |
 | [SweetAlert2 11.26.25](https://sweetalert2.github.io/) | กล่องข้อความแจ้งเตือนและหน้าต่างเกี่ยวกับ | Tristan Edwards & Limon Monte | MIT ([ไฟล์สัญญาอนุญาต](assets/vendor/sweetalert2.LICENSE)) |
 | [qrcode-generator 2.0.4 (qrcode.js)](http://www.d-project.com/) | QR code ตรวจสอบอนุโมทนาบัตร | Kazuhiko Arase | MIT ([ไฟล์สัญญาอนุญาต](assets/vendor/qrcode.LICENSE)) |
+| [Feather Icons 4.29.2](https://github.com/feathericons/feather) | ไอคอนบนเมนู ปุ่ม และการแจ้งเตือนทั่วระบบ (ไฟล์ sprite ฝังในระบบ) | Cole Bemis | MIT ([ไฟล์สัญญาอนุญาต](assets/vendor/feather.LICENSE)) |
 | [Tailwind CSS 3.4.17](https://tailwindcss.com/) | จัดรูปแบบหน้าเว็บ (ไฟล์ CSS ที่คอมไพล์แล้ว assets/css/tailwind.css) | Tailwind Labs, Inc. | MIT |
 | [ฟอนต์ Sarabun](https://fonts.google.com/specimen/Sarabun) | ตัวอักษรหน้าเว็บ (โหลดจาก Google Fonts ตอนใช้งาน ไม่ได้ฝังในระบบ) | Cadson Demak | SIL Open Font License 1.1 |
 | [thai-province-data](https://github.com/kongvut/thai-province-data) | ฐานข้อมูลจังหวัด/อำเภอ/ตำบล สำหรับตัวติดตั้งและการสร้างผู้ใช้อัตโนมัติ (data/thai_geo.json) | Kongvut Sangkla | MIT ([ไฟล์สัญญาอนุญาต](data/thai_geo.LICENSE)) |

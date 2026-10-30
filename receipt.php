@@ -116,7 +116,7 @@ if (isset($_GET['txn'])) {
   <div><label>ผู้รับเงิน (ชื่อ)</label><input name="receiver_name" maxlength="200" value="<?= e($rc ? person_full_name($rc, false) : '') ?>"></div>
   <div><label>ตำแหน่งผู้รับเงิน</label><input name="receiver_position" maxlength="100" value="<?= e($rc ? PERSON_POSITIONS[$rc['position']] : '') ?>"></div>
   <p class="col-span-full text-sm text-stone-600">เลขที่ออกให้อัตโนมัติเรียงต่อเนื่องในแต่ละปี พ.ศ. · ชื่อเจ้าอาวาสดึงจากข้อมูลบุคลากร · พิมพ์แล้วให้เจ้าอาวาสหรือผู้ที่วัดมอบหมายลงลายมือชื่อและประทับตราวัด</p>
-  <div class="col-span-full"><button class="btn">ออกอนุโมทนาบัตร</button> <a class="btn btn-outline" href="transactions.php?type=income">กลับ</a></div>
+  <div class="col-span-full"><button class="btn">ออกอนุโมทนาบัตร</button> <a class="btn btn-outline" href="transactions.php?type=income"><?= icon('arrow-left') ?> กลับ</a></div>
 </form>
 <?php elseif ($x['is_donation']): ?><p class="text-stone-600">รายการนี้ยังไม่ได้ออกอนุโมทนาบัตร (เฉพาะแอดมินวัด/แอดมินหลักเท่านั้นที่ออกได้)</p><?php endif;
     require __DIR__ . '/includes/footer.php';
@@ -139,7 +139,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="mb-3 flex flex-wrap items-center gap-2 print:hidden">
   <h2 class="mr-auto">อนุโมทนาบัตร <?= e(receipt_label($r)) ?><?= $void ? ' <span class="badge">ยกเลิกแล้ว</span>' : '' ?></h2>
-  <button class="btn" type="button" onclick="window.print()">พิมพ์</button>
+  <button class="btn" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
   <a class="btn btn-outline" href="receipts.php?temple=<?= $tid ?>">รายการทั้งหมด</a>
 </div>
 

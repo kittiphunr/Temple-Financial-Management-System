@@ -63,7 +63,8 @@ function alert_box(string $msg, string $type = 'ok'): string
         'info' => 'bg-sky-50 text-sky-900',
         default => 'bg-emerald-50 text-emerald-900',
     };
-    return '<div class="mb-4 rounded-lg px-4 py-2.5 ' . $cls . '" role="alert" data-swal="' . e($type) . '">' . e($msg) . '</div>';
+    $ic = match ($type) { 'err' => 'alert-circle', 'info' => 'info', default => 'check-circle' };
+    return '<div class="mb-4 rounded-lg flex items-start gap-2 px-4 py-2.5 ' . $cls . '" role="alert" data-swal="' . e($type) . '">' . icon($ic, 'mt-1') . '<span>' . e($msg) . '</span></div>';
 }
 
 /** รายการเครดิตส่วนประกอบของผู้อื่นที่ระบบใช้ (data/credits.json — นโยบาย: ใช้ผลงานของใครต้องให้เครดิตเสมอ ดู CREDITS.md) */

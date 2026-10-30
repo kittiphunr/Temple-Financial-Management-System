@@ -7,7 +7,9 @@
     "license": "GNU GPL v2",
     "url": "",
     "license_file": "assets/fonts/GPL-License-JS.pdf",
-    "files": ["assets/fonts/JS-Chanok-Normal.ttf"]
+    "files": [
+      "assets/fonts/JS-Chanok-Normal.ttf"
+    ]
   },
   {
     "id": "sweetalert2",
@@ -17,7 +19,9 @@
     "license": "MIT",
     "url": "https://sweetalert2.github.io/",
     "license_file": "assets/vendor/sweetalert2.LICENSE",
-    "files": ["assets/vendor/sweetalert2.all.min.js"]
+    "files": [
+      "assets/vendor/sweetalert2.all.min.js"
+    ]
   },
   {
     "id": "qrcode",
@@ -27,7 +31,21 @@
     "license": "MIT",
     "url": "http://www.d-project.com/",
     "license_file": "assets/vendor/qrcode.LICENSE",
-    "files": ["assets/vendor/qrcode.js"]
+    "files": [
+      "assets/vendor/qrcode.js"
+    ]
+  },
+  {
+    "id": "feather-icons",
+    "name": "Feather Icons 4.29.2",
+    "use": "ไอคอนบนเมนู ปุ่ม และการแจ้งเตือนทั่วระบบ (ไฟล์ sprite ฝังในระบบ)",
+    "author": "Cole Bemis",
+    "license": "MIT",
+    "url": "https://github.com/feathericons/feather",
+    "license_file": "assets/vendor/feather.LICENSE",
+    "files": [
+      "assets/vendor/feather-sprite.svg"
+    ]
   },
   {
     "id": "tailwindcss",
@@ -37,7 +55,9 @@
     "license": "MIT",
     "url": "https://tailwindcss.com/",
     "license_file": "",
-    "files": ["assets/css/tailwind.css"]
+    "files": [
+      "assets/css/tailwind.css"
+    ]
   },
   {
     "id": "sarabun",
@@ -57,7 +77,9 @@
     "license": "MIT",
     "url": "https://github.com/kongvut/thai-province-data",
     "license_file": "data/thai_geo.LICENSE",
-    "files": ["data/thai_geo.json"]
+    "files": [
+      "data/thai_geo.json"
+    ]
   },
   {
     "id": "onab-temples",
@@ -67,6 +89,8 @@
     "license": "ไม่ได้ระบุสัญญาอนุญาตของข้อมูล — ใช้เป็นข้อมูลอ้างอิงจากเว็บไซต์ทางการและให้เครดิตแหล่งที่มา",
     "url": "https://binfo.onab.go.th/Temple/Temple-List-view.aspx",
     "license_file": "",
-    "files": ["data/temples_phrae.csv"]
+    "files": [
+      "data/temples_phrae.csv"
+    ]
   }
 ]

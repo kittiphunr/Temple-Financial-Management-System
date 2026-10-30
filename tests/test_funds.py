@@ -81,7 +81,7 @@ def _run(R, q, app, smtp):
     _, _, pg = ca.req('/funds.php')
     check('F6 หน้ากองทุนสรุป รับ 8,000 ใช้ 1,500 คงเหลือ 6,500 และ 80%', all(s in pg for s in ('8,000.00', '1,500.00', '6,500.00', '80%')))
     _, _, pg = ca.req('/transactions.php?type=income')
-    check('F7 รายการในบัญชีแสดงชื่อกองทุน', '🏛️ กฐินสามัคคี' in pg)
+    check('F7 รายการในบัญชีแสดงชื่อกองทุน', re.search(r'#layers"></use></svg> กฐินสามัคคี', pg) is not None)
 
     # กองทุนของวัดอื่น / กองทุนปิด
     fund(cb, 'ของวัดอื่น')

@@ -67,10 +67,10 @@ require __DIR__ . '/includes/header.php';
   <div><label>วัด</label><select name="temple"><option value="0">ทุกวัด</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $temple === (int)$t['id'] ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <button class="btn" type="submit">แสดงรายงาน</button>
-  <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>">ส่งออก CSV (Excel)</a>
+  <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>"><?= icon('download') ?> ส่งออก CSV (Excel)</a>
   <a class="btn btn-outline" href="statements.php<?= $temple ? '?temple=' . $temple : '' ?>">แบบฟอร์มรายงานประจำเดือน (แบบที่ 1–3)</a>
   <a class="btn btn-outline" href="annual.php?year=<?= $year ?><?= $temple ? '&temple=' . $temple : '' ?>">งบแสดงรายรับ-รายจ่ายประจำปี (รายวัด เทียบปีก่อน)</a>
-  <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
+  <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ / บันทึก PDF</button>
 </form>
 
 <?php

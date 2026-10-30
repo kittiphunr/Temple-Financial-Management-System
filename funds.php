@@ -69,7 +69,7 @@ require __DIR__ . '/includes/header.php';
 <?php if ($detail): $txns = fund_transactions($pdo, (int)$detail['id']); $run = 0.0; ?>
 <?= letterhead($pdo, $tid, 0, 'รายงานกองทุน/โครงการ', $detail['name'], true) ?>
 <div class="flex flex-wrap items-center justify-between gap-2 print:hidden"><h2><?= e($detail['name']) ?> · <?= e($temple['name']) ?></h2>
-  <span class="flex gap-2"><button class="btn btn-outline btn-sm" type="button" onclick="window.print()">พิมพ์</button><a class="btn btn-outline btn-sm" href="<?= e($self) ?>">กลับ</a></span></div>
+  <span class="flex gap-2"><button class="btn btn-outline btn-sm" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button><a class="btn btn-outline btn-sm" href="<?= e($self) ?>"><?= icon('arrow-left') ?> กลับ</a></span></div>
 <?php if ($detail['purpose']): ?><p class="text-stone-600"><?= e($detail['purpose']) ?></p><?php endif; ?>
 <div class="grid gap-3 sm:grid-cols-3">
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รับสะสม<?= $detail['target_amount'] ? ' (เป้า ' . money($detail['target_amount']) . ')' : '' ?></div><div class="text-2xl font-bold text-emerald-700"><?= money($detail['raised']) ?></div></div>
@@ -107,7 +107,7 @@ require __DIR__ . '/includes/header.php';
     <td class="text-right text-emerald-700"><?= money($f['raised']) ?></td><td class="text-right text-red-700"><?= money($f['spent']) ?></td>
     <td class="text-right font-semibold <?= $f['balance'] < 0 ? 'text-red-700' : '' ?>"><?= money($f['balance']) ?></td>
     <td><?php if ($f['pct'] !== null): ?><div class="flex items-center gap-2"><div class="h-2 w-24 overflow-hidden rounded bg-stone-200"><div class="h-2 bg-emerald-600" style="width:<?= min(100, round($f['pct'])) ?>%"></div></div><span class="text-sm"><?= number_format($f['pct'], 0) ?>%</span></div><?php endif; ?></td>
-    <td class="whitespace-nowrap"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline" href="funds.php?<?= e(trim($tq . '&edit=' . (int)$f['id'], '&')) ?>">แก้ไข</a>
+    <td class="whitespace-nowrap"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline" href="funds.php?<?= e(trim($tq . '&edit=' . (int)$f['id'], '&')) ?>"><?= icon('edit-2') ?> แก้ไข</a>
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="fund_id" value="<?= (int)$f['id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>"><button class="btn btn-sm btn-outline"><?= $f['is_active'] ? 'ปิด' : 'เปิด' ?></button></form><?php endif; ?></td>
   </tr>
   <?php endforeach; ?>

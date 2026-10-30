@@ -147,6 +147,26 @@
   apply();
 })();
 
+/* เมนูบนแถบนำทาง (dropdown): เปิดทีละกลุ่ม ปิดเมื่อคลิกที่อื่นหรือกด Esc */
+(function () {
+  'use strict';
+  var menus = Array.prototype.slice.call(document.querySelectorAll('header details.nav-group, header details.nav-mobile'));
+  if (!menus.length) return;
+  menus.forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      menus.forEach(function (o) { if (o !== d) o.open = false; });
+    });
+  });
+  document.addEventListener('click', function (e) {
+    menus.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    menus.forEach(function (d) { if (d.open) { d.open = false; var s = d.querySelector('summary'); if (s) s.focus(); } });
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

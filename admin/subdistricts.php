@@ -121,7 +121,7 @@ require __DIR__ . '/../includes/header.php';
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิดใช้งาน' : 'เปิดใช้งาน' ?></button></form>
-      <form method="post" class="inline" data-confirm="ลบบัญชีนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-danger">ลบ</button></form>
+      <form method="post" class="inline" data-confirm="ลบบัญชีนี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form>
     </div>
   </div>
   <details class="mt-3">
