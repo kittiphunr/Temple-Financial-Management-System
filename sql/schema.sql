@@ -86,7 +86,27 @@ CREATE TABLE IF NOT EXISTS categories (
   sort_order INT NOT NULL DEFAULT 0,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   is_donation TINYINT(1) NOT NULL DEFAULT 0,   -- หมวดรับบริจาค: ออกอนุโมทนาบัตรได้
+  is_transfer TINYINT(1) NOT NULL DEFAULT 0,   -- หมวดระบบสำหรับโอน/ฝาก-ถอนระหว่างบัญชี (ไม่นับเป็นรายรับ-รายจ่ายจริง)
   UNIQUE KEY uq_cat (type, name)
+) ENGINE=InnoDB;
+
+-- บัญชีของวัด: เงินสด/เช็ค (1 วัด 1 บัญชี) และบัญชีเงินฝากธนาคาร (หลายบัญชีได้) ใช้ออกรายงานแบบที่ 1-3
+CREATE TABLE IF NOT EXISTS accounts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  kind ENUM('cash','bank') NOT NULL,
+  cash_flag TINYINT NULL COMMENT '1 = บัญชีเงินสด (unique ต่อวัด) · NULL = บัญชีธนาคาร',
+  name VARCHAR(150) NOT NULL COMMENT 'ชื่อบัญชี',
+  bank_name VARCHAR(100) NULL,
+  branch VARCHAR(100) NULL,
+  account_no VARCHAR(30) NULL,
+  opening_balance DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'ยอดยกมา ณ วันเริ่มบัญชี (ก่อนรายการของวันนั้น)',
+  opening_date DATE NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_cash (temple_id, cash_flag),
+  KEY idx_account_temple (temple_id),
+  CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -98,14 +118,19 @@ CREATE TABLE IF NOT EXISTS transactions (
   doc_no VARCHAR(50) NULL,
   description VARCHAR(255) NULL,
   amount DECIMAL(14,2) NOT NULL,
+  account_id INT UNSIGNED NULL COMMENT 'บัญชีที่รายการเกิดขึ้น (NULL = เงินสด)',
+  transfer_id INT UNSIGNED NULL COMMENT 'รหัสกลุ่มรายการโอน/ฝาก-ถอนระหว่างบัญชี (ไม่นับเป็นรายรับ-รายจ่ายในสถิติ)',
   created_by INT UNSIGNED NULL,
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_temple_date (temple_id, txn_date),
   KEY idx_type_date (type, txn_date),
+  KEY idx_txn_account (account_id, txn_date),
+  KEY idx_txn_transfer (transfer_id),
   CONSTRAINT fk_txn_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_txn_cat FOREIGN KEY (category_id) REFERENCES categories(id),
+  CONSTRAINT fk_txn_account FOREIGN KEY (account_id) REFERENCES accounts(id),
   CONSTRAINT fk_txn_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
