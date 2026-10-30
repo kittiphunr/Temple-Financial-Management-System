@@ -295,7 +295,7 @@ def _provinces(db, R):
         w.upload('/install.php', site('น่าน', temple_source='file'), 'bad.xlsx', b'not a zip', '/install.php?step=3', field='temple_file')
         c, _, b = w.req('/install.php?step=3')
         check('P3b ไฟล์ .xlsx เสีย → แจ้งข้อผิดพลาด ไม่ล้ม', 'ไม่ใช่ไฟล์ Excel' in notice(b) or 'อ่านไฟล์' in notice(b), notice(b))
-        c, loc, _ = w.upload('/install.php', site('น่าน', temple_source='file'), 'nan.xlsx', xlsx, '/install.php?step=3', field='temple_file')
+        c, loc, _ = w.upload('/install.php', site('น่าน', temple_source='file', make_staff='1'), 'nan.xlsx', xlsx, '/install.php?step=3', field='temple_file')
         check('P4 ไฟล์น่าน + จังหวัดน่าน → ผ่านไปขั้น 4', c == 302 and loc == 'install.php?step=4', f'{c} {loc}')
         staged = [f for f in os.listdir(os.path.join(app.dir, 'storage')) if f.startswith('install_temples_')]
         check('P4b ไฟล์ที่อัปโหลดถูกเก็บชั่วคราวใน storage/ (1 ไฟล์)', len(staged) == 1, str(staged))
@@ -306,6 +306,13 @@ def _provinces(db, R):
         check('P6 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
         c, _, b = w.req('/install.php?step=done')
         check('P6b หน้าเสร็จสิ้นแสดงจังหวัดน่าน 3 อำเภอ + เตือนเปลี่ยนตราระบบ', 'น่าน' in b and '3 อำเภอ' in b and 'assets/img/logo.svg' in b)
+        check('P6c หน้าเสร็จสิ้นมีปุ่มดาวน์โหลดรหัสผ่านผู้ใช้จังหวัด/อำเภอ/ตำบล', 'download=staff' in b and '7 บัญชี' in b)
+        c, _, sb = w.req('/install.php?download=staff')
+        c2, _, _ = w.req('/install.php?download=staff')
+        check('P6d ดาวน์โหลด CSV ผู้ใช้จังหวัด/อำเภอ/ตำบล ได้ครั้งเดียว (7 บัญชี)', c == 200 and sb.count('\n') == 8 and 'เจ้าคณะจังหวัดน่าน' in sb and 'province' in sb and 'tambon' in sb and 'amphoe' in sb and 'download=staff' not in w.req('/install.php?step=done')[2], str(sb[:150]))
+        check('P6e สร้างผู้ใช้เจ้าคณะจังหวัด 1 · แอดมินอำเภอ 3 · เจ้าคณะตำบล 3 (ตามไฟล์) และบังคับเปลี่ยนรหัส',
+              q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT COUNT(*) FROM users WHERE role='district'") == '3'
+              and q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == '3' and q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict') AND must_change_password=0") == '0')
         check('P7 ตั้งชื่อจังหวัดในตาราง settings', q("SELECT v FROM settings WHERE k='province_name'") == 'น่าน')
         check('P8 อำเภอมีเฉพาะของน่าน ไม่มีอำเภอตัวอย่างของแพร่',
               sorted(q("SELECT name FROM districts ORDER BY name").split('\n')) == sorted(['เมืองน่าน', 'ปัว', 'ท่าวังผา']), q("SELECT GROUP_CONCAT(name) FROM districts"))
@@ -331,6 +338,7 @@ def _provinces(db, R):
         check('Q2 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
         c, _, b = w.req('/install.php?step=done')
         check('Q3 หน้าเสร็จสิ้นบอกให้นำเข้าทะเบียนวัดภายหลัง', 'นำเข้าทะเบียนวัด' in b and 'เชียงใหม่' in b)
+        check('Q3b ไม่ได้ติ๊กสร้างผู้ใช้จังหวัด/อำเภอ/ตำบล → ไม่สร้าง', q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict')") == '0')
         check('Q4 ไม่มีอำเภอตัวอย่างของแพร่ และไม่มีวัด', q("SELECT COUNT(*) FROM districts") == '0' and q("SELECT COUNT(*) FROM temples") == '0')
         cl = Client(app.serve())
         check('Q5 หน้าสาธารณะใช้ได้แม้ยังไม่มีอำเภอ', all(cl.req(p)[0] == 200 for p in ['/index.php', '/temples.php', '/login.php']))

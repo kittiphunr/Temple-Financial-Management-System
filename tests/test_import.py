@@ -77,7 +77,7 @@ def run(db, R):
 
 def _run(R, q, app):
     check = R.check
-    app.php('setup.php', 'Test12345pw')
+    app.php('setup.php', 'Test12345pw', '--no-staff')
     base = app.serve()
     adm = Client(base)
     adm.post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})

@@ -34,7 +34,7 @@ def _run(R, smtp, q, app):
     off = subprocess.run(['php', '-r', "echo var_export((require 'config.php')['staff_2fa'], true);"], cwd=app.dir, capture_output=True, text=True, env={**env, 'TFMS_STAFF_2FA': '0'}).stdout
     check('C1 ค่าเริ่มต้นเปิด 2FA ให้แอดมิน (ปิดได้ด้วย TFMS_STAFF_2FA=0 เท่านั้น)', dflt == 'true' and off == 'false', dflt + off)
 
-    p = app.php('setup.php', PW)
+    p = app.php('setup.php', PW, '--no-staff')
     creds = parse_creds_csv(sorted((app.dir / 'storage').glob('temple_accounts_*.csv'))[0].read_text(encoding='utf-8'))
     q("UPDATE users SET must_change_password = 0 WHERE role = 'temple'")
     base = app.serve()

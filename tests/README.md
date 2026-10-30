@@ -18,7 +18,7 @@ python3 tests/run_all.py auth         # เฉพาะ 2FA ของแอด�
 python3 tests/run_all.py ui           # เฉพาะการแจ้งเตือน SweetAlert2 + หน้าต่างเกี่ยวกับ
 python3 tests/run_all.py statements   # เฉพาะรายงานแบบที่ 1-3 + บัญชีเงินสด/ธนาคาร
 python3 tests/run_all.py import       # เฉพาะนำเข้าทะเบียนวัดจาก Excel (ไฟล์จริงแพร่ + ไฟล์สังเคราะห์จังหวัดน่าน)
-python3 tests/run_all.py subdistrict  # เฉพาะเจ้าคณะตำบล (ดูข้อมูลวัดในตำบลที่ดูแลได้อย่างเดียว)
+python3 tests/run_all.py subdistrict  # เฉพาะเจ้าคณะตำบล + การสร้างผู้ใช้จังหวัด/อำเภอ/ตำบลอัตโนมัติ
 ```
 รหัสออก: `0` ผ่านทั้งหมด · `1` มีข้อที่ไม่ผ่าน · `2` เชื่อมต่อฐานข้อมูลไม่ได้/ระบุชุดทดสอบผิด
 

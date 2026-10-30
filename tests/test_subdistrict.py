@@ -25,10 +25,52 @@ def run(db, R):
 
 def _run(R, q, app):
     check = R.check
-    app.php('setup.php', 'Test12345pw')
+    setup = app.php('setup.php', 'Test12345pw')   # ค่าเริ่มต้น: สร้างผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลให้ครบด้วย
     base = app.serve()
     adm = Client(base)
     adm.post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
+
+    # ================= A: สร้างผู้ใช้ทุกระดับของจังหวัดแพร่อัตโนมัติ =================
+    import csv
+    n_tambon = int(q("SELECT COUNT(*) FROM (SELECT 1 FROM temples WHERE subdistrict IS NOT NULL AND subdistrict<>'' GROUP BY district_id, subdistrict) x"))
+    files = sorted((app.dir / 'storage').glob('staff_accounts_*.csv'))
+    rows = list(csv.reader(files[0].open(encoding='utf-8-sig'))) if files else []
+    check('A1 setup.php สร้างผู้ใช้เจ้าคณะจังหวัด 1 + อำเภอ 8 + ตำบลตามทะเบียน (บัญชี=%d) และบอกจำนวน' % (9 + n_tambon),
+          f'{9 + n_tambon} บัญชี' in setup.stdout and len(rows) == 1 + 9 + n_tambon, setup.stdout[-300:])
+    check('A2 ไฟล์ CSV รหัสผ่านเริ่มต้นเก็บใน storage/ สิทธิ์ 0600 และมีชื่อผู้ใช้/รหัสผ่านทุกแถว',
+          len(files) == 1 and oct(files[0].stat().st_mode & 0o777) == '0o600' and all(r[3] and len(r[4]) == 12 for r in rows[1:]), str(files))
+    check('A3 เจ้าคณะจังหวัด 1 บัญชี ชื่อผู้ใช้ province', q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT username FROM users WHERE role='province'") == 'province')
+    check('A4 แอดมินประจำอำเภอครบ 8 อำเภอ ชื่อผู้ใช้ amphoe<รหัสอำเภอ> ไม่ซ้ำอำเภอ',
+          q("SELECT COUNT(DISTINCT district_id) FROM users WHERE role='district'") == '8' and q("SELECT COUNT(*) FROM users WHERE role='district' AND username REGEXP '^amphoe54[0-9]{2}$'") == '8')
+    check('A5 เจ้าคณะตำบลตำบลละ 1 บัญชี (%d ตำบล) ทุกบัญชีมีตำบลที่ดูแลตำบลเดียว' % n_tambon,
+          q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == str(n_tambon) and q("SELECT COUNT(*) FROM user_subdistricts") == str(n_tambon)
+          and q("SELECT COUNT(*) FROM (SELECT user_id FROM user_subdistricts GROUP BY user_id HAVING COUNT(*)<>1) x") == '0')
+    check('A6 ชื่อผู้ใช้เจ้าคณะตำบลมาจากรหัสตำบลของรหัสวัด (ร้องกวาง ทุ่งศรี = tambon540207) และไม่ซ้ำกัน',
+          q("SELECT u.username FROM users u JOIN user_subdistricts s ON s.user_id=u.id WHERE s.subdistrict='ทุ่งศรี'") == 'tambon540207'
+          and q("SELECT COUNT(DISTINCT username) FROM users WHERE role='subdistrict'") == str(n_tambon))
+    check('A7 บัญชีที่สร้างทั้งหมดต้องเปลี่ยนรหัสผ่านครั้งแรก และเก็บเป็นแฮช',
+          q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict') AND (must_change_password<>1 OR password_hash NOT LIKE '$%')") == '0')
+    check('A8 โควตาผู้ใช้ระดับจังหวัด/อำเภอ = 10 จาก 10 (เจ้าคณะตำบลไม่นับ)', 'ใช้ไป 10 จาก 10' in re.sub(r'\s+', ' ', re.sub('<[^>]+>', ' ', adm.req('/admin/users.php')[2])))
+    pwOf = {r[3]: r[4] for r in rows[1:]}
+    adm.post('/admin/users.php', {'action': 'set_email', 'id': q("SELECT id FROM users WHERE username='amphoe5402'"), 'email': 'amphoe5402@example.org'}, '/admin/users.php')
+    d = Client(base)
+    c, loc, _ = d.post('/login.php', {'username': 'amphoe5402', 'password': pwOf['amphoe5402']})
+    c2, loc2, _ = d.req('/transactions.php?type=income')
+    check('A9 เข้าสู่ระบบด้วยรหัสผ่านเริ่มต้นจาก CSV ได้ แต่ถูกบังคับเปลี่ยนรหัสก่อนใช้งาน', loc == 'index.php' and c2 == 302 and loc2 == 'account.php', f'{loc} {c2} {loc2}')
+    # กดปุ่มสร้างซ้ำ: ไม่มีอะไรต้องสร้าง / ลบบางบัญชีแล้วสร้างเฉพาะที่ขาด
+    adm.post('/admin/users.php', {'action': 'provision_staff'}, '/admin/users.php')
+    check('A10 กดสร้างซ้ำเมื่อครบแล้ว → ไม่สร้างเพิ่ม', 'ครบแล้ว' in notice(adm.req('/admin/users.php')[2]) and q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict')") == str(9 + n_tambon))
+    q("DELETE FROM users WHERE username IN ('province','amphoe5403','tambon540207')")
+    adm.post('/admin/users.php', {'action': 'provision_staff'}, '/admin/users.php')
+    pg = adm.req('/admin/users.php')[2]
+    check('A11 ลบ 3 บัญชีแล้วกดสร้าง → สร้างเฉพาะที่ขาด 3 บัญชี และมีลิงก์ดาวน์โหลดรหัสผ่าน',
+          q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict')") == str(9 + n_tambon) and '3 บัญชี' in pg and 'download=staff_creds' in pg, notice(pg))
+    c, _, csvb = adm.req('/admin/users.php?download=staff_creds')
+    c2, loc2, _ = adm.req('/admin/users.php?download=staff_creds')
+    check('A12 ดาวน์โหลด CSV ได้ครั้งเดียว (3 แถว) ครั้งที่สองถูกปฏิเสธ', c == 200 and csvb.count('\n') == 4 and 'tambon540207' in csvb and c2 == 302, str(csvb[:200]))
+    q("DELETE FROM users WHERE role='subdistrict'")   # เริ่มชุดทดสอบเจ้าคณะตำบลจากบัญชีว่าง
+    q("DELETE FROM users WHERE role IN ('province') OR (role='district' AND username<>'x')")
+
 
     # เลือกตำบล: A, B อยู่อำเภอเดียวกัน (ได้รับมอบหมาย) · C คนละอำเภอ (ไม่ได้รับมอบหมาย) · A2 = ตำบลชื่อซ้ำกับ A แต่อยู่อีกอำเภอ
     rows = [r.split('\t') for r in q("SELECT district_id, subdistrict, COUNT(*) c FROM temples WHERE subdistrict IS NOT NULL AND subdistrict<>'' GROUP BY district_id, subdistrict HAVING c>=2 ORDER BY district_id, subdistrict").split('\n')]

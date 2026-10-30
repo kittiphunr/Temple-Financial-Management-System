@@ -33,7 +33,7 @@ def _run(db, R, smtp, name, q, app):
     check = R.check
 
     # ---------- ติดตั้งด้วย CLI ----------
-    p = app.php('setup.php', 'Test12345pw')
+    p = app.php('setup.php', 'Test12345pw', '--no-staff')
     check('S1 setup.php ติดตั้งสำเร็จ (381 วัด / 381 บัญชี)',
           p.returncode == 0 and 'นำเข้าทะเบียนวัด 381 วัด' in p.stdout and 'สร้างบัญชีวัดอัตโนมัติ 381 บัญชี' in p.stdout, p.stdout + p.stderr)
     check('S2 สร้างไฟล์ล็อก storage/installed.lock', (app.dir / 'storage' / 'installed.lock').is_file())

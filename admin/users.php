@@ -8,11 +8,35 @@ require __DIR__ . '/../includes/bootstrap.php';
 $me = require_admin();
 $pdo = db();
 
+if (($_GET['download'] ?? '') === 'staff_creds') {
+    $rows = $_SESSION['new_staff_creds'] ?? [];
+    unset($_SESSION['new_staff_creds']); // ให้ดาวน์โหลดได้ครั้งเดียว
+    if (!$rows) {
+        flash('ไม่มีรหัสผ่านเริ่มต้นให้ดาวน์โหลดแล้ว (ดาวน์โหลดได้ครั้งเดียวหลังสร้างบัญชี)', 'err');
+        redirect('users.php');
+    }
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="staff-accounts-' . ((int)date('Y') + 543) . date('md-His') . '.csv"');
+    header('Cache-Control: no-store');
+    write_staff_credentials_csv(fopen('php://output', 'w'), $rows);
+    audit('download_credentials', 'user', null, count($rows) . ' staff accounts');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $act = $_POST['action'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
-    if ($act === 'create') {
+    if ($act === 'provision_staff') {
+        $created = staff_provision_all($pdo);
+        if ($created) {
+            $_SESSION['new_staff_creds'] = array_merge($_SESSION['new_staff_creds'] ?? [], $created);
+            audit('provision_staff', 'user', null, count($created) . ' accounts');
+            flash('สร้างบัญชีผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลแล้ว ' . count($created) . ' บัญชี — ดาวน์โหลดรหัสผ่านเริ่มต้นได้ครั้งเดียว');
+        } else {
+            flash('ทุกตำแหน่งมีผู้ใช้ครบแล้ว ไม่มีบัญชีที่ต้องสร้างเพิ่ม');
+        }
+    } elseif ($act === 'create') {
         [$ok, $msg] = staff_create($pdo, (string)($_POST['slot'] ?? ''), trim($_POST['username'] ?? ''),
             trim($_POST['full_name'] ?? ''), (string)($_POST['password'] ?? ''), trim($_POST['email'] ?? ''));
         flash($msg, $ok ? 'ok' : 'err');
@@ -68,6 +92,17 @@ require __DIR__ . '/../includes/header.php';
 </div>
 <p class="mb-4 text-sm text-stone-600">โควตา = แอดมินประจำอำเภอ (อำเภอละ 1 คน) + แอดมินหลัก 1 คน + ผู้ใช้เจ้าคณะจังหวัด 1 คน = จำนวนอำเภอ + 2
   บัญชีแอดมินประจำวัดไม่นับ — จัดการที่ <a class="font-semibold" href="temple_accounts.php">บัญชีวัด</a></p>
+
+<div class="mb-4 rounded-2xl border border-gold-500 bg-gold-50 p-4">
+  <h3>สร้างบัญชีให้ครบทุกตำแหน่งอัตโนมัติ</h3>
+  <p class="mb-3 text-sm text-stone-700">สร้างผู้ใช้ในตำแหน่งที่ยังว่างจากทะเบียนวัดที่นำเข้า: <strong>เจ้าคณะจังหวัด</strong> 1 · <strong>แอดมินประจำอำเภอ</strong> อำเภอละ 1 ·
+    <strong>เจ้าคณะตำบล</strong> ตำบลละ 1 (ดูอย่างเดียว ไม่นับโควตา) พร้อมรหัสผ่านเริ่มต้นแบบสุ่ม ตำแหน่งที่มีผู้ใช้อยู่แล้วจะไม่ถูกแตะต้อง
+    ผู้ใช้ต้องตั้งรหัสผ่านใหม่ตอนเข้าครั้งแรก และต้องลงอีเมลของแต่ละบัญชีก่อนจึงจะเข้าสู่ระบบได้</p>
+  <form method="post" class="flex flex-wrap items-center gap-2" data-confirm="สร้างบัญชีผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลที่ยังว่างทั้งหมด?"><?= csrf_field() ?><input type="hidden" name="action" value="provision_staff">
+    <button class="btn">สร้างบัญชีที่ยังว่างทั้งหมด</button>
+    <?php if (!empty($_SESSION['new_staff_creds'])): ?><a class="btn btn-outline" href="?download=staff_creds">⇩ ดาวน์โหลดรหัสผ่านเริ่มต้น (<?= count($_SESSION['new_staff_creds']) ?> บัญชี)</a><?php endif; ?>
+  </form>
+</div>
 
 <?php if ($vacant): ?>
 <div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">

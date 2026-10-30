@@ -22,7 +22,7 @@ def run(db, R):
 
 def _run(R, q, app):
     check = R.check
-    app.php('setup.php', 'Test12345pw')
+    app.php('setup.php', 'Test12345pw', '--no-staff')
     base = app.serve()
     g = Client(base)
     _, _, b = g.req('/login.php')

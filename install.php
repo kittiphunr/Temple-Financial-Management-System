@@ -13,6 +13,9 @@ require __DIR__ . '/includes/mailer.php';
 require __DIR__ . '/includes/accounts.php';
 require __DIR__ . '/includes/temple_import.php';
 require __DIR__ . '/includes/crypto.php';
+require __DIR__ . '/includes/staff.php';
+require __DIR__ . '/includes/subdistricts.php';
+require __DIR__ . '/includes/staff_provision.php';
 
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
@@ -111,6 +114,15 @@ if (is_installed($CONFIG)) {
         write_credentials_csv(fopen('php://output', 'w'), $rows);
         exit;
     }
+    if ($done && ($_GET['download'] ?? '') === 'staff' && !empty($done['staff'])) {
+        $rows = $done['staff'];
+        unset($_SESSION['inst_done']['staff']); // ดาวน์โหลดได้ครั้งเดียว
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="staff-accounts-' . ((int)date('Y') + 543) . date('md-His') . '.csv"');
+        header('Cache-Control: no-store');
+        write_staff_credentials_csv(fopen('php://output', 'w'), $rows);
+        exit;
+    }
     if ($done && ($_GET['step'] ?? '') === 'done') {
         ob_start(); ?>
         <h2 class="mb-2 text-2xl font-bold text-emerald-700">✓ ติดตั้งเสร็จเรียบร้อย</h2>
@@ -126,6 +138,14 @@ if (is_installed($CONFIG)) {
           <p class="mb-3 mt-1 text-sm">ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้ — เก็บไฟล์ไว้ในที่ปลอดภัย นำไปแจกวัด แล้วลบทิ้ง
             วัดต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรกหลังยืนยันอีเมล</p>
           <a class="btn" href="install.php?download=creds">⇩ ดาวน์โหลด CSV รหัสผ่านเริ่มต้น</a>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($done['staff'])): ?>
+        <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <p class="font-bold">ดาวน์โหลดรหัสผ่านเริ่มต้นของผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล (ทำได้ครั้งเดียว)</p>
+          <p class="mb-3 mt-1 text-sm">สร้างแล้ว <?= count($done['staff']) ?> บัญชี: เจ้าคณะจังหวัด แอดมินประจำอำเภอ และเจ้าคณะตำบล — ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้
+            ผู้ใช้ต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรก และ <strong>แอดมินหลักต้องลงอีเมลของแต่ละบัญชีก่อน</strong> (จัดการระบบ → ผู้ใช้ระดับจังหวัด/อำเภอ และ เจ้าคณะตำบล) จึงเข้าสู่ระบบได้</p>
+          <a class="btn" href="install.php?download=staff">⇩ ดาวน์โหลด CSV ผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล</a>
         </div>
         <?php endif; ?>
         <div class="mb-4 rounded-xl bg-gold-50 p-4 text-sm text-stone-800">
@@ -267,6 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'admin_name' => trim($_POST['admin_name'] ?? ''),
             'temple_source' => $source,
             'make_accounts' => isset($_POST['make_accounts']),
+            'make_staff' => isset($_POST['make_staff']),
         ];
         $S['site_form'] = $f;
         $pw = (string)($_POST['admin_pass'] ?? '');
@@ -416,6 +437,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $creds = provision_temple_accounts($pdo);
             }
 
+            $staffCreds = [];
+            if (!empty($site['make_staff']) && $nTemples > 0) {
+                $staffCreds = staff_provision_all($pdo);
+            }
+
             $values = $S['db'] + [
                 'app_name' => $S['site']['site_name'],
                 'app_sub' => $S['site']['site_sub'],
@@ -438,7 +464,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             notice('ติดตั้งไม่สำเร็จ: ' . $e->getMessage());
             go(5);
         }
-        $_SESSION['inst_done'] = ['admin' => $S['site']['admin_user'], 'temples' => $nTemples, 'accounts' => count($creds), 'creds' => $creds, 'province' => $S['site']['province'], 'districts' => (int)$pdo->query('SELECT COUNT(*) FROM districts')->fetchColumn(), 'source' => $S['site']['temple_source']];
+        $_SESSION['inst_done'] = ['admin' => $S['site']['admin_user'], 'temples' => $nTemples, 'accounts' => count($creds), 'creds' => $creds, 'staff' => $staffCreds, 'province' => $S['site']['province'], 'districts' => (int)$pdo->query('SELECT COUNT(*) FROM districts')->fetchColumn(), 'source' => $S['site']['temple_source']];
         unset($_SESSION['inst']);
         session_regenerate_id(true);
         go('done');
@@ -492,7 +518,7 @@ switch ($step) {
 
     case 3:
         $f = ($S['site_form'] ?? []) + ['province' => 'แพร่', 'site_name' => 'ระบบบัญชีรายรับ-รายจ่ายวัด', 'site_sub' => 'สำหรับคณะสงฆ์จังหวัดแพร่',
-            'admin_user' => '', 'admin_name' => '', 'temple_source' => 'builtin', 'make_accounts' => true];
+            'admin_user' => '', 'admin_name' => '', 'temple_source' => 'builtin', 'make_accounts' => true, 'make_staff' => true];
         $stage = $S['site']['stage'] ?? null;
         $hasPw = !empty($S['site']['admin_hash']);
         $hasBuiltin = is_file(__DIR__ . '/data/temples_phrae.csv'); ?>
@@ -523,6 +549,7 @@ switch ($step) {
             </div>
             <label class="!mb-0 !text-stone-800"><input type="radio" name="temple_source" value="later" <?= $f['temple_source'] === 'later' ? 'checked' : '' ?>> ยังไม่นำเข้า — ไปนำเข้าภายหลังที่ จัดการระบบ → นำเข้ารายชื่อวัด</label>
             <label class="!mb-0 mt-1 !text-stone-800"><input type="checkbox" name="make_accounts" value="1" <?= $f['make_accounts'] ? 'checked' : '' ?>> สร้างบัญชีแอดมินประจำวัดให้ทุกวัดที่นำเข้าอัตโนมัติ (1 วัด = 1 บัญชี พร้อมรหัสผ่านเริ่มต้นสุ่ม)</label>
+            <label class="!mb-0 !text-stone-800"><input type="checkbox" name="make_staff" value="1" <?= $f['make_staff'] ? 'checked' : '' ?>> สร้างบัญชีผู้ใช้ระดับจังหวัด/อำเภอ/ตำบลให้ครบตามทะเบียนวัด (เจ้าคณะจังหวัด 1 · แอดมินประจำอำเภอ อำเภอละ 1 · เจ้าคณะตำบล ตำบลละ 1 พร้อมรหัสผ่านเริ่มต้นสุ่ม ใช้ได้เมื่อมีทะเบียนวัด)</label>
           </div>
 
           <h3 class="mt-2 font-bold text-brand-700 sm:col-span-2">3. แอดมินหลัก</h3>
@@ -599,6 +626,7 @@ switch ($step) {
           <dt class="text-stone-500">ชื่อระบบ</dt><dd><?= h($site['site_name']) ?></dd>
           <dt class="text-stone-500">แอดมินหลัก</dt><dd class="font-mono"><?= h($site['admin_user']) ?> <span class="font-sans text-stone-500">(<?= h($site['admin_name']) ?>)</span></dd>
           <dt class="text-stone-500">ทะเบียนวัด</dt><dd><?php if ($site['temple_source'] === 'builtin'): ?>ใช้ทะเบียนที่มากับชุด (381 วัด)<?php elseif ($site['temple_source'] === 'file' && !empty($site['stage'])): ?>นำเข้าจากไฟล์ <?= h($site['stage']['name']) ?> (<?= (int)$site['stage']['count'] ?> วัด <?= (int)$site['stage']['districts'] ?> อำเภอ)<?php else: ?>ยังไม่นำเข้า (ไปนำเข้าที่ จัดการระบบ → นำเข้ารายชื่อวัด)<?php endif; ?></dd>
+          <dt class="text-stone-500">ผู้ใช้จังหวัด/อำเภอ/ตำบล</dt><dd><?= !empty($site['make_staff']) && $site['temple_source'] !== 'later' ? 'สร้างอัตโนมัติตามทะเบียนวัด' : 'ไม่สร้าง (สร้างภายหลังได้ในหน้าจัดการระบบ)' ?></dd>
           <dt class="text-stone-500">บัญชีวัด</dt><dd><?= $site['make_accounts'] ? 'สร้างอัตโนมัติ 1 วัด 1 บัญชี' : 'ไม่สร้าง (สร้างภายหลังได้ในหน้าจัดการระบบ)' ?></dd>
           <dt class="text-stone-500">อีเมล</dt><dd><?= h(['smtp' => 'SMTP', 'mail' => 'mail()', 'log' => 'เขียนลงไฟล์ (ทดสอบ)'][$mail['mail_driver']]) ?><?= $mail['mail_driver'] === 'smtp' ? ' — ' . ($mail['smtp_host'] !== '' ? h($mail['smtp_host']) : '<span class="text-red-700">ยังไม่ได้ตั้งค่า (วัดจะเข้าสู่ระบบไม่ได้จนกว่าจะตั้งค่า)</span>') : '' ?></dd>
         </dl>
