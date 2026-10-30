@@ -35,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('กรุณาระบุเลขที่บัญชี (ตัวเลข/ขีด ไม่เกิน 30 ตัว)', 'err');
         } elseif ($open === null || $bal < 0) {
             flash('วันที่เริ่มบัญชีหรือยอดยกมาไม่ถูกต้อง', 'err');
+        } elseif (temple_has_closed_month($pdo, $tid)) {
+            flash('วัดนี้มีเดือนที่ปิดงวดแล้ว เพิ่มบัญชีใหม่ที่มียอดยกมาไม่ได้ (กระทบยอดคงเหลือของงวดที่ปิด) — ให้แอดมินเปิดงวดก่อน', 'err');
         } else {
             $pdo->prepare("INSERT INTO accounts (temple_id, kind, name, bank_name, branch, account_no, opening_balance, opening_date) VALUES (?, 'bank', ?, ?, ?, ?, ?, ?)")
                 ->execute([$tid, $txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $bal, $open]);
@@ -57,6 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $bal = $money('opening_balance');
         if ($open === null || $bal < 0 || $bal > 999999999999) {
             flash('วันที่เริ่มบัญชีหรือยอดยกมาไม่ถูกต้อง', 'err');
+        } elseif (temple_has_closed_month($pdo, $tid) && ((float)$acc['opening_balance'] !== $bal || (string)$acc['opening_date'] !== $open)) {
+            flash('วัดนี้มีเดือนที่ปิดงวดแล้ว แก้ยอดยกมา/วันที่เริ่มบัญชีไม่ได้ (กระทบยอดคงเหลือของงวดที่ปิด) — ให้แอดมินเปิดงวดก่อน', 'err');
         } else {
             $pdo->prepare('UPDATE accounts SET opening_balance = ?, opening_date = ? WHERE id = ?')->execute([$bal, $open, $aid]);
             audit('set_opening', 'account', $aid, "$open $bal");
@@ -82,9 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($act === 'delete_transfer') {
         $gid = (int)($_POST['transfer_id'] ?? 0);
+        $dt = $pdo->prepare('SELECT MIN(txn_date) FROM transactions WHERE transfer_id = ? AND temple_id = ? AND is_deleted = 0');
+        $dt->execute([$gid, $tid]);
+        $lock = period_lock_error($pdo, $tid, $dt->fetchColumn() ?: null);
         $n = $pdo->prepare('UPDATE transactions SET is_deleted = 1 WHERE transfer_id = ? AND temple_id = ?');
-        $n->execute([$gid, $tid]);
-        if ($n->rowCount()) {
+        if ($lock !== '') {
+            flash($lock, 'err');
+        } elseif ($n->execute([$gid, $tid]) && $n->rowCount()) {
             audit('delete_transfer', 'account', $gid);
             flash('ลบรายการโอน/ฝาก-ถอนแล้ว');
         }

@@ -103,6 +103,9 @@ function report_submit(PDO $pdo, int $templeId, int $beYear, int $month, ?int $u
     $snap = report_snapshot($pdo, $templeId, $beYear, $month);
     $note = mb_substr(trim($note), 0, 255);
     $old = report_row($pdo, $templeId, $beYear, $month);
+    if ($old && !empty($old['closed_at'])) {
+        return [false, 'เดือนนี้ปิดงวดแล้ว ส่งรายงานใหม่ไม่ได้ (ต้องเปิดงวดก่อน)'];
+    }
     if ($old) {
         $pdo->prepare('UPDATE monthly_reports SET submitted_at = NOW(), submitted_by = ?, revision = revision + 1, txn_count = ?, income_total = ?, expense_total = ?, note = ?
             WHERE id = ?')->execute([$userId, $snap['count'], $snap['income'], $snap['expense'], $note ?: null, $old['id']]);
@@ -115,14 +118,14 @@ function report_submit(PDO $pdo, int $templeId, int $beYear, int $month, ?int $u
 
 /**
  * รายชื่อวัดในขอบเขตของผู้ใช้ พร้อมสถานะการส่งของเดือนนั้น
- * @param array{district?:int,status?:string,q?:string} $f  status: all|sent|unsent|late|changed
+ * @param array{district?:int,status?:string,q?:string} $f  status: all|sent|unsent|late|changed|closed
  */
 function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
 {
     [$from, $to] = report_month_range($beYear, $month);
     [$sc, $sp] = scope_sql('t');
     $sql = "SELECT t.id, t.name, t.subdistrict, t.email, d.id AS district_id, d.name AS district, d.sort_order,
-            r.submitted_at, r.revision, r.txn_count AS r_count, r.income_total AS r_income, r.expense_total AS r_expense, r.note, ub.full_name AS by_name,
+            r.submitted_at, r.revision, " . (month_close_available() ? 'r.closed_at' : 'NULL') . " AS closed_at, r.txn_count AS r_count, r.income_total AS r_income, r.expense_total AS r_expense, r.note, ub.full_name AS by_name,
             COALESCE(s.c, 0) AS n_count, COALESCE(s.i, 0) AS n_income, COALESCE(s.e, 0) AS n_expense, m.sent_at AS reminded_at
         FROM temples t JOIN districts d ON d.id = t.district_id
         LEFT JOIN monthly_reports r ON r.temple_id = t.id AND r.report_year = ? AND r.report_month = ?
@@ -152,6 +155,7 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
             'unsent' => in_array($r['state'], ['pending', 'late', 'future'], true),
             'late' => $r['state'] === 'late',
             'changed' => $r['state'] === 'changed',
+            'closed' => !empty($r['closed_at']),
             default => true,
         };
         if ($keep) {
@@ -164,8 +168,9 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
 /** สรุปจำนวนตามสถานะ @return array{total:int,sent:int,unsent:int,late:int,changed:int} */
 function report_summary(array $rows): array
 {
-    $s = ['total' => count($rows), 'sent' => 0, 'unsent' => 0, 'late' => 0, 'changed' => 0];
+    $s = ['total' => count($rows), 'sent' => 0, 'unsent' => 0, 'late' => 0, 'changed' => 0, 'closed' => 0];
     foreach ($rows as $r) {
+        if (!empty($r['closed_at'])) $s['closed']++;
         if (in_array($r['state'], ['ok', 'changed'], true)) $s['sent']++;
         elseif ($r['state'] !== 'future') $s['unsent']++;
         if ($r['state'] === 'late') $s['late']++;
@@ -213,4 +218,112 @@ function report_send_reminders(PDO $pdo, array $rows, int $beYear, int $month, ?
         }
     }
     return $res;
+}
+
+// ===================== ปิดงวดรายเดือน =====================
+// เดือนที่ปิดงวดแล้ว: เพิ่ม/แก้ไข/ลบรายการ (รายรับ-รายจ่าย โอน/ฝาก-ถอน) ของวัดนั้นในเดือนนั้นไม่ได้ จนกว่าแอดมินหลัก/แอดมินอำเภอจะ "เปิดงวด" พร้อมเหตุผล
+// ปิดงวดได้เมื่อ: ส่งรายงานเดือนนั้นแล้วและยอดตรงกับปัจจุบัน และสิ้นเดือนแล้ว · แก้ยอดยกมาของบัญชีไม่ได้ถ้าวัดมีเดือนที่ปิดงวดอยู่
+
+/** ฐานข้อมูลมีคอลัมน์ปิดงวดหรือยัง (ยังไม่รัน migration 2026_month_close.sql = ไม่มีการล็อกงวด ระบบทำงานแบบเดิม) */
+function month_close_available(): bool
+{
+    static $ok = null;
+    if ($ok === null) {
+        try {
+            $ok = report_available();
+            if ($ok) {
+                db()->query('SELECT closed_at, closed_by FROM monthly_reports LIMIT 1');
+                db()->query('SELECT 1 FROM month_close_events LIMIT 1');
+            }
+        } catch (PDOException) {
+            $ok = false;
+        }
+    }
+    return $ok;
+}
+
+/** วันที่ (Y-m-d ค.ศ.) อยู่ในเดือนที่ปิดงวดของวัดนี้หรือไม่ */
+function period_closed(PDO $pdo, int $templeId, ?string $ymd): bool
+{
+    if (!$ymd || !month_close_available() || !preg_match('/^(\d{4})-(\d{2})-\d{2}$/', $ymd, $m)) {
+        return false;
+    }
+    $st = $pdo->prepare('SELECT 1 FROM monthly_reports WHERE temple_id = ? AND report_year = ? AND report_month = ? AND closed_at IS NOT NULL');
+    $st->execute([$templeId, (int)$m[1] + 543, (int)$m[2]]);
+    return (bool)$st->fetchColumn();
+}
+
+/** ข้อความผิดพลาดถ้าวันที่อยู่ในงวดที่ปิดแล้ว ไม่งั้น '' */
+function period_lock_error(PDO $pdo, int $templeId, ?string $ymd): string
+{
+    if (!period_closed($pdo, $templeId, $ymd)) {
+        return '';
+    }
+    [, $mo] = explode('-', $ymd);
+    return 'เดือน' . TH_MONTHS[(int)$mo] . ' ' . ((int)substr($ymd, 0, 4) + 543) . ' ปิดงวดแล้ว แก้ไขรายการไม่ได้ — ให้แอดมินหลักหรือแอดมินอำเภอเปิดงวดก่อน';
+}
+
+/** วัดนี้มีเดือนที่ปิดงวดอยู่หรือไม่ (ใช้กันการแก้ยอดยกมา) */
+function temple_has_closed_month(PDO $pdo, int $templeId): bool
+{
+    if (!month_close_available()) {
+        return false;
+    }
+    $st = $pdo->prepare('SELECT 1 FROM monthly_reports WHERE temple_id = ? AND closed_at IS NOT NULL LIMIT 1');
+    $st->execute([$templeId]);
+    return (bool)$st->fetchColumn();
+}
+
+/** ปิดงวด @return array{0:bool,1:string} */
+function report_close(PDO $pdo, int $templeId, int $beYear, int $month, ?int $userId): array
+{
+    if (!month_close_available()) {
+        return [false, 'ยังไม่ได้รัน migration ปิดงวด (sql/migrations/2026_month_close.sql)'];
+    }
+    [, $last] = report_month_range($beYear, $month);
+    if ($last >= date('Y-m-d')) {
+        return [false, 'ปิดงวดได้หลังสิ้นเดือนเท่านั้น'];
+    }
+    $rep = report_row($pdo, $templeId, $beYear, $month);
+    if (!$rep) {
+        return [false, 'ต้องส่งรายงานประจำเดือนก่อนจึงจะปิดงวดได้'];
+    }
+    if (!empty($rep['closed_at'])) {
+        return [false, 'เดือนนี้ปิดงวดแล้ว'];
+    }
+    if (report_state($rep, report_snapshot($pdo, $templeId, $beYear, $month), $beYear, $month) !== 'ok') {
+        return [false, 'มีการแก้ไขรายการหลังส่งรายงาน — ส่งรายงานใหม่ก่อนจึงจะปิดงวดได้'];
+    }
+    $pdo->prepare('UPDATE monthly_reports SET closed_at = NOW(), closed_by = ? WHERE id = ? AND closed_at IS NULL')->execute([$userId, $rep['id']]);
+    $pdo->prepare("INSERT INTO month_close_events (temple_id, report_year, report_month, action, by_user, created_at) VALUES (?,?,?,'close',?,NOW())")->execute([$templeId, $beYear, $month, $userId]);
+    return [true, 'ปิดงวดเดือน' . TH_MONTHS[$month] . ' ' . $beYear . ' แล้ว'];
+}
+
+/** เปิดงวด (ต้องมีเหตุผลอย่างน้อย 5 ตัวอักษร) @return array{0:bool,1:string} */
+function report_reopen(PDO $pdo, int $templeId, int $beYear, int $month, ?int $userId, string $reason): array
+{
+    $reason = mb_substr(trim($reason), 0, 255);
+    if (mb_strlen($reason) < 5) {
+        return [false, 'กรุณาระบุเหตุผลในการเปิดงวด (อย่างน้อย 5 ตัวอักษร)'];
+    }
+    $rep = month_close_available() ? report_row($pdo, $templeId, $beYear, $month) : null;
+    if (!$rep || empty($rep['closed_at'])) {
+        return [false, 'เดือนนี้ยังไม่ได้ปิดงวด'];
+    }
+    $pdo->prepare('UPDATE monthly_reports SET closed_at = NULL, closed_by = NULL WHERE id = ?')->execute([$rep['id']]);
+    $pdo->prepare("INSERT INTO month_close_events (temple_id, report_year, report_month, action, reason, by_user, created_at) VALUES (?,?,?,'reopen',?,?,NOW())")
+        ->execute([$templeId, $beYear, $month, $reason, $userId]);
+    return [true, 'เปิดงวดเดือน' . TH_MONTHS[$month] . ' ' . $beYear . ' แล้ว (บันทึกเหตุผลไว้)'];
+}
+
+/** ประวัติปิด/เปิดงวดของวัดในเดือนนั้น (ใหม่ → เก่า) */
+function report_close_events(PDO $pdo, int $templeId, int $beYear, int $month): array
+{
+    if (!month_close_available()) {
+        return [];
+    }
+    $st = $pdo->prepare('SELECT e.*, u.full_name FROM month_close_events e LEFT JOIN users u ON u.id = e.by_user
+        WHERE e.temple_id = ? AND e.report_year = ? AND e.report_month = ? ORDER BY e.id DESC');
+    $st->execute([$templeId, $beYear, $month]);
+    return $st->fetchAll();
 }

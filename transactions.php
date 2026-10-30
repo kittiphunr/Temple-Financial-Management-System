@@ -17,10 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
 
     if ($action === 'delete' && $id) {
-        $st = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0 AND transfer_id IS NULL');
+        $st = $pdo->prepare('SELECT temple_id, txn_date FROM transactions WHERE id = ? AND is_deleted = 0 AND transfer_id IS NULL');
         $st->execute([$id]);
         $row = $st->fetch();
-        if ($row && can_access_temple((int)$row['temple_id']) && ($rc = receipt_active_for($pdo, $id))) {
+        if ($row && can_access_temple((int)$row['temple_id']) && ($lock = period_lock_error($pdo, (int)$row['temple_id'], $row['txn_date'])) !== '') {
+            flash($lock, 'err');
+        } elseif ($row && can_access_temple((int)$row['temple_id']) && ($rc = receipt_active_for($pdo, $id))) {
             flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะลบได้', 'err');
         } elseif ($row && can_access_temple((int)$row['temple_id'])) {
             $pdo->prepare('UPDATE transactions SET is_deleted = 1 WHERE id = ?')->execute([$id]);
@@ -48,6 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($date === null) $errs[] = 'วันที่ไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ.)';
         if ($amount <= 0 || $amount > 999999999999) $errs[] = 'จำนวนเงินต้องมากกว่า 0';
+        if ($templeId && can_access_temple($templeId) && ($lock = period_lock_error($pdo, $templeId, $date)) !== '') $errs[] = $lock;
+        if ($id) {   // แก้ไขรายการเดิม: เดือนเดิมของรายการต้องไม่ปิดงวดด้วย (กันย้ายรายการออกจากงวดที่ปิด)
+            $oldRow = $pdo->prepare('SELECT temple_id, txn_date FROM transactions WHERE id = ? AND is_deleted = 0 AND transfer_id IS NULL');
+            $oldRow->execute([$id]);
+            if (($orow = $oldRow->fetch()) && can_access_temple((int)$orow['temple_id']) && ($lock = period_lock_error($pdo, (int)$orow['temple_id'], $orow['txn_date'])) !== '') $errs[] = $lock;
+        }
 
         if ($errs) {
             flash(implode(', ', $errs), 'err');
@@ -99,7 +107,10 @@ if (!empty($_GET['edit'])) {
 }
 
 $sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation, a.kind AS acc_kind, a.bank_name AS acc_bank, a.account_no AS acc_no,
-      (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id
+      (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id" . (month_close_available()
+      ? ",
+      (SELECT 1 FROM monthly_reports m WHERE m.temple_id = x.temple_id AND m.report_year = YEAR(x.txn_date) + 543 AND m.report_month = MONTH(x.txn_date) AND m.closed_at IS NOT NULL) AS locked" : ', NULL AS locked') . "
+
     FROM transactions x JOIN temples t ON t.id = x.temple_id
     JOIN districts d ON d.id = t.district_id JOIN categories c ON c.id = x.category_id LEFT JOIN accounts a ON a.id = x.account_id
     WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
@@ -188,10 +199,14 @@ function temple_options(array $groups, int $sel): string
       <?php if ($type === 'income' && $r['is_donation']): ?>
         <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
       <?php endif; ?>
+      <?php if (!empty($r['locked'])): ?>
+        <span class="badge badge-mute" title="ปิดงวดแล้ว แก้ไขไม่ได้ (แอดมินหลัก/อำเภอเปิดงวดได้ที่หน้ารายงานประจำเดือน)">🔒 ปิดงวด</span>
+      <?php else: ?>
       <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
       <form method="post" class="inline" data-confirm="ยืนยันการลบรายการนี้?">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <button class="btn btn-sm btn-danger">ลบ</button></form>
+      <?php endif; ?>
     </td>
   </tr>
   <?php endforeach; ?>
