@@ -266,6 +266,7 @@ require_once __DIR__ . '/staff.php';
 require_once __DIR__ . '/subdistricts.php';
 require_once __DIR__ . '/thai_geo.php';
 require_once __DIR__ . '/staff_provision.php';
+require_once __DIR__ . '/report_status.php';
 require_once __DIR__ . '/letterhead.php';
 require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/about.php';
