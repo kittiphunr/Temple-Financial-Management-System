@@ -30,7 +30,7 @@ function about_html(): string
     $li = implode('', array_map(fn($p) => '<li>' . e($p) . '</li>', ABOUT_POINTS));
     return '<div class="about">'
         . '<div class="about-head"><img src="' . e(BASE) . 'assets/img/logo.svg" alt="" width="72" height="72"><div><h3>เกี่ยวกับ ' . e($CONFIG['app_name']) . '</h3>'
-        . '<div class="about-sub">' . e($CONFIG['app_sub']) . '</div></div></div>'
+        . '<div class="about-sub">' . e(app_subtitle()) . '</div></div></div>'
         . '<h4>ผู้พัฒนา</h4>'
         . '<div class="about-dev"><img class="about-photo" src="' . e(BASE) . 'assets/img/developer.jpg" alt="' . e($d['name']) . '" width="96" height="96">'
         . '<div><div class="about-name">' . e($d['name']) . '</div><div class="about-sub">' . e($d['name_en']) . '</div>'
@@ -43,7 +43,7 @@ function about_html(): string
         . $row('เว็บไซต์', 'https://' . $d['website'], $d['website'])
         . '</dl>'
         . '<h4>เกี่ยวกับเว็บไซต์</h4>'
-        . '<p>' . e($CONFIG['app_name']) . ' ' . e($CONFIG['app_sub']) . ' — บันทึก สรุป และออกเอกสารบัญชีของวัดทุกแห่งในจังหวัด' . e($CONFIG['province_name'] ?? '') . ' ในที่เดียว</p>'
+        . '<p>' . e($CONFIG['app_name']) . ' ' . e(app_subtitle()) . ' — บันทึก สรุป และออกเอกสารบัญชีของวัดทุกแห่งในจังหวัด' . e(province_name()) . ' ในที่เดียว</p>'
         . '<ul>' . $li . '</ul></div>';
 }
 

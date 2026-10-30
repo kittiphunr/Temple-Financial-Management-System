@@ -263,6 +263,7 @@ require_once __DIR__ . '/staff.php';
 require_once __DIR__ . '/letterhead.php';
 require_once __DIR__ . '/receipts.php';
 require_once __DIR__ . '/about.php';
+require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/ledger.php';
 require_once __DIR__ . '/ledger_ui.php';
 

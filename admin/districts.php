@@ -3,9 +3,16 @@
 require __DIR__ . '/../includes/bootstrap.php';
 $me = require_admin();
 $pdo = db();
+require __DIR__ . '/../includes/temple_import.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+    if (($_POST['action'] ?? '') === 'prune') {
+        $gone = districts_prune_empty($pdo);
+        audit('prune_districts', 'district', null, (string)count($gone));
+        flash($gone ? 'ลบอำเภอที่ไม่มีวัดและไม่มีผู้ใช้แล้ว: ' . implode(', ', $gone) : 'ไม่มีอำเภอที่ว่างให้ลบ');
+        redirect('districts.php');
+    }
     $did = (int)($_POST['district_id'] ?? 0);
     $st = $pdo->prepare('SELECT id, name, logo_media_id FROM districts WHERE id = ?');
     $st->execute([$did]);
@@ -41,6 +48,14 @@ require __DIR__ . '/../includes/header.php';
 <h2>โลโก้อำเภอ</h2>
 <p class="mb-3 text-sm text-stone-600">ติดตามโลโก้ของแต่ละอำเภอแล้วอัปโหลดที่นี่ (ใช้เป็นหัวเอกสารรายงานระดับอำเภอ) ·
   <?= $missing ? '<strong class="text-amber-700">ยังไม่มีโลโก้ ' . $missing . ' จาก ' . count($rows) . ' อำเภอ</strong>' : '<strong class="text-emerald-700">มีโลโก้ครบทุกอำเภอแล้ว</strong>' ?></p>
+<?php $emptyCount = (int)$pdo->query('SELECT COUNT(*) FROM districts d WHERE NOT EXISTS (SELECT 1 FROM temples t WHERE t.district_id = d.id) AND NOT EXISTS (SELECT 1 FROM users u WHERE u.district_id = d.id)')->fetchColumn(); ?>
+<?php if ($emptyCount): ?>
+<form method="post" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" data-confirm="ลบอำเภอที่ไม่มีวัดและไม่มีผู้ใช้ทั้งหมด?">
+  <?= csrf_field() ?><input type="hidden" name="action" value="prune">
+  <span>มี <?= $emptyCount ?> อำเภอที่ยังไม่มีวัดและไม่มีผู้ใช้ (เช่น อำเภอตัวอย่างที่ติดมากับระบบ) — นับรวมในโควตาผู้ใช้ระดับจังหวัด</span>
+  <button class="btn btn-sm btn-outline">ลบอำเภอที่ว่าง</button>
+</form>
+<?php endif; ?>
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($rows as $r): ?>
   <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">

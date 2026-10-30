@@ -64,7 +64,7 @@ $items .= $u
       <img class="h-12 w-12 shrink-0" src="<?= BASE ?>assets/img/logo.svg" alt="ตราสัญลักษณ์">
       <span class="leading-tight">
         <strong class="block whitespace-nowrap text-lg text-brand-600 sm:text-xl"><?= e($CONFIG['app_name']) ?></strong>
-        <small class="text-sm text-stone-700"><?= e($CONFIG['app_sub']) ?></small>
+        <small class="text-sm text-stone-700"><?= e(app_subtitle()) ?></small>
       </span>
     </a>
     <nav class="hidden items-center justify-end gap-1 xl:flex"><?= $items ?></nav>
