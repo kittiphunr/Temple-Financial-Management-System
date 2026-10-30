@@ -126,6 +126,27 @@
   });
 })();
 
+/* หน้า "บันทึกด่วน": เลือกรายรับ/รายจ่ายแล้วกรองหมวดและเปลี่ยนปลายทางของฟอร์ม */
+(function () {
+  'use strict';
+  var form = document.getElementById('quick-form');
+  if (!form) return;
+  var cat = form.elements.category_id, radios = form.querySelectorAll('input[name=kind]');
+  function apply() {
+    var kind = form.querySelector('input[name=kind]:checked').value;
+    form.action = 'transactions.php?type=' + kind;
+    var first = null;
+    Array.prototype.forEach.call(cat.options, function (o) {
+      var ok = o.getAttribute('data-type') === kind;
+      o.hidden = !ok; o.disabled = !ok;
+      if (ok && first === null) first = o;
+    });
+    if (cat.selectedOptions[0] && cat.selectedOptions[0].disabled && first) cat.value = first.value;
+  }
+  Array.prototype.forEach.call(radios, function (r) { r.addEventListener('change', apply); });
+  apply();
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

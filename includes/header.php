@@ -23,6 +23,7 @@ if (!$u) {
 } elseif (!$forced) {
     $items .= nav_item('dashboard.php', 'แดชบอร์ด', $cur === 'dashboard.php');
     if (in_array($role, ['admin', 'district', 'temple'], true)) {   // เจ้าคณะจังหวัด/ตำบลดูข้อมูลได้อย่างเดียว ไม่มีเมนูบันทึกบัญชี
+        $items .= nav_item('quick.php', 'บันทึกด่วน', $cur === 'quick.php');
         $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
         $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     }

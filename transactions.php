@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'save') {
         $templeId = (int)($_POST['temple_id'] ?? 0);
+        // บันทึกจากหน้า "บันทึกด่วน" (มือถือ) ให้กลับไปหน้านั้นหลังบันทึก/ผิดพลาด
+        $backTo = ($_POST['back'] ?? '') === 'quick' ? 'quick.php' . ($u['role'] === 'temple' ? '' : '?temple=' . $templeId) : null;
         $catId = (int)($_POST['category_id'] ?? 0);
         $date = date_be_parse($_POST, 'txn_date');
         $amount = round((float)str_replace(',', '', $_POST['amount'] ?? '0'), 2);
@@ -82,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($errs) {
             flash(implode(', ', $errs), 'err');
-            redirect("transactions.php?type=$type" . ($id ? "&edit=$id" : ''));
+            redirect($backTo ?? "transactions.php?type=$type" . ($id ? "&edit=$id" : ''));
         }
         $desc = mb_substr(trim($_POST['description'] ?? ''), 0, 255);
         $doc = mb_substr(trim($_POST['doc_no'] ?? ''), 0, 50);
@@ -110,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $bw = $type === 'expense' ? budget_warning($pdo, $templeId, $catId, $date) : '';
         flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — ⚠️ $bw" : ''));
-        redirect("transactions.php?type=$type");
+        redirect($backTo ?? "transactions.php?type=$type");
     }
 }
 
