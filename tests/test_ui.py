@@ -130,6 +130,11 @@ def _run(R, q, app):
             if re.search(r'(?<![\w-])(rounded(-[a-z0-9\[\]]+)?|h-\d+|min-h-\d+|!min-h-\d+)(?![\w-])', tag) and 'type="checkbox"' not in tag and 'type="radio"' not in tag:
                 odd.append(f'{f.name}: {tag[:80]}')
     check('U25 ช่องกรอก/ตัวเลือก/ปุ่มไม่กำหนดความสูงหรือรัศมีขอบเอง (ใช้ค่ากลางของระบบ)', not odd, '; '.join(odd[:4]))
+    flat = css.replace(' ', '')
+    check('U27 ลูกศร dropdown วาดเอง (appearance:none + ไอคอน chevron ชิดขวากึ่งกลาง + เว้นพื้นที่ด้านขวา) และเปลี่ยนสีเมื่อโฟกัส',
+          'appearance:none' in flat and 'data:image/svg+xml' in flat and 'backgroundposition' not in flat and 'background-position:right.75remcenter' in flat.replace('0.', '.') + css.replace(' ', '') and 'padding-right:2.25rem' in flat and flat.count('data:image/svg+xml') >= 2)
+    _, _, bf = ad.req('/accounts.php')
+    check('U28 ช่องเลือกเดือนในช่องวันที่ใช้ชื่อย่อ (ม.ค./ก.พ. ...) ให้พอดีกับช่องแคบ', '>ม.ค.</option>' in bf and '>มกราคม</option>' not in bf)
     import shutil, subprocess as sp
     has_pw = shutil.which('node') and sp.run(['node', '-e', "require('playwright')"], capture_output=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()}).returncode == 0
     if has_pw:

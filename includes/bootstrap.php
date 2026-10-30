@@ -52,6 +52,7 @@ function redirect(string $url): never
 }
 
 // ---------- ปี/วันที่แบบไทย ----------
+const TH_MONTHS_SHORT = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const TH_MONTHS = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
@@ -115,9 +116,9 @@ function date_be_field(string $name, ?string $iso = null, int $yearsBack = 10, i
         return $h . '</select>';
     };
     $days = array_combine(range(1, 31), range(1, 31));
-    $months = array_slice(TH_MONTHS, 1, null, true);
+    $months = array_slice(TH_MONTHS_SHORT, 1, null, true);   // ชื่อเดือนย่อให้พอดีกับช่องแคบ
     $yearOpts = array_combine($years, $years);
-    return '<span class="grid grid-cols-[4.5rem_1fr_6rem] gap-1">'
+    return '<span class="grid grid-cols-[4.5rem_minmax(5rem,1fr)_6rem] gap-1.5">'
         . $sel('d', 'วันที่', $days, $sd, 'w-full') . $sel('m', 'เดือน', $months, $sm, 'w-full') . $sel('y', 'ปี พ.ศ.', $yearOpts, $sy, 'w-full') . '</span>';
 }
 
