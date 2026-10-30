@@ -39,3 +39,4 @@ h2{font-size:2rem;margin:0 0 4px;color:var(--brand-d)}.sub{color:var(--mut);marg
 details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;margin:10px 0}summary{cursor:pointer;font-weight:700}details p{color:var(--mut);margin:.5em 0 0}
 .foot{border-top:1px solid var(--line);padding:28px 0;color:var(--mut);text-align:center}.small{font-size:.85rem}
 @media(max-width:860px){.hero-grid{grid-template-columns:1fr}.dl-box{grid-template-columns:1fr}.brand span{font-size:.95rem}}
+.credits{max-width:760px;margin:12px auto 0;text-align:left;font-size:.88rem}.credits summary{cursor:pointer;text-align:center;font-weight:600}.credits ul{margin:8px 0;padding-left:1.2em}

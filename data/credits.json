@@ -1,0 +1,72 @@
+[
+  {
+    "id": "js-chanok",
+    "name": "ฟอนต์ JS Chanok",
+    "use": "ตัวอักษรบนอนุโมทนาบัตร (ฝังในระบบ)",
+    "author": "ไม่ระบุชื่อในไฟล์สัญญาอนุญาตที่ได้รับ",
+    "license": "GNU GPL v2",
+    "url": "",
+    "license_file": "assets/fonts/GPL-License-JS.pdf",
+    "files": ["assets/fonts/JS-Chanok-Normal.ttf"]
+  },
+  {
+    "id": "sweetalert2",
+    "name": "SweetAlert2 11.26.25",
+    "use": "กล่องข้อความแจ้งเตือนและหน้าต่างเกี่ยวกับ",
+    "author": "Tristan Edwards & Limon Monte",
+    "license": "MIT",
+    "url": "https://sweetalert2.github.io/",
+    "license_file": "assets/vendor/sweetalert2.LICENSE",
+    "files": ["assets/vendor/sweetalert2.all.min.js"]
+  },
+  {
+    "id": "qrcode",
+    "name": "qrcode-generator 2.0.4 (qrcode.js)",
+    "use": "QR code ตรวจสอบอนุโมทนาบัตร",
+    "author": "Kazuhiko Arase",
+    "license": "MIT",
+    "url": "http://www.d-project.com/",
+    "license_file": "assets/vendor/qrcode.LICENSE",
+    "files": ["assets/vendor/qrcode.js"]
+  },
+  {
+    "id": "tailwindcss",
+    "name": "Tailwind CSS 3.4.17",
+    "use": "จัดรูปแบบหน้าเว็บ (ไฟล์ CSS ที่คอมไพล์แล้ว assets/css/tailwind.css)",
+    "author": "Tailwind Labs, Inc.",
+    "license": "MIT",
+    "url": "https://tailwindcss.com/",
+    "license_file": "",
+    "files": ["assets/css/tailwind.css"]
+  },
+  {
+    "id": "sarabun",
+    "name": "ฟอนต์ Sarabun",
+    "use": "ตัวอักษรหน้าเว็บ (โหลดจาก Google Fonts ตอนใช้งาน ไม่ได้ฝังในระบบ)",
+    "author": "Cadson Demak",
+    "license": "SIL Open Font License 1.1",
+    "url": "https://fonts.google.com/specimen/Sarabun",
+    "license_file": "",
+    "files": []
+  },
+  {
+    "id": "thai-province-data",
+    "name": "thai-province-data",
+    "use": "ฐานข้อมูลจังหวัด/อำเภอ/ตำบล สำหรับตัวติดตั้งและการสร้างผู้ใช้อัตโนมัติ (data/thai_geo.json)",
+    "author": "Kongvut Sangkla",
+    "license": "MIT",
+    "url": "https://github.com/kongvut/thai-province-data",
+    "license_file": "data/thai_geo.LICENSE",
+    "files": ["data/thai_geo.json"]
+  },
+  {
+    "id": "onab-temples",
+    "name": "ทะเบียนวัด จังหวัดแพร่ (binfo.onab.go.th)",
+    "use": "ข้อมูลตั้งต้นของวัด 381 วัด (data/temples_phrae.csv) และรูปแบบไฟล์ Excel ที่นำเข้าได้",
+    "author": "สำนักงานพระพุทธศาสนาแห่งชาติ",
+    "license": "ไม่ได้ระบุสัญญาอนุญาตของข้อมูล — ใช้เป็นข้อมูลอ้างอิงจากเว็บไซต์ทางการและให้เครดิตแหล่งที่มา",
+    "url": "https://binfo.onab.go.th/Temple/Temple-List-view.aspx",
+    "license_file": "",
+    "files": ["data/temples_phrae.csv"]
+  }
+]

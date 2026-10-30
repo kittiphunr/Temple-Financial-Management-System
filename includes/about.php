@@ -47,7 +47,8 @@ function about_html(): string
         . '<ul>' . $li . '</ul>'
         . '<h4>ฟอนต์และสัญญาอนุญาต</h4>'
         . '<p>อนุโมทนาบัตรใช้ฟอนต์ <strong>JS Chanok</strong> ซึ่งเผยแพร่ภายใต้สัญญาอนุญาต GNU General Public License เวอร์ชัน 2 (GPL v2) — '
-        . '<a href="' . e(BASE) . 'assets/fonts/GPL-License-JS.pdf" target="_blank" rel="noopener noreferrer">อ่านข้อความสัญญาอนุญาตของฟอนต์ (PDF)</a></p></div>';
+        . '<a href="' . e(BASE) . 'assets/fonts/GPL-License-JS.pdf" target="_blank" rel="noopener noreferrer">อ่านข้อความสัญญาอนุญาตของฟอนต์ (PDF)</a></p>'
+        . credits_html() . '</div>';
 }
 
 /** ข้อความแจ้งเตือนที่แสดงด้วย SweetAlert2 (ไม่มี JS จะเป็นแถบข้อความบนหน้า) type: ok | err | info */
@@ -59,4 +60,23 @@ function alert_box(string $msg, string $type = 'ok'): string
         default => 'bg-emerald-50 text-emerald-900',
     };
     return '<div class="mb-4 rounded-lg px-4 py-2.5 ' . $cls . '" role="alert" data-swal="' . e($type) . '">' . e($msg) . '</div>';
+}
+
+/** รายการเครดิตส่วนประกอบของผู้อื่นที่ระบบใช้ (data/credits.json — นโยบาย: ใช้ผลงานของใครต้องให้เครดิตเสมอ ดู CREDITS.md) */
+function credits_html(): string
+{
+    $file = dirname(__DIR__) . '/data/credits.json';
+    $items = is_file($file) ? json_decode((string)file_get_contents($file), true) : null;
+    if (!is_array($items) || !$items) {
+        return '';
+    }
+    $li = '';
+    foreach ($items as $c) {
+        $name = e($c['name']);
+        if (!empty($c['url'])) {
+            $name = '<a href="' . e($c['url']) . '" target="_blank" rel="noopener noreferrer">' . $name . '</a>';
+        }
+        $li .= '<li>' . $name . ' — ' . e($c['author']) . ' · ' . e(explode(' — ', (string)$c['license'])[0]) . '</li>';
+    }
+    return '<h4>เครดิตส่วนประกอบที่ใช้</h4><ul class="about-credits">' . $li . '</ul>';
 }
