@@ -24,6 +24,11 @@ foreach (['schema.sql', 'seed.sql'] as $file) {
 }
 
 $pdo->exec('USE `' . $cfg['db_name'] . '`');
+
+require __DIR__ . '/includes/temple_import.php';
+$res = import_temples_csv($pdo, __DIR__ . '/data/temples_phrae.csv', true, 'ทะเบียนวัด พศ. (Report_Temple.xlsx)');
+echo "นำเข้าทะเบียนวัด {$res['ok']} วัด" . ($res['bad'] ? ' (ข้าม ' . count($res['bad']) . ' บรรทัด)' : '') . "\n";
+
 $st = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role) VALUES ('admin', ?, 'ผู้ดูแลระบบ', 'admin')
     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)");
 $st->execute([password_hash($pw, PASSWORD_DEFAULT)]);

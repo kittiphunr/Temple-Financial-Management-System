@@ -15,19 +15,18 @@ $pageTitle = 'ข้อมูลวัด';
 require __DIR__ . '/includes/header.php';
 ?>
 <h2>ข้อมูลวัดจังหวัดแพร่ แยกตามอำเภอ</h2>
-<p class="muted">ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงรายชื่อที่ยังไม่ได้เทียบกับทะเบียนวัดอย่างเป็นทางการ
-  ผู้ดูแลระบบสามารถนำเข้ารายชื่อวัดทั้งหมดจากทะเบียนวัดได้ที่เมนูจัดการระบบ</p>
+<p class="muted">ข้อมูลจากทะเบียนวัดจังหวัดแพร่ ป้าย <span class="badge">รอตรวจสอบ</span> หมายถึงวัดที่เพิ่มเองและยังไม่ได้เทียบกับทะเบียนทางการ</p>
 <?php foreach ($districts as $dn): $list = $groups[$dn] ?? []; ?>
   <h3 class="district-title">อำเภอ<?= e($dn) ?> <small class="muted">(<?= count($list) ?> วัด)</small></h3>
   <?php if (!$list): ?>
     <p class="muted">ยังไม่มีข้อมูลวัดของอำเภอนี้ในระบบ</p>
   <?php else: ?>
   <div class="table-wrap"><table>
-    <tr><th>ชื่อวัด</th><th>ตำบล</th><th>เจ้าอาวาส</th><th>โทรศัพท์</th><th>สถานะข้อมูล</th></tr>
+    <tr><th>ชื่อวัด</th><th>ตำบล</th><th>หมู่</th><th>ประเภท / นิกาย</th><th>รหัสวัด</th><th>สถานะข้อมูล</th></tr>
     <?php foreach ($list as $r): ?>
     <tr>
       <td><?= e($r['name']) ?></td><td><?= e($r['subdistrict'] ?? '-') ?></td>
-      <td><?= e($r['abbot'] ?? '-') ?></td><td><?= e($r['phone'] ?? '-') ?></td>
+      <td><?= e($r['moo'] ?? '-') ?></td><td><?= e(trim(($r['temple_type'] ?? '') . ' / ' . ($r['sect'] ?? ''), ' /') ?: '-') ?></td><td><?= e($r['temple_code'] ?? '-') ?></td>
       <td><?= $r['verified'] ? '<span class="badge ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
     </tr>
     <?php endforeach; ?>

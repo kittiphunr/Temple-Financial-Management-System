@@ -16,7 +16,10 @@ CREATE TABLE IF NOT EXISTS districts (
 CREATE TABLE IF NOT EXISTS temples (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   district_id INT UNSIGNED NOT NULL,
+  temple_code VARCHAR(11) NULL UNIQUE COMMENT 'รหัสวัด 11 หลักจากทะเบียน พศ.',
   name VARCHAR(150) NOT NULL,
+  temple_type VARCHAR(50) NULL,
+  sect VARCHAR(30) NULL,
   subdistrict VARCHAR(100) NULL,
   moo VARCHAR(20) NULL,
   abbot VARCHAR(150) NULL,
@@ -25,7 +28,7 @@ CREATE TABLE IF NOT EXISTS temples (
   source VARCHAR(255) NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_temple (district_id, name),
+  UNIQUE KEY uq_temple (district_id, name, subdistrict),
   CONSTRAINT fk_temple_district FOREIGN KEY (district_id) REFERENCES districts(id)
 ) ENGINE=InnoDB;
 

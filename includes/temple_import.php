@@ -1,0 +1,48 @@
+<?php
+/**
+ * นำเข้ารายชื่อวัดจากไฟล์ CSV (UTF-8) คอลัมน์:
+ * อำเภอ, ชื่อวัด, ตำบล, หมู่ที่, เจ้าอาวาส, โทรศัพท์, [รหัสวัด, ประเภทวัด, นิกาย]
+ * ถ้ามีรหัสวัดซ้ำ หรือ (อำเภอ+ชื่อ+ตำบล) ซ้ำ จะอัปเดตแทนการเพิ่มใหม่
+ * @return array{ok:int,bad:string[]}
+ */
+function import_temples_csv(PDO $pdo, string $path, bool $verified, string $source): array
+{
+    $dmap = [];
+    foreach ($pdo->query('SELECT id, name FROM districts') as $d) {
+        $dmap[$d['name']] = (int)$d['id'];
+    }
+    $h = fopen($path, 'r');
+    if (fread($h, 3) !== "\xEF\xBB\xBF") {
+        rewind($h);
+    }
+    $ins = $pdo->prepare('INSERT INTO temples (district_id,name,subdistrict,moo,abbot,phone,temple_code,temple_type,sect,verified,source)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE district_id=VALUES(district_id), name=VALUES(name), subdistrict=COALESCE(VALUES(subdistrict),subdistrict),
+        moo=COALESCE(VALUES(moo),moo), abbot=COALESCE(VALUES(abbot),abbot), phone=COALESCE(VALUES(phone),phone),
+        temple_code=COALESCE(VALUES(temple_code),temple_code), temple_type=COALESCE(VALUES(temple_type),temple_type),
+        sect=COALESCE(VALUES(sect),sect), verified=GREATEST(verified, VALUES(verified))');
+    $ok = 0;
+    $bad = [];
+    $line = 0;
+    while (($r = fgetcsv($h)) !== false) {
+        $line++;
+        if ($line === 1 && in_array(trim($r[0] ?? ''), ['อำเภอ', 'district'], true)) {
+            continue;
+        }
+        $dn = preg_replace('/^อำเภอ|^อ\./u', '', trim($r[0] ?? ''));
+        $name = trim($r[1] ?? '');
+        if ($name === '' || !isset($dmap[$dn])) {
+            $bad[] = "บรรทัด $line: " . implode(',', $r);
+            continue;
+        }
+        $n = fn(int $i) => (isset($r[$i]) && trim($r[$i]) !== '') ? trim($r[$i]) : null;
+        try {
+            $ins->execute([$dmap[$dn], $name, $n(2), $n(3), $n(4), $n(5), $n(6), $n(7), $n(8), $verified ? 1 : 0, $source]);
+            $ok++;
+        } catch (PDOException $ex) {
+            $bad[] = "บรรทัด $line: " . $ex->getMessage();
+        }
+    }
+    fclose($h);
+    return ['ok' => $ok, 'bad' => $bad];
+}
