@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 audit('login_blocked_no_email', 'user', (int)$row['id']);
                 $error = 'ยังเข้าสู่ระบบไม่ได้ เนื่องจากวัดนี้ยังไม่ได้ลงทะเบียนอีเมลกับผู้ดูแลระบบ กรุณาแจ้งอีเมลของวัดให้ผู้ดูแลระบบหลักเพื่อลงข้อมูลก่อน';
             } else {
-                [$sent, $why] = otp_issue($pdo, $row, $row['temple_email']);
+                [$sent, $why] = otp_issue($pdo, $row, user_mail_address($row));
                 if ($sent) {
                     session_regenerate_id(true);
                     $_SESSION['pending_2fa'] = ['uid' => (int)$row['id'], 't' => time()];
@@ -50,9 +50,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $error = $why;
             }
-        } else {
+        } elseif (!staff_2fa_enabled()) {
             complete_login($pdo, $row);
             redirect('index.php');
+        } elseif (user_mail_address($row) === '') {
+            if ($row['role'] === 'admin') {
+                // แอดมินหลักที่ยังไม่มีอีเมล: ลงทะเบียนและยืนยันอีเมลก่อนเข้าระบบ (ครั้งแรกหลังติดตั้ง/อัปเกรด)
+                session_regenerate_id(true);
+                $_SESSION['pending_enroll'] = ['uid' => (int)$row['id'], 't' => time()];
+                redirect('staff_email.php');
+            }
+            audit('login_blocked_no_email', 'user', (int)$row['id']);
+            $error = 'ยังเข้าสู่ระบบไม่ได้ เนื่องจากบัญชีนี้ยังไม่ได้ลงทะเบียนอีเมล กรุณาแจ้งผู้ดูแลระบบหลักให้ลงอีเมลที่ จัดการระบบ → ผู้ใช้';
+        } else {
+            [$sent, $why] = otp_issue($pdo, $row, user_mail_address($row));
+            if ($sent) {
+                session_regenerate_id(true);
+                $_SESSION['pending_2fa'] = ['uid' => (int)$row['id'], 't' => time()];
+                audit('otp_sent', 'user', (int)$row['id']);
+                redirect('login_verify.php');
+            }
+            $error = $why;
         }
     }
 }
@@ -62,13 +80,14 @@ require __DIR__ . '/includes/header.php';
 ?>
 <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm mx-auto my-10 max-w-sm">
   <h2>เข้าสู่ระบบ</h2>
-  <?php if ($error): ?><div class="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-red-900"><?= e($error) ?></div><?php endif; ?>
+  <?php if ($error): ?><?= alert_box($error, 'err') ?><?php endif; ?>
   <form method="post" class="grid gap-3">
     <?= csrf_field() ?>
-    <div><label>ชื่อผู้ใช้</label><input name="username" required autofocus autocomplete="username" class="w-full"></div>
+    <div><label>ชื่อผู้ใช้</label><input name="username" required autofocus autocomplete="username" value="<?= e($_POST["username"] ?? "") ?>" class="w-full"></div>
     <div><label>รหัสผ่าน</label><input type="password" name="password" required autocomplete="current-password" class="w-full"></div>
     <div><button class="btn w-full" type="submit">เข้าสู่ระบบ</button></div>
   </form>
-  <p class="mt-4 text-sm text-stone-500">บัญชีของวัดต้องยืนยันตัวตนด้วยรหัส 6 หลักที่ส่งไปยังอีเมลของวัดหลังกรอกรหัสผ่าน</p>
+  <p class="mt-4 text-sm"><a href="forgot.php">ลืมรหัสผ่าน?</a></p>
+  <p class="mt-2 text-sm text-stone-500">ทุกบัญชีต้องยืนยันตัวตนด้วยรหัส 6 หลักที่ส่งไปยังอีเมลที่ลงทะเบียนไว้ (อีเมลวัดสำหรับบัญชีวัด) หลังกรอกรหัสผ่าน</p>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

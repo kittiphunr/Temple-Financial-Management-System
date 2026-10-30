@@ -227,7 +227,7 @@ require __DIR__ . '/../includes/header.php';
     <td class="whitespace-nowrap text-sm"><?= $r['last_login_at'] ? e(th_date($r['last_login_at'])) : '-' ?></td>
     <td class="whitespace-nowrap">
       <?php if ($r['uid']): ?>
-      <form method="post" class="inline" onsubmit="return confirm('สร้างรหัสผ่านใหม่ให้ <?= e(addslashes($r['name'])) ?> ? รหัสเดิมจะใช้ไม่ได้ทันที')">
+      <form method="post" class="inline" data-confirm="สร้างรหัสผ่านใหม่ให้ <?= e(($r['name'])) ?> ? รหัสเดิมจะใช้ไม่ได้ทันที">
         <?= csrf_field() ?><input type="hidden" name="action" value="reset_password"><input type="hidden" name="user_id" value="<?= (int)$r['uid'] ?>"><input type="hidden" name="return" value="<?= e($return) ?>">
         <button class="btn btn-outline btn-sm">รีเซ็ตรหัสผ่าน</button></form>
       <form method="post" class="inline">

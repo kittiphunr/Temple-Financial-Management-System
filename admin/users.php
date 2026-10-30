@@ -14,8 +14,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     if ($act === 'create') {
         [$ok, $msg] = staff_create($pdo, (string)($_POST['slot'] ?? ''), trim($_POST['username'] ?? ''),
-            trim($_POST['full_name'] ?? ''), (string)($_POST['password'] ?? ''));
+            trim($_POST['full_name'] ?? ''), (string)($_POST['password'] ?? ''), trim($_POST['email'] ?? ''));
         flash($msg, $ok ? 'ok' : 'err');
+    } elseif ($act === 'set_email' && $id) {
+        $email = trim($_POST['email'] ?? '');
+        if (!valid_email($email)) {
+            flash('รูปแบบอีเมลไม่ถูกต้อง', 'err');
+        } else {
+            // แอดมินหลักเปลี่ยนอีเมลตัวเองที่ "บัญชีของฉัน" (ต้องยืนยันรหัส) — ที่นี่แก้ได้เฉพาะแอดมินอำเภอและเจ้าคณะจังหวัด
+            $n = $pdo->prepare("UPDATE users SET email = ?, email_verified_at = NULL WHERE id = ? AND role IN ('district','province')");
+            $n->execute([$email, $id]);
+            if ($n->rowCount()) {
+                otp_invalidate_all($pdo, $id);
+                audit('set_staff_email', 'user', $id);
+                flash('บันทึกอีเมลแล้ว');
+            }
+        }
     } elseif ($act === 'toggle' && $id && $id !== $me['id']) {
         $pdo->prepare("UPDATE users SET is_active = 1 - is_active WHERE id = ? AND role <> 'temple'")->execute([$id]);
         audit('toggle', 'user', $id);
@@ -64,6 +78,7 @@ require __DIR__ . '/../includes/header.php';
       <select id="slot" name="slot" class="w-full" required><?php foreach ($vacant as $s): ?><option value="<?= e($s['key']) ?>"><?= e($s['label']) ?></option><?php endforeach; ?></select></div>
     <div><label for="username">ชื่อผู้ใช้</label><input id="username" name="username" required class="w-full" autocomplete="off"></div>
     <div><label for="full_name">ชื่อ-นามสกุล</label><input id="full_name" name="full_name" required class="w-full"></div>
+    <div class="sm:col-span-2"><label for="email">อีเมล (รับรหัสยืนยันตัวตนและกู้รหัสผ่าน<?= staff_2fa_enabled() ? ' — จำเป็นสำหรับอำเภอ/เจ้าคณะจังหวัด' : '' ?>)</label><input id="email" type="email" name="email" maxlength="190" class="w-full" autocomplete="off"></div>
     <div class="sm:col-span-2"><label for="password">รหัสผ่าน (อย่างน้อย 10 ตัว มีตัวอักษรและตัวเลข)</label><input id="password" type="password" name="password" minlength="10" required class="w-full" autocomplete="new-password"></div>
     <div class="flex items-end"><button class="btn">สร้างผู้ใช้</button></div>
   </form>
@@ -73,13 +88,20 @@ require __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-  <thead><tr><th>ตำแหน่ง</th><th>ผู้ใช้</th><th>ชื่อ</th><th>สถานะ</th><th></th></tr></thead>
+  <thead><tr><th>ตำแหน่ง</th><th>ผู้ใช้</th><th>ชื่อ</th><th>อีเมลยืนยัน</th><th>สถานะ</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($slots as $s): $r = $s['user']; ?>
   <tr>
     <td class="font-semibold"><?= e($s['label']) ?></td>
     <?php if ($r): ?>
     <td class="font-mono text-sm"><?= e($r['username']) ?></td><td><?= e($r['full_name']) ?></td>
+    <td class="text-sm">
+      <?php if ($r['email']): ?><span class="whitespace-nowrap"><?= e(mask_email($r['email'])) ?></span><?php else: ?><span class="text-red-700"><?= $r['role'] === 'admin' ? 'ยังไม่ยืนยัน (ยืนยันตอนเข้าสู่ระบบ)' : 'ยังไม่มีอีเมล — เข้าสู่ระบบไม่ได้' ?></span><?php endif; ?>
+      <?php if (in_array($r['role'], ['district', 'province'], true)): ?>
+      <form method="post" class="mt-1 flex gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="set_email"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+        <input type="email" name="email" placeholder="<?= $r['email'] ? 'เปลี่ยนอีเมล' : 'อีเมล' ?>" maxlength="190" required class="w-44 !py-1 text-sm"><button class="btn btn-sm btn-outline">บันทึก</button></form>
+      <?php endif; ?>
+    </td>
     <td><?= $r['is_active'] ? '<span class="badge badge-ok">ใช้งาน</span>' : '<span class="badge">ปิดใช้งาน</span>' ?></td>
     <td class="whitespace-nowrap">
       <?php if ((int)$r['id'] !== $me['id']): ?>
@@ -89,7 +111,7 @@ require __DIR__ . '/../includes/header.php';
         <input type="password" name="password" placeholder="รหัสผ่านใหม่ (10+ ตัว)" minlength="10" class="w-40 !py-1 text-sm" autocomplete="new-password"><button class="btn btn-sm btn-outline ml-1">เปลี่ยนรหัส</button></form>
     </td>
     <?php else: ?>
-    <td colspan="4" class="text-stone-500">— ว่าง —</td>
+    <td colspan="5" class="text-stone-500">— ว่าง —</td>
     <?php endif; ?>
   </tr>
   <?php endforeach; ?>
@@ -104,7 +126,7 @@ require __DIR__ . '/../includes/header.php';
     <?php foreach ($extras as $x): ?>
     <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2"><span><span class="font-mono"><?= e($x['username']) ?></span> — <?= e($x['full_name']) ?> (<?= e($x['role']) ?>)</span>
       <?php if ((int)$x['id'] !== $me['id']): ?>
-      <form method="post" onsubmit="return confirm('ลบผู้ใช้นี้?')"><?= csrf_field() ?><input type="hidden" name="action" value="delete_extra"><input type="hidden" name="id" value="<?= (int)$x['id'] ?>"><button class="btn btn-sm btn-danger">ลบ</button></form>
+      <form method="post" data-confirm="ลบผู้ใช้นี้?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_extra"><input type="hidden" name="id" value="<?= (int)$x['id'] ?>"><button class="btn btn-sm btn-danger">ลบ</button></form>
       <?php endif; ?></li>
     <?php endforeach; ?>
   </ul>

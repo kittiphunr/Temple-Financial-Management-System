@@ -165,7 +165,7 @@ function temple_options(array $groups, int $sel): string
         <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
       <?php endif; ?>
       <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
-      <form method="post" class="inline" onsubmit="return confirm('ยืนยันการลบรายการนี้?')">
+      <form method="post" class="inline" data-confirm="ยืนยันการลบรายการนี้?">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <button class="btn btn-sm btn-danger">ลบ</button></form>
     </td>

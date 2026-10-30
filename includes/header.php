@@ -75,7 +75,7 @@ $items .= $u
 </header>
 <main class="mx-auto max-w-6xl px-4 pb-10 pt-5">
 <?php if ($f = flash()): ?>
-  <div class="mb-4 rounded-lg px-4 py-2.5 <?= $f[1] === 'err' ? 'bg-red-50 text-red-900' : 'bg-emerald-50 text-emerald-900' ?>"><?= e($f[0]) ?></div>
+  <?= alert_box($f[0], $f[1] === 'err' ? 'err' : 'ok') ?>
 <?php endif; ?>
 <?php
 // แจ้งเตือนแอดมินวัด: ต้องใส่โลโก้วัดเพื่อใช้ในเอกสาร (แสดงทุกหน้าจนกว่าจะใส่) และควรกรอกข้อมูลเจ้าอาวาส

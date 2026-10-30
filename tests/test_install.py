@@ -186,7 +186,7 @@ def _run(db, R, smtp, wiz, full, app):
     c, _, b = t.req('/account.php')
     check('F4b หน้า account.php เปิดได้ (หน้าเปลี่ยนรหัสผ่าน)', c == 200)
     check('F5 โหมดบังคับ: มีข้อความอธิบาย ไม่มีเมนูอื่น ไม่มีกล่องข้อมูลบัญชี',
-          'ตั้งรหัสผ่านใหม่ก่อนเริ่มใช้งาน' in b and 'บัญชีรายรับ' not in b and 'ออกจากระบบ' in b and 'ข้อมูลบัญชี' not in b)
+          'ตั้งรหัสผ่านใหม่ก่อนเริ่มใช้งาน' in b and 'transactions.php?type=income' not in b and 'ออกจากระบบ' in b and 'ข้อมูลบัญชี' not in b)
 
     def chg(cur, new, conf=None):
         t.post('/account.php', {'current_password': cur, 'new_password': new, 'confirm_password': new if conf is None else conf}, '/account.php')

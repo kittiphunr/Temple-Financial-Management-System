@@ -148,7 +148,7 @@ require __DIR__ . '/includes/header.php';
 </article>
 
 <?php if (!$void && people_can_edit($tid)): ?>
-<form method="post" class="mx-auto mt-4 flex max-w-3xl flex-wrap items-end gap-2 print:hidden" onsubmit="return confirm('ยืนยันยกเลิกอนุโมทนาบัตรใบนี้? (เลขที่จะไม่ถูกนำกลับมาใช้)')">
+<form method="post" class="mx-auto mt-4 flex max-w-3xl flex-wrap items-end gap-2 print:hidden" data-confirm="ยืนยันยกเลิกอนุโมทนาบัตรใบนี้? (เลขที่จะไม่ถูกนำกลับมาใช้)">
   <?= csrf_field() ?><input type="hidden" name="action" value="void"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
   <div class="grow"><label>เหตุผลที่ยกเลิก</label><input name="reason" required maxlength="255" class="w-full"></div>
   <button class="btn btn-danger">ยกเลิกอนุโมทนาบัตร</button>

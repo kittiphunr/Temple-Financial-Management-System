@@ -106,7 +106,7 @@ require __DIR__ . '/includes/header.php';
       <button class="btn btn-sm"><?= $t['logo_media_id'] ? 'เปลี่ยนโลโก้' : 'อัปโหลดโลโก้' ?></button>
     </form>
     <?php if ($t['logo_media_id']): ?>
-    <form method="post" class="mt-2" onsubmit="return confirm('ลบโลโก้วัด?')">
+    <form method="post" class="mt-2" data-confirm="ลบโลโก้วัด?">
       <?= csrf_field() ?><input type="hidden" name="action" value="logo_remove"><button class="text-sm text-red-700 underline">ลบโลโก้</button>
     </form>
     <?php endif; ?>

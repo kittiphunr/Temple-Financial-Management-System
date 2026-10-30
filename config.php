@@ -18,6 +18,8 @@ $config = [
     'smtp_user'      => getenv('TFMS_SMTP_USER') ?: '',
     'smtp_pass'      => getenv('TFMS_SMTP_PASS') ?: '',
     'mail_from'      => getenv('TFMS_MAIL_FROM') ?: 'no-reply@example.org',
+    // ยืนยันตัวตนสองชั้นทางอีเมลสำหรับแอดมินหลัก/อำเภอ/เจ้าคณะจังหวัด (เปิดเป็นค่าเริ่มต้น) — ปิดได้เฉพาะกรณีฉุกเฉิน เช่น ตั้ง SMTP ไม่ได้ (TFMS_STAFF_2FA=0)
+    'staff_2fa' => in_array(strtolower((string)getenv('TFMS_STAFF_2FA')), ['0', 'false', 'off', 'no'], true) ? false : true,
     'mail_from_name' => 'ระบบบัญชีวัด จังหวัดแพร่',
 ];
 

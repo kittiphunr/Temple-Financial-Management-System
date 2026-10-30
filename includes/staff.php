@@ -53,13 +53,17 @@ function staff_extras(PDO $pdo): array
  * สร้างผู้ใช้ในช่องตำแหน่งที่ว่าง (ใช้ล็อกชื่อ GET_LOCK กันสร้างซ้อนกันพร้อมกัน)
  * @return array{0:bool,1:string} [สำเร็จ, ข้อความ]
  */
-function staff_create(PDO $pdo, string $slotKey, string $username, string $fullName, string $password): array
+function staff_create(PDO $pdo, string $slotKey, string $username, string $fullName, string $password, string $email = ''): array
 {
     if (!preg_match('/^[A-Za-z0-9_.-]{3,50}$/', $username) || str_starts_with(strtolower($username), 'wat')) {
         return [false, 'ชื่อผู้ใช้ใช้ได้เฉพาะ a-z A-Z 0-9 _ . - (3–50 ตัว) และห้ามขึ้นต้นด้วย wat (สงวนไว้สำหรับบัญชีวัด)'];
     }
     if (mb_strlen($password) < 10 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/\d/', $password)) {
         return [false, 'รหัสผ่านต้องยาวอย่างน้อย 10 ตัว และมีทั้งตัวอักษรและตัวเลข'];
+    }
+    $email = trim($email);
+    if ($email !== '' && !valid_email($email)) {
+        return [false, 'รูปแบบอีเมลไม่ถูกต้อง'];
     }
     if (trim($fullName) === '') {
         return [false, 'กรุณากรอกชื่อ-นามสกุล'];
@@ -82,8 +86,11 @@ function staff_create(PDO $pdo, string $slotKey, string $username, string $fullN
         if ($slot['user']) {
             return [false, 'ตำแหน่งนี้มีผู้ใช้แล้ว — ปิดใช้งานหรือรีเซ็ตรหัสผ่านของผู้ใช้เดิมแทนการสร้างใหม่'];
         }
-        $pdo->prepare('INSERT INTO users (username, password_hash, full_name, role, district_id, password_changed_at) VALUES (?,?,?,?,?,NOW())')
-            ->execute([$username, password_hash($password, PASSWORD_DEFAULT), trim($fullName), $slot['role'], $slot['district_id']]);
+        if ($email === '' && $slot['role'] !== 'admin' && staff_2fa_enabled()) {
+            return [false, 'กรุณากรอกอีเมลของผู้ใช้ (ใช้รับรหัสยืนยันตัวตนและกู้รหัสผ่าน)'];
+        }
+        $pdo->prepare('INSERT INTO users (username, password_hash, full_name, email, role, district_id, password_changed_at) VALUES (?,?,?,?,?,?,NOW())')
+            ->execute([$username, password_hash($password, PASSWORD_DEFAULT), trim($fullName), $email ?: null, $slot['role'], $slot['district_id']]);
         audit('create', 'user', (int)$pdo->lastInsertId(), $slot['key'] . ':' . $username);
         return [true, 'สร้างผู้ใช้ตำแหน่ง ' . $slot['label'] . ' แล้ว'];
     } catch (PDOException $e) {
