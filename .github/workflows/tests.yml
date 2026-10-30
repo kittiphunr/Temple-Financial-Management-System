@@ -1,0 +1,51 @@
+# รันชุดทดสอบทั้งหมด (tests/run_all.py) กับฐานข้อมูล MariaDB 10.11 และ MySQL 8.0 ทุกครั้งที่เปิด/แก้ PR และเมื่อ push เข้า main
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.db }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        db: ['mariadb:10.11', 'mysql:8.0']
+    services:
+      db:
+        image: ${{ matrix.db }}
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-pw
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-root-pw"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring, gd, zip, sodium, fileinfo, xmlreader, iconv
+          coverage: none
+      - name: สร้างบัญชีทดสอบ (mysql_native_password ใช้ได้ทั้ง MariaDB และ MySQL)
+        run: |
+          mysql -h127.0.0.1 -uroot -pci-root-pw -e "CREATE USER 'tfmstest'@'%' IDENTIFIED WITH mysql_native_password BY 'ci-test-pw'; GRANT ALL ON *.* TO 'tfmstest'@'%';"
+      - name: รันชุดทดสอบ
+        env:
+          TFMS_TEST_DB_HOST: 127.0.0.1
+          TFMS_TEST_DB_PORT: '3306'
+          TFMS_TEST_DB_USER: tfmstest
+          TFMS_TEST_DB_PASS: ci-test-pw
+        run: python3 tests/run_all.py

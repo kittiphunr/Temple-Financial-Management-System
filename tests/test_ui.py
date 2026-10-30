@@ -2,9 +2,12 @@
 ทดสอบฝั่งเซิร์ฟเวอร์ (HTML ที่ส่งออก + ไฟล์ที่ต้องโหลด) — พฤติกรรมในเบราว์เซอร์ตรวจด้วยตา"""
 import glob
 import re
+from pathlib import Path
 from datetime import date
 
 from support import App, Client, be_date, notice
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def run(db, R):
@@ -65,6 +68,100 @@ def _run(R, q, app):
     check('U10b หน้าต่างเกี่ยวกับระบุฟอนต์ JS Chanok + GPL v2 และลิงก์ไฟล์สัญญาอนุญาต',
           'JS Chanok' in tpl and 'GPL v2' in tpl and 'assets/fonts/GPL-License-JS.pdf' in tpl and Client(base).raw('/assets/fonts/GPL-License-JS.pdf')[0] == 200)
     check('U11 หน้าสาธารณะ (ก่อนเข้าสู่ระบบ) ก็มีหน้าต่างเกี่ยวกับ', 'id="about-template"' in Client(base).req('/')[2] or 'id="about-template"' in Client(base).req('/login.php')[2])
+
+    ver = (app.dir / 'VERSION').read_text().strip()
+    check('U12 หน้าต่างเกี่ยวกับแสดงเวอร์ชันจากไฟล์ VERSION (รันจากซอร์ส = dev)', re.fullmatch(r'\d+\.\d+\.\d+', ver) is not None and f'เวอร์ชัน {ver} (dev)' in tpl, ver)
+    (app.dir / 'version.json').write_text('{"version":"%s","build":123,"commit":"abc1234","built_at":"2026-10-30"}' % ver)
+    _, _, b2 = Client(base).req('/login.php')
+    check('U13 มี version.json จากการบิวล์ → แสดงหมายเลขบิวล์และคอมมิต', f'เวอร์ชัน {ver} (บิวล์ 123 · abc1234)' in b2 and 'สร้างเมื่อ 2026-10-30' in b2)
+    (app.dir / 'version.json').write_text('{"version":"<script>","build":"x","commit":"<b>"}')
+    _, _, b3 = Client(base).req('/login.php')
+    check('U14 version.json ผิดรูปแบบ/แฝงโค้ดถูกเมินเฉย (ใช้ค่าจาก VERSION)', f'เวอร์ชัน {ver}' in b3 and '<script>' not in re.search(r'<template id="about-template">(.*?)</template>', b3, re.S).group(1))
+    (app.dir / 'version.json').unlink()
+
+    # ================= เมนูและไอคอน (Feather Icons) =================
+    sprite = (ROOT / 'assets' / 'vendor' / 'feather-sprite.svg').read_text(encoding='utf-8')
+    have = set(re.findall(r'<symbol id="([a-z0-9-]+)"', sprite))
+    used = set()
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        used |= set(re.findall(r"icon\('([a-z0-9-]+)'", f.read_text(encoding='utf-8')))
+    used |= set(re.findall(r"nav_(?:link|group)\([^)]*?'([a-z0-9-]+)'(?:, [^)]*)?\)", (ROOT / 'includes' / 'header.php').read_text(encoding='utf-8')))
+    check('U15 ไอคอนทุกชื่อที่เรียกใช้ในโค้ดมีอยู่จริงใน Feather sprite', used and used <= have, str(sorted(used - have)))
+    check('U16 ไฟล์ sprite และสัญญาอนุญาต MIT ของ Feather ถูกส่งออกจากเซิร์ฟเวอร์ได้ และมีเครดิต Cole Bemis',
+          g.raw('/assets/vendor/feather-sprite.svg')[0] == 200 and b'Cole Bemis' in g.raw('/assets/vendor/feather.LICENSE')[2] and 'Cole Bemis' in tpl)
+    ad = Client(base)
+    ad.post('/login.php', {'username': 'admin', 'password': 'Test12345pw'})
+    _, _, bd = ad.req('/dashboard.php')
+    desk = re.search(r'<nav class="hidden[^>]*>(.*?)</nav>', bd, re.S).group(1)
+    mob = re.search(r'<details class="nav-mobile.*?<nav[^>]*>(.*?)</nav>', bd, re.S).group(1)
+    groups = re.findall(r'<details class="nav-group[^>]*><summary[^>]*>.*?<span>(.*?)</span>', desk, re.S)
+    check('U17 เมนูแอดมินหลักแบ่งเป็นกลุ่ม dropdown (บันทึกบัญชี/การเงิน/รายงาน/ทะเบียน) พร้อมลิงก์เดี่ยว แดชบอร์ด และ จัดการระบบ', groups == ['บันทึกบัญชี', 'การเงิน', 'รายงาน', 'ทะเบียน'] and 'แดชบอร์ด' in desk and 'จัดการระบบ' in desk, str(groups))
+    hrefs_d = re.findall(r'<a class="[^"]*" href="([^"]+)"', desk)
+    check('U18 เมนูแถบแนวนอนไม่มีลิงก์ซ้ำ และเมนูมือถือมีลิงก์ชุดเดียวกัน (แยกเป็นหัวกลุ่ม)', len(hrefs_d) == len(set(hrefs_d)) and sorted(re.findall(r'<a class="[^"]*" href="([^"]+)"', mob)) == sorted(hrefs_d))
+    check('U19 รายการที่อยู่ในกลุ่มมีไอคอนทุกรายการ และมีขนาดเมนูกระชับ (ลิงก์ระดับบนสุดไม่เกิน 8 ข้อ)', desk.count('<svg class="icon') >= len(hrefs_d) and len(re.findall(r'<details class="nav-group', desk)) + len(re.findall(r'</details><a|^<a', desk)) <= 8)
+    check('U20 กล่องแจ้งเตือนมีไอคอน และบัญชีของฉัน/ออกจากระบบแสดงแต่ไอคอนบนแถบแคบ (มี title และข้อความสำหรับโปรแกรมอ่านหน้าจอ)',
+          'sr-only 2xl:not-sr-only' in desk and 'title="ออกจากระบบ"' in desk and 'aria-hidden="true"' in desk)
+
+    # ================= การ์ดกลาง: ช่องว่างเท่ากันทั้งระบบ =================
+    css = g.raw('/assets/css/tailwind.css')[2].decode('utf-8', 'ignore')
+    check('U21 CSS การ์ดกลางถูกคอมไพล์ (.card .card-table .card-bar .callout) พร้อมกฎจัดช่องไฟในกริด', all(x in css for x in ('.card{', '.card-table{', '.card-bar{', '.callout{')) and ':has(' in css)
+    raw_cards = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'class="([^"]*)"', f.read_text(encoding='utf-8')):
+            v = m.group(1).split('<?')[0].split()
+            if 'rounded-2xl' in v and 'border' in v and 'border-stone-200' in v and 'bg-white' in v and not ({'card', 'card-table', 'card-bar'} & set(v)) and 'rc-page' not in v:
+                raw_cards.append(f'{f.name}: {" ".join(v)[:70]}')
+    check('U22 ไม่มีกล่องที่ประกอบสไตล์การ์ดเอง (ต้องใช้ .card/.card-table/.card-bar ให้ padding เท่ากันทั้งระบบ)', raw_cards == [], '; '.join(raw_cards[:5]))
+    padded = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'class="([^"]*)"', f.read_text(encoding='utf-8')):
+            v = m.group(1).split('<?')[0].split()
+            if ({'card', 'card-table', 'card-bar'} & set(v)) and any(re.fullmatch(r'(p|px|py|pt|pb|pl|pr)-\d+(\.\d+)?', t) for t in v):
+                padded.append(f'{f.name}: {" ".join(v)[:70]}')
+    check('U23 การ์ดไม่กำหนด padding เอง (padding มาจาก .card เท่ากันทุกด้าน)', not padded, '; '.join(padded[:5]))
+
+    # ================= ตัวควบคุมฟอร์ม: ความสูงและขอบมนสมดุลกัน =================
+    check('U24 CSS ตัวควบคุม: ช่องกรอก/ตัวเลือก/ปุ่ม ใช้ความสูงมาตรฐานเดียวกัน (--ctl-h) ขอบมน 0.75rem เท่ากัน และปุ่มเล็ก/ฟอร์มใหญ่มีขนาดของตัวเอง',
+          '--ctl-h:2.75rem' in css.replace(' ', '') and 'min-height:var(--ctl-h)' in css and 'min-height:var(--ctl-h-sm)' in css and '.form-lg' in css and 'border-radius:.75rem' in css.replace(' ', ''))
+    odd = []
+    for f in list(ROOT.glob('*.php')) + list(ROOT.glob('admin/*.php')) + list(ROOT.glob('includes/*.php')):
+        for m in re.finditer(r'<(input|select|textarea|button class="btn[^"]*)([^>]*)>', f.read_text(encoding='utf-8')):
+            tag = m.group(0).split('<?')[0]
+            if re.search(r'(?<![\w-])(rounded(-[a-z0-9\[\]]+)?|h-\d+|min-h-\d+|!min-h-\d+)(?![\w-])', tag) and 'type="checkbox"' not in tag and 'type="radio"' not in tag:
+                odd.append(f'{f.name}: {tag[:80]}')
+    check('U25 ช่องกรอก/ตัวเลือก/ปุ่มไม่กำหนดความสูงหรือรัศมีขอบเอง (ใช้ค่ากลางของระบบ)', not odd, '; '.join(odd[:4]))
+    src = (ROOT / 'assets/css/input.css').read_text(encoding='utf-8')
+    check('U30 กฎ padding ของช่องกรอกไม่ห่อด้วย :where() ทั้งก้อน (specificity 0 แพ้ input{padding:0} ของ Tailwind ทำให้อักษรชิดขอบ)',
+          ":where(input:not(" not in src and "input:where(:not(" in src, 'ตรวจ input.css')
+    flat = css.replace(' ', '')
+    check('U27 ลูกศร dropdown วาดเอง (appearance:none + ไอคอน chevron ชิดขวากึ่งกลาง + เว้นพื้นที่ด้านขวา) และเปลี่ยนสีเมื่อโฟกัส',
+          'appearance:none' in flat and 'data:image/svg+xml' in flat and 'backgroundposition' not in flat and 'background-position:right.75remcenter' in flat.replace('0.', '.') + css.replace(' ', '') and 'padding-right:2.25rem' in flat and flat.count('data:image/svg+xml') >= 2)
+    _, _, bf = ad.req('/accounts.php?temple=' + q("SELECT id FROM temples ORDER BY id LIMIT 1"))
+    check('U28 ช่องเลือกเดือนในช่องวันที่ใช้ชื่อย่อ (ม.ค./ก.พ. ...) ให้พอดีกับช่องแคบ', '>ม.ค.</option>' in bf and '>มกราคม</option>' not in bf)
+    import shutil, subprocess as sp
+    has_pw = shutil.which('node') and sp.run(['node', '-e', "require('playwright')"], capture_output=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()}).returncode == 0
+    if has_pw:
+        t0 = q("SELECT id FROM temples ORDER BY id LIMIT 1")
+        js = """const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+        await p.goto('%s/login.php');await p.fill('input[name=username]','admin');await p.fill('input[name=password]','Test12345pw');await p.click('form button');await p.waitForLoadState('networkidle');
+        const out={};for(const pg of ['/accounts.php?temple=%s','/funds.php?temple=%s','/assets.php?temple=%s&new=1']){await p.goto('%s'+pg);await p.waitForLoadState('networkidle');
+        const r=await p.evaluate(()=>{const o=[];document.querySelectorAll('main input:not([type=checkbox]):not([type=radio]):not([type=hidden]),main select,main .btn:not(.btn-sm)').forEach(e=>{if(!e.offsetParent)return;const c=getComputedStyle(e);o.push(Math.round(e.getBoundingClientRect().height)+'/'+c.borderTopLeftRadius)});return [...new Set(o)]});out[pg]=r}
+        console.log(JSON.stringify(out));await b.close()})()""" % (base, t0, t0, t0, base)
+        r = sp.run(['node', '-e', js], capture_output=True, text=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()})
+        sizes = {x for v in __import__('json').loads(r.stdout.strip().splitlines()[-1]).values() for x in v} if r.returncode == 0 else {'error'}
+        check('U26 ในเบราว์เซอร์จริง ช่องกรอก/ตัวเลือก/ปุ่มทุกตัวสูง 44px และขอบมน 12px เท่ากัน', sizes == {'44/12px'}, f'{sizes} {r.stderr[-200:]}')
+        aud = """const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+        await p.goto('%s/login.php');await p.fill('input[name=username]','admin');await p.fill('input[name=password]','Test12345pw');await p.click('form button');await p.waitForLoadState('networkidle');
+        const bad=[];for(const pg of %s){await p.goto('%s'+pg);await p.waitForLoadState('networkidle');
+        const r=await p.evaluate(()=>{const out=[];const vis=e=>e.offsetParent!==null;document.querySelectorAll('main *').forEach(par=>{const ctl=[...par.children].filter(vis).filter(k=>k.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),select,.btn,button'));
+        if(!ctl.some(k=>k.matches('input,select'))||ctl.length<2||!/flex|grid/.test(getComputedStyle(par).display))return;const rs=ctl.map(k=>{const r=k.getBoundingClientRect();return {h:Math.round(r.height),b:Math.round(r.bottom),t:Math.round(r.top),n:k.tagName+'.'+(k.className||'').toString().slice(0,24)}});
+        for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++){const a=rs[i],c=rs[j];if(Math.abs(a.t-c.t)<20&&(a.h!==c.h||a.b!==c.b))out.push(a.n+' h'+a.h+'|'+c.n+' h'+c.h)}});return out});
+        r.forEach(x=>bad.push(pg+' '+x))}console.log(JSON.stringify(bad));await b.close()})()""" % (base, __import__('json').dumps(['/dashboard.php', f'/accounts.php?temple={t0}', '/report_status.php', f'/statements.php?temple={t0}', '/admin/users.php', '/admin/subdistricts.php', '/admin/temple_accounts.php', f'/profile.php?temple={t0}', '/transactions.php?type=income', '/reports.php']), base)
+        ra = sp.run(['node', '-e', aud], capture_output=True, text=True, env={**__import__('os').environ, 'NODE_PATH': sp.run(['npm', 'root', '-g'], capture_output=True, text=True).stdout.strip()})
+        mism = __import__('json').loads(ra.stdout.strip().splitlines()[-1]) if ra.returncode == 0 else ['error ' + ra.stderr[-200:]]
+        check('U29 แถวฟอร์มที่มีช่องกรอก/ตัวเลือกคู่กับปุ่ม: ทุกตัวสูงเท่ากันและชิดขอบล่างเดียวกัน (ตรวจ 10 หน้าในเบราว์เซอร์จริง)', mism == [], '; '.join(mism[:4]))
+    else:
+        check('U26 (ข้าม: ไม่มี Node/Playwright ในเครื่องนี้) ตรวจขนาดตัวควบคุมในเบราว์เซอร์จริง', True)
 
     # ================= วันที่ทุกจุดเป็น พ.ศ. =================
     today = date.today()

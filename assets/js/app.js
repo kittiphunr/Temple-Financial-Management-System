@@ -93,6 +93,109 @@
   });
 })();
 
+/* ช่อง "ทรัพย์สินที่ซื้อ/ซ่อม" ในฟอร์มรายจ่าย: แสดงทรัพย์สินของวัดที่เลือก (data-asset-map = {รหัสวัด: [[รหัสทรัพย์สิน, ชื่อ], ...]}) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-asset-map]').forEach(function (sel) {
+    var form = sel.form, temple = form && form.elements[sel.getAttribute('data-temple-select')], map;
+    try { map = JSON.parse(sel.getAttribute('data-asset-map')); } catch (e) { return; }
+    if (!temple) return;
+    function render(keep) {
+      var want = keep || '0';
+      sel.innerHTML = '';
+      sel.add(new Option('ไม่เกี่ยวกับทรัพย์สิน', '0'));
+      (map[temple.value] || []).forEach(function (a) { sel.add(new Option(a[1], a[0])); });
+      sel.value = Array.prototype.some.call(sel.options, function (o) { return o.value === want; }) ? want : '0';
+    }
+    temple.addEventListener('change', function () { render('0'); });
+    render(sel.getAttribute('data-selected'));
+  });
+})();
+
+/* หน้าออกอนุโมทนาบัตร: เลือกผู้บริจาคจากทะเบียนแล้วเติมชื่อ/ที่อยู่ (data-donor-pick) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-donor-pick]').forEach(function (sel) {
+    var form = sel.form;
+    sel.addEventListener('change', function () {
+      var o = sel.options[sel.selectedIndex];
+      if (!form || !o || sel.value === '0') return;
+      if (form.elements.donor_name) form.elements.donor_name.value = o.getAttribute('data-name') || '';
+      if (form.elements.donor_address) form.elements.donor_address.value = o.getAttribute('data-address') || '';
+    });
+  });
+})();
+
+/* หน้า "บันทึกด่วน": เลือกรายรับ/รายจ่ายแล้วกรองหมวดและเปลี่ยนปลายทางของฟอร์ม */
+(function () {
+  'use strict';
+  var form = document.getElementById('quick-form');
+  if (!form) return;
+  var cat = form.elements.category_id, radios = form.querySelectorAll('input[name=kind]');
+  function apply() {
+    var kind = form.querySelector('input[name=kind]:checked').value;
+    form.action = 'transactions.php?type=' + kind;
+    var first = null;
+    Array.prototype.forEach.call(cat.options, function (o) {
+      var ok = o.getAttribute('data-type') === kind;
+      o.hidden = !ok; o.disabled = !ok;
+      if (ok && first === null) first = o;
+    });
+    if (cat.selectedOptions[0] && cat.selectedOptions[0].disabled && first) cat.value = first.value;
+  }
+  Array.prototype.forEach.call(radios, function (r) { r.addEventListener('change', apply); });
+  apply();
+})();
+
+/* เมนูบนแถบนำทาง (dropdown): เปิดทีละกลุ่ม ปิดเมื่อคลิกที่อื่นหรือกด Esc */
+(function () {
+  'use strict';
+  var menus = Array.prototype.slice.call(document.querySelectorAll('header details.nav-group, header details.nav-mobile'));
+  if (!menus.length) return;
+  menus.forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      menus.forEach(function (o) { if (o !== d) o.open = false; });
+    });
+  });
+  document.addEventListener('click', function (e) {
+    menus.forEach(function (d) { if (d.open && !d.contains(e.target)) d.open = false; });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    menus.forEach(function (d) { if (d.open) { d.open = false; var s = d.querySelector('summary'); if (s) s.focus(); } });
+  });
+})();
+
+/* ตัวเลือกธนาคารพร้อมโลโก้ (data-bank-picker): ค้นหา · เลือกแล้วอัปเดตป้ายและปิดเมนู · กรณี "อื่น ๆ" โฟกัสช่องพิมพ์ชื่อ */
+(function () {
+  'use strict';
+  document.querySelectorAll('[data-bank-picker]').forEach(function (box) {
+    var det = box.querySelector('details'), label = box.querySelector('[data-bank-label]'), search = box.querySelector('[data-bank-search]'),
+        other = box.querySelector('[data-bank-other]'), opts = box.querySelectorAll('[data-bank-opt]');
+    function sync() {
+      var chk = box.querySelector('input[name=bank_code]:checked');
+      if (!chk) return;
+      var o = chk.closest('[data-bank-opt]');
+      label.innerHTML = chk.value === '' ? '<span class="text-stone-500">อื่น ๆ — พิมพ์ชื่อด้านล่าง</span>' : o.querySelector('img').outerHTML + '<span class="truncate">' + o.querySelector('span.min-w-0').innerHTML + '</span>';
+      if (other) other.required = chk.value === '';
+    }
+    box.addEventListener('change', function (e) {
+      if (e.target.name !== 'bank_code') return;
+      sync(); det.open = false;
+      if (e.target.value === '' && other) other.focus();
+    });
+    if (other) other.addEventListener('input', function () { var r = box.querySelector('input[name=bank_code][value=""]'); if (r && other.value) { r.checked = true; sync(); } });
+    if (search) search.addEventListener('input', function () {
+      var q = search.value.trim().toLowerCase();
+      opts.forEach(function (o) { o.style.display = !q || o.getAttribute('data-q').indexOf(q) >= 0 ? '' : 'none'; });
+    });
+    document.addEventListener('click', function (e) { if (det.open && !box.contains(e.target)) det.open = false; });
+    det.addEventListener('keydown', function (e) { if (e.key === 'Escape') { det.open = false; det.querySelector('summary').focus(); } });
+    sync();
+  });
+})();
+
 /* QR code ตรวจสอบใบอนุโมทนา: <div data-qr="ลิงก์"> วาดเป็น SVG ด้วย qrcode.js (assets/vendor) — ลิงก์แบบสัมพัทธ์จะต่อกับโดเมนที่เปิดอยู่ */
 (function () {
   'use strict';

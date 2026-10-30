@@ -65,7 +65,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2"><h2>กระทบยอดบัญชีธนาคาร<?= $temple ? ' · ' . e($temple['name']) : '' ?></h2>
   <?php if ($temple): ?><a class="btn btn-outline btn-sm" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร</a><?php endif; ?></div>
 
-<form method="get" class="my-3 flex flex-wrap items-end gap-3">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3">
   <?php if ($u['role'] !== 'temple'): ?>
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
@@ -83,10 +83,10 @@ require __DIR__ . '/includes/header.php';
 <?php elseif (!$banks): ?>
   <p class="text-stone-600">วัดนี้ยังไม่มีบัญชีธนาคาร — เพิ่มได้ที่หน้า <a class="underline" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร</a></p>
 <?php elseif ($acc): ?>
-<p class="mb-3 text-sm text-stone-600">ติ๊กรายการที่ <strong>ปรากฏใน statement/สมุดบัญชีธนาคารแล้ว</strong> ส่วนรายการที่ไม่ติ๊กจะถือเป็นรายการค้าง (เงินฝากระหว่างทาง หรือเช็ค/รายจ่ายที่ธนาคารยังไม่หัก) จากนั้นกรอกยอดคงเหลือสิ้นเดือนตาม statement ระบบจะบอกว่าตรงกันหรือไม่ — ถ้าไม่ตรง ให้ตรวจว่าบันทึกรายการผิดจำนวน ขาดรายการ (เช่น ดอกเบี้ย ค่าธรรมเนียม) หรือซ้ำ</p>
-<?php if ($stale): ?><div class="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">⚠️ มีการแก้ไขรายการหลังบันทึกผลกระทบยอดครั้งนี้ ยอดด้านล่างคำนวณใหม่จากข้อมูลปัจจุบัน กรุณากระทบยอดและบันทึกอีกครั้ง</div><?php endif; ?>
+<p class="mb-4 text-sm text-stone-600">ติ๊กรายการที่ <strong>ปรากฏใน statement/สมุดบัญชีธนาคารแล้ว</strong> ส่วนรายการที่ไม่ติ๊กจะถือเป็นรายการค้าง (เงินฝากระหว่างทาง หรือเช็ค/รายจ่ายที่ธนาคารยังไม่หัก) จากนั้นกรอกยอดคงเหลือสิ้นเดือนตาม statement ระบบจะบอกว่าตรงกันหรือไม่ — ถ้าไม่ตรง ให้ตรวจว่าบันทึกรายการผิดจำนวน ขาดรายการ (เช่น ดอกเบี้ย ค่าธรรมเนียม) หรือซ้ำ</p>
+<?php if ($stale): ?><div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900"><?= icon('alert-triangle') ?> มีการแก้ไขรายการหลังบันทึกผลกระทบยอดครั้งนี้ ยอดด้านล่างคำนวณใหม่จากข้อมูลปัจจุบัน กรุณากระทบยอดและบันทึกอีกครั้ง</div><?php endif; ?>
 
-<form method="post" class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<form method="post" class="card">
   <?= csrf_field() ?><input type="hidden" name="temple" value="<?= $tid ?>"><input type="hidden" name="account" value="<?= (int)$acc['id'] ?>"><input type="hidden" name="year" value="<?= $year ?>"><input type="hidden" name="month" value="<?= $month ?>">
   <h3>เดือน<?= e(TH_MONTHS[$month]) ?> <?= $year ?> · <?= e(ledger_account_label($acc)) ?></h3>
   <div class="overflow-x-auto"><table class="data-table">
@@ -116,7 +116,7 @@ require __DIR__ . '/includes/header.php';
     <div><label>หมายเหตุ (ถ้ามี)</label><input name="note" maxlength="255" value="<?= e($saved['note'] ?? '') ?>" <?= $canEdit && $ended ? '' : 'disabled' ?>></div>
   </div>
   <?php if ($saved): $ok = abs((float)$saved['difference']) < 0.005; ?>
-    <p class="mt-3 <?= $ok ? 'text-emerald-700' : 'text-red-700' ?>"><?= $ok ? '✅ ตรงกัน' : '❌ ไม่ตรงกัน ส่วนต่าง ' . money($saved['difference']) . ' บาท' ?>
+    <p class="mt-3 <?= $ok ? 'text-emerald-700' : 'text-red-700' ?>"><?= $ok ? icon('check-circle') . ' ตรงกัน' : icon('x-circle') . ' ไม่ตรงกัน ส่วนต่าง ' . money($saved['difference']) . ' บาท' ?>
       <small class="text-stone-500">· บันทึกโดย <?= e($saved['by_name'] ?? '-') ?> เมื่อ <?= e($saved['reconciled_at']) ?></small></p>
   <?php endif; ?>
   <?php if (!$ended): ?><p class="mt-3 text-amber-800">ยังไม่สิ้นเดือน — กระทบยอดได้หลังสิ้นเดือนที่เลือก</p>
@@ -125,12 +125,12 @@ require __DIR__ . '/includes/header.php';
 </form>
 
 <?php if ($hist): ?>
-<section class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<section class="card-table"><table class="data-table">
   <tr><th>เดือน</th><th class="text-right">ยอด statement</th><th class="text-right">ยอดสมุดวัด</th><th class="text-right">ส่วนต่าง</th><th>ผล</th></tr>
   <?php foreach ($hist as $h): $ok = abs((float)$h['difference']) < 0.005; ?>
   <tr><td><a class="underline" href="reconcile.php?<?= e(http_build_query(array_filter(['temple' => $u['role'] === 'temple' ? 0 : $tid, 'account' => $aid, 'year' => $h['recon_year'], 'month' => $h['recon_month']]))) ?>"><?= e(TH_MONTHS[(int)$h['recon_month']]) ?> <?= (int)$h['recon_year'] ?></a></td>
     <td class="text-right"><?= money($h['statement_balance']) ?></td><td class="text-right"><?= money($h['book_balance']) ?></td><td class="text-right"><?= money($h['difference']) ?></td>
-    <td><?= $ok ? '<span class="badge">✅ ตรงกัน</span>' : '<span class="badge badge-err">❌ ไม่ตรง</span>' ?></td></tr>
+    <td><?= $ok ? '<span class="badge">' . icon('check-circle') . ' ตรงกัน</span>' : '<span class="badge badge-err">' . icon('x-circle') . ' ไม่ตรง</span>' ?></td></tr>
   <?php endforeach; ?>
 </table></section>
 <?php endif; ?>

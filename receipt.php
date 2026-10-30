@@ -86,7 +86,7 @@ if (isset($_GET['txn'])) {
     require __DIR__ . '/includes/header.php';
     ?>
 <h2>ออกอนุโมทนาบัตร</h2>
-<div class="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <div class="text-sm text-stone-600"><?= e($t['name']) ?> · <?= e(th_date($x['txn_date'])) ?> · <?= e($x['category']) ?></div>
   <div class="text-2xl font-bold text-emerald-700"><?= money($x['amount']) ?> บาท</div>
   <div class="text-sm text-stone-600">(<?= e(thai_baht_text($x['amount'])) ?>)</div>
@@ -94,8 +94,20 @@ if (isset($_GET['txn'])) {
   <?php if (!$t['tax_id'] && $canIssue): ?><p class="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">วัดยังไม่ได้กรอกเลขประจำตัวผู้เสียภาษี — ผู้บริจาคอาจนำไปลดหย่อนภาษีไม่ได้ กรอกได้ที่ <a class="underline" href="<?= BASE ?>profile.php<?= $u['role'] === 'admin' ? '?temple=' . $tid : '' ?>">ข้อมูลวัด</a></p><?php endif; ?>
 </div>
 <?php if ($canIssue): ?>
-<form method="post" class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2 [&_input]:w-full">
+<form method="post" class="card grid gap-3 sm:grid-cols-2 [&_input]:w-full">
   <?= csrf_field() ?><input type="hidden" name="action" value="issue"><input type="hidden" name="txn" value="<?= $txnId ?>">
+  <?php if (donor_available() && donor_can_manage($tid)): $dch = donor_choices($pdo, $tid); ?>
+  <div class="col-span-full rounded-xl bg-gold-50 p-3 text-sm">
+    <label>เลือกผู้บริจาคจากทะเบียน (ไม่บังคับ — เติมชื่อและที่อยู่ให้อัตโนมัติ)</label>
+    <select name="donor_id" class="w-full" data-donor-pick><option value="0">— ไม่เลือก / ผู้บริจาคใหม่ —</option>
+      <?php foreach ($dch as $d): ?><option value="<?= (int)$d['id'] ?>" data-name="<?= e($d['name']) ?>" data-address="<?= e($d['address']) ?>"><?= e($d['name']) ?></option><?php endforeach; ?></select>
+    <details class="mt-2"><summary class="cursor-pointer text-brand-700">บันทึกผู้บริจาคใหม่ลงทะเบียน (ต้องได้รับความยินยอม PDPA)</summary>
+      <label class="mt-2 flex items-start gap-2"><input type="checkbox" name="save_donor" value="1" class="mt-1"><span>บันทึกผู้บริจาครายนี้ลงทะเบียนผู้บริจาคของวัด เพื่อใช้ซ้ำในครั้งถัดไป</span></label>
+      <label class="flex items-start gap-2"><input type="checkbox" name="donor_consent" value="1" class="mt-1"><span>ผู้บริจาคได้รับแจ้งว่าวัดเก็บชื่อและที่อยู่เพื่อออกอนุโมทนาบัตรและติดต่อเรื่องการบริจาค (ที่อยู่เก็บแบบเข้ารหัส ถอนความยินยอมได้ทุกเมื่อ) และให้ความยินยอมแล้ว</span></label>
+      <input type="hidden" name="donor_channel" value="at_receipt">
+    </details>
+  </div>
+  <?php endif; ?>
   <div class="col-span-full"><label>ชื่อผู้บริจาค *</label><input name="donor_name" required maxlength="200"></div>
   <div class="col-span-full"><label>ที่อยู่ผู้บริจาค</label><input name="donor_address" maxlength="500"></div>
   <div class="col-span-full"><label>เพื่อ (วัตถุประสงค์)</label><input name="purpose" maxlength="255" value="<?= e(($fundName ?? '') !== '' ? $fundName : ($x['description'] ?? '')) ?>"></div>
@@ -104,7 +116,7 @@ if (isset($_GET['txn'])) {
   <div><label>ผู้รับเงิน (ชื่อ)</label><input name="receiver_name" maxlength="200" value="<?= e($rc ? person_full_name($rc, false) : '') ?>"></div>
   <div><label>ตำแหน่งผู้รับเงิน</label><input name="receiver_position" maxlength="100" value="<?= e($rc ? PERSON_POSITIONS[$rc['position']] : '') ?>"></div>
   <p class="col-span-full text-sm text-stone-600">เลขที่ออกให้อัตโนมัติเรียงต่อเนื่องในแต่ละปี พ.ศ. · ชื่อเจ้าอาวาสดึงจากข้อมูลบุคลากร · พิมพ์แล้วให้เจ้าอาวาสหรือผู้ที่วัดมอบหมายลงลายมือชื่อและประทับตราวัด</p>
-  <div class="col-span-full"><button class="btn">ออกอนุโมทนาบัตร</button> <a class="btn btn-outline" href="transactions.php?type=income">กลับ</a></div>
+  <div class="col-span-full"><button class="btn">ออกอนุโมทนาบัตร</button> <a class="btn btn-outline" href="transactions.php?type=income"><?= icon('arrow-left') ?> กลับ</a></div>
 </form>
 <?php elseif ($x['is_donation']): ?><p class="text-stone-600">รายการนี้ยังไม่ได้ออกอนุโมทนาบัตร (เฉพาะแอดมินวัด/แอดมินหลักเท่านั้นที่ออกได้)</p><?php endif;
     require __DIR__ . '/includes/footer.php';
@@ -125,9 +137,9 @@ $extraScripts = '<script src="' . BASE . 'assets/vendor/qrcode.js"></script>';
 $pageTitle = 'อนุโมทนาบัตร ' . receipt_label($r);
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mb-3 flex flex-wrap items-center gap-2 print:hidden">
+<div class="mb-4 flex flex-wrap items-center gap-2 print:hidden">
   <h2 class="mr-auto">อนุโมทนาบัตร <?= e(receipt_label($r)) ?><?= $void ? ' <span class="badge">ยกเลิกแล้ว</span>' : '' ?></h2>
-  <button class="btn" type="button" onclick="window.print()">พิมพ์</button>
+  <button class="btn" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
   <a class="btn btn-outline" href="receipts.php?temple=<?= $tid ?>">รายการทั้งหมด</a>
 </div>
 

@@ -1,0 +1,154 @@
+[
+  {
+    "code": "BAAC",
+    "name": "ธ.ก.ส.",
+    "name_long": "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร",
+    "name_en": "Bank for Agriculture and Agricultural Cooperatives",
+    "color": "#CCA41C",
+    "logo": "assets/banks/BAAC.png"
+  },
+  {
+    "code": "BAY",
+    "name": "กรุงศรีอยุธยา",
+    "name_long": "ธนาคารกรุงศรีอยุธยา",
+    "name_en": "Krungsri Bank",
+    "color": "#FFD51C",
+    "logo": "assets/banks/BAY.png"
+  },
+  {
+    "code": "BBL",
+    "name": "กรุงเทพ",
+    "name_long": "ธนาคารกรุงเทพ",
+    "name_en": "Bangkok Bank",
+    "color": "#29449D",
+    "logo": "assets/banks/BBL.png"
+  },
+  {
+    "code": "CIMB",
+    "name": "ซีไอเอ็มบี",
+    "name_long": "ธนาคารซีไอเอ็มบี",
+    "name_en": "CIMB Thai Bank",
+    "color": "#BD1325",
+    "logo": "assets/banks/CIMB.png"
+  },
+  {
+    "code": "CITI",
+    "name": "ซิตี้แบงก์",
+    "name_long": "ธนาคารซิตี้แบงก์",
+    "name_en": "citibank",
+    "color": "#0F3D89",
+    "logo": "assets/banks/CITI.png"
+  },
+  {
+    "code": "GHB",
+    "name": "ธ.อ.ส.",
+    "name_long": "ธนาคารอาคารสงเคราะห์",
+    "name_en": "GH Bank",
+    "color": "#FF8614",
+    "logo": "assets/banks/GHB.png"
+  },
+  {
+    "code": "GSB",
+    "name": "ออมสิน",
+    "name_long": "ธนาคารออมสิน",
+    "name_en": "Government Savings Bank",
+    "color": "#ED1891",
+    "logo": "assets/banks/GSB.png"
+  },
+  {
+    "code": "HSBC",
+    "name": "เอชเอสบีซี",
+    "name_long": "ธนาคารเอชเอสบีซี",
+    "name_en": "HSBC Bank",
+    "color": "#FF1518",
+    "logo": "assets/banks/HSBC.png"
+  },
+  {
+    "code": "IBANK",
+    "name": "อิสลามแห่งประเทศไทย",
+    "name_long": "ธนาคารอิสลามแห่งประเทศไทย",
+    "name_en": "Islamic Bank of Thailand",
+    "color": "#164626",
+    "logo": "assets/banks/IBANK.png"
+  },
+  {
+    "code": "ICBC",
+    "name": "ไอซีบีซี",
+    "name_long": "ธนาคารไอซีบีซี",
+    "name_en": "ICBC Thai Commercial Bank",
+    "color": "#CD1511",
+    "logo": "assets/banks/ICBC.png"
+  },
+  {
+    "code": "KBANK",
+    "name": "กสิกรไทย",
+    "name_long": "ธนาคารกสิกรไทย",
+    "name_en": "Kasikorn Bank",
+    "color": "#1DA858",
+    "logo": "assets/banks/KBANK.png"
+  },
+  {
+    "code": "KKP",
+    "name": "เกียรตินาคิน",
+    "name_long": "ธนาคารเกียรตินาคินภัทร",
+    "name_en": "Kiatnakin Phatra Bank",
+    "color": "#5A547C",
+    "logo": "assets/banks/KKP.png"
+  },
+  {
+    "code": "KTB",
+    "name": "กรุงไทย",
+    "name_long": "ธนาคารกรุงไทย",
+    "name_en": "Krungthai Bank",
+    "color": "#1DA8E6",
+    "logo": "assets/banks/KTB.png"
+  },
+  {
+    "code": "LHB",
+    "name": "แลนด์ แอนด์ เฮ้าส์",
+    "name_long": "ธนาคารแลนด์ แอนด์ เฮ้าส์",
+    "name_en": "LH Bank",
+    "color": "#727375",
+    "logo": "assets/banks/LHB.png"
+  },
+  {
+    "code": "SCB",
+    "name": "ไทยพาณิชย์",
+    "name_long": "ธนาคารไทยพาณิชย์",
+    "name_en": "The Siam Commercial Bank",
+    "color": "#543186",
+    "logo": "assets/banks/SCB.png"
+  },
+  {
+    "code": "TCRB",
+    "name": "ไทยเครดิต",
+    "name_long": "ธนาคารไทยเครดิต",
+    "name_en": "Thai Credit Bank",
+    "color": "#FF7813",
+    "logo": "assets/banks/TCRB.png"
+  },
+  {
+    "code": "TISCO",
+    "name": "ทิสโก้",
+    "name_long": "ธนาคารทิสโก้",
+    "name_en": "Tisco Bank",
+    "color": "#267CBC",
+    "logo": "assets/banks/TISCO.png"
+  },
+  {
+    "code": "TTB",
+    "name": "ทีเอ็มบีธนชาต",
+    "name_long": "ธนาคารทีเอ็มบีธนชาต",
+    "name_en": "TMBThanachart Bank",
+    "color": "#0C55F2",
+    "logo": "assets/banks/TTB.png"
+  },
+  {
+    "code": "UOB",
+    "name": "ยูโอบี",
+    "name_long": "ธนาคารยูโอบี",
+    "name_en": "United Overseas Bank",
+    "color": "#E41A26",
+    "logo": "assets/banks/UOB.png"
+  }
+]

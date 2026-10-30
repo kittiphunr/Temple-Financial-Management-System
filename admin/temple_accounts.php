@@ -166,16 +166,16 @@ require __DIR__ . '/../includes/header.php';
 <h2>บัญชีวัด (1 วัด = 1 บัญชี)</h2>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">วัดทั้งหมดในระบบ</div><div class="text-2xl font-bold"><?= (int)$stat['n'] ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ลงทะเบียนอีเมลแล้ว (เข้าสู่ระบบได้)</div><div class="text-2xl font-bold text-emerald-700"><?= (int)$stat['with_email'] ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยังไม่มีอีเมล (เข้าสู่ระบบไม่ได้)</div><div class="text-2xl font-bold text-red-700"><?= (int)$stat['n'] - (int)$stat['with_email'] ?></div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยังไม่ได้ใส่โลโก้วัด</div><div class="text-2xl font-bold text-amber-700"><?= (int)$stat['no_logo'] ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">วัดทั้งหมดในระบบ</div><div class="text-2xl font-bold"><?= (int)$stat['n'] ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">ลงทะเบียนอีเมลแล้ว (เข้าสู่ระบบได้)</div><div class="text-2xl font-bold text-emerald-700"><?= (int)$stat['with_email'] ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">ยังไม่มีอีเมล (เข้าสู่ระบบไม่ได้)</div><div class="text-2xl font-bold text-red-700"><?= (int)$stat['n'] - (int)$stat['with_email'] ?></div></div>
+  <div class="card"><div class="text-sm text-stone-500">ยังไม่ได้ใส่โลโก้วัด</div><div class="text-2xl font-bold text-amber-700"><?= (int)$stat['no_logo'] ?></div></div>
 </div>
 
 <div class="mt-4 grid gap-4 lg:grid-cols-2">
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <div class="card">
     <h3>สร้างบัญชีและรหัสผ่านเริ่มต้น</h3>
-    <p class="mb-3 text-sm text-stone-600">สร้างบัญชีให้วัดที่ยังไม่มีบัญชีอัตโนมัติ (<?= (int)$stat['no_acct'] ?> วัดที่ยังไม่มี) ชื่อผู้ใช้ = <code>wat</code> + รหัสวัด 11 หลัก
+    <p class="mb-4 text-sm text-stone-600">สร้างบัญชีให้วัดที่ยังไม่มีบัญชีอัตโนมัติ (<?= (int)$stat['no_acct'] ?> วัดที่ยังไม่มี) ชื่อผู้ใช้ = <code>wat</code> + รหัสวัด 11 หลัก
       รหัสผ่านเริ่มต้นสุ่มให้ และดาวน์โหลดเป็น CSV ได้<strong>ครั้งเดียว</strong> หลังสร้าง (ในระบบเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้)</p>
     <div class="flex flex-wrap gap-2">
       <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="provision"><input type="hidden" name="return" value="<?= e($return) ?>">
@@ -183,12 +183,12 @@ require __DIR__ . '/../includes/header.php';
       <?php if ($hasCreds): ?><a class="btn btn-outline" href="?download=creds">⇩ ดาวน์โหลดรหัสผ่านเริ่มต้น (<?= count($_SESSION['new_creds']) ?> บัญชี)</a><?php endif; ?>
     </div>
   </div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <div class="card">
     <h3>นำเข้าอีเมลวัดจากไฟล์ CSV</h3>
-    <p class="mb-3 text-sm text-stone-600">ดาวน์โหลดแม่แบบ (รหัสวัด, อีเมล, ...) กรอกอีเมลที่สืบเสาะมา แล้วอัปโหลดกลับ ช่องอีเมลที่ว่างจะไม่ถูกแก้ไข</p>
+    <p class="mb-4 text-sm text-stone-600">ดาวน์โหลดแม่แบบ (รหัสวัด, อีเมล, ...) กรอกอีเมลที่สืบเสาะมา แล้วอัปโหลดกลับ ช่องอีเมลที่ว่างจะไม่ถูกแก้ไข</p>
     <form method="post" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
       <?= csrf_field() ?><input type="hidden" name="action" value="import_emails"><input type="hidden" name="return" value="<?= e($return) ?>">
-      <input type="file" name="csv" accept=".csv,text/csv" required class="max-w-[14rem] text-sm">
+      <input type="file" name="csv" accept=".csv,text/csv" required class="max-w-[14rem] ctl-sm">
       <button class="btn btn-sm">นำเข้า</button>
       <a class="btn btn-outline btn-sm" href="?download=email_template">⇩ แม่แบบ CSV</a>
     </form>
@@ -204,7 +204,7 @@ require __DIR__ . '/../includes/header.php';
   <button class="btn">แสดง</button>
 </form>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>วัด</th><th>ชื่อผู้ใช้ (ล็อก)</th><th>อีเมลวัด (แก้ได้เฉพาะแอดมินหลัก)</th><th>สถานะ</th><th>เข้าสู่ระบบล่าสุด</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
@@ -213,7 +213,7 @@ require __DIR__ . '/../includes/header.php';
     <td>
       <form method="post" class="flex gap-1">
         <?= csrf_field() ?><input type="hidden" name="action" value="save_email"><input type="hidden" name="temple_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="return" value="<?= e($return) ?>">
-        <input type="email" name="email" value="<?= e($r['email']) ?>" maxlength="190" placeholder="ยังไม่ได้ลงทะเบียน" class="w-56 !py-1 text-sm">
+        <input type="email" name="email" value="<?= e($r['email']) ?>" maxlength="190" placeholder="ยังไม่ได้ลงทะเบียน" class="w-56 ctl-sm">
         <button class="btn btn-outline btn-sm">บันทึก</button>
       </form>
     </td>

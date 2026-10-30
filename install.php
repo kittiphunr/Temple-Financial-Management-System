@@ -95,7 +95,7 @@ function page(string $title, int $step, string $body, int $status = 200): never
   </ol>
   <?php endif; ?>
   <?php if ($n): ?><div class="mb-4 rounded-lg px-4 py-2.5 <?= $n[1] === 'ok' ? 'bg-emerald-50 text-emerald-900' : 'bg-red-50 text-red-900' ?>"><?= h($n[0]) ?></div><?php endif; ?>
-  <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"><?= $body ?></div>
+  <div class="card"><?= $body ?></div>
 </main>
 </body>
 </html>
@@ -134,17 +134,17 @@ if (is_installed($CONFIG)) {
           <li>• สร้างบัญชีแอดมินประจำวัด: <strong><?= (int)$done['accounts'] ?></strong> บัญชี (1 วัด = 1 บัญชี)</li>
         </ul>
         <?php if (!empty($done['creds'])): ?>
-        <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+        <div class="callout border-amber-300 bg-amber-50 text-amber-950">
           <p class="font-bold">ดาวน์โหลดรหัสผ่านเริ่มต้นของแต่ละวัด (ทำได้ครั้งเดียว)</p>
-          <p class="mb-3 mt-1 text-sm">ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้ — เก็บไฟล์ไว้ในที่ปลอดภัย นำไปแจกวัด แล้วลบทิ้ง
+          <p class="mb-4 mt-1 text-sm">ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้ — เก็บไฟล์ไว้ในที่ปลอดภัย นำไปแจกวัด แล้วลบทิ้ง
             วัดต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรกหลังยืนยันอีเมล</p>
           <a class="btn" href="install.php?download=creds">⇩ ดาวน์โหลด CSV รหัสผ่านเริ่มต้น</a>
         </div>
         <?php endif; ?>
         <?php if (!empty($done['staff'])): ?>
-        <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+        <div class="callout border-amber-300 bg-amber-50 text-amber-950">
           <p class="font-bold">ดาวน์โหลดรหัสผ่านเริ่มต้นของผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล (ทำได้ครั้งเดียว)</p>
-          <p class="mb-3 mt-1 text-sm">สร้างแล้ว <?= count($done['staff']) ?> บัญชี: เจ้าคณะจังหวัด แอดมินประจำอำเภอ และเจ้าคณะตำบล — ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้
+          <p class="mb-4 mt-1 text-sm">สร้างแล้ว <?= count($done['staff']) ?> บัญชี: เจ้าคณะจังหวัด แอดมินประจำอำเภอ และเจ้าคณะตำบล — ในฐานข้อมูลเก็บเฉพาะค่าแฮช ดูย้อนหลังไม่ได้
             ผู้ใช้ต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรก และ <strong>แอดมินหลักต้องลงอีเมลของแต่ละบัญชีก่อน</strong> (จัดการระบบ → ผู้ใช้ระดับจังหวัด/อำเภอ และ เจ้าคณะตำบล) จึงเข้าสู่ระบบได้</p>
           <a class="btn" href="install.php?download=staff">⇩ ดาวน์โหลด CSV ผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล</a>
         </div>
@@ -187,7 +187,7 @@ if ($installKey !== '' && empty($_SESSION['inst_auth'])) {
         notice('รหัสติดตั้งไม่ถูกต้อง');
     }
     page('รหัสติดตั้ง', 0, '<h2 class="mb-2 text-xl font-bold">ยืนยันว่าคุณเป็นผู้ดูแลเซิร์ฟเวอร์</h2>'
-        . '<p class="mb-3 text-sm text-stone-600">เซิร์ฟเวอร์นี้ตั้งรหัสป้องกันการติดตั้งไว้ (ตัวแปรสภาพแวดล้อม <code>TFMS_INSTALL_KEY</code>)</p>'
+        . '<p class="mb-4 text-sm text-stone-600">เซิร์ฟเวอร์นี้ตั้งรหัสป้องกันการติดตั้งไว้ (ตัวแปรสภาพแวดล้อม <code>TFMS_INSTALL_KEY</code>)</p>'
         . '<form method="post" class="grid gap-3">' . csrf_input() . field('รหัสติดตั้ง', 'key', '', 'password', 'required autofocus')
         . '<div><button class="btn">ต่อไป</button></div></form>');
 }

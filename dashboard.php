@@ -52,7 +52,7 @@ require __DIR__ . '/includes/header.php';
 $lhTemple = $u['role'] === 'temple' ? (int)$u['temple_id'] : 0;
 echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพรวมบัญชีรายรับ-รายจ่าย', 'ปี พ.ศ. ' . $year, true);
 ?>
-<div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0"><?= e($title) ?> <span class="text-xl font-semibold text-stone-600">(ปี พ.ศ. <?= $year ?>)</span></h2>
     <p class="mt-1 text-sm text-stone-600">สรุปข้อมูลบัญชีรายรับ-รายจ่ายของวัด<?= $subLabel !== '' ? 'ใน' . unit_subdistrict() . 'ที่ท่านดูแล: ' . e($subLabel) : ($dist ? 'ในสังกัดคณะสงฆ์' . unit_district() . e($distName) . ' ' : '') . e(province_phrase()) ?></p>
@@ -65,7 +65,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
         <option value="<?= $y ?>" <?= $y === $year ? 'selected' : '' ?>>ปี พ.ศ. <?= $y ?></option>
       <?php endfor; ?>
     </select>
-    <button type="button" class="btn btn-outline btn-sm" onclick="window.print()">พิมพ์</button>
+    <button type="button" class="btn btn-outline" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
   </form>
 </div>
 
@@ -86,13 +86,13 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
     $ry = (int)date('n') === 1 ? be_year() - 1 : be_year();
     $rs = report_summary(report_list($pdo, $ry, $rm, ['district' => $dist]));
     if ($rs['total']): ?>
-<a class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-3 no-underline shadow-sm hover:border-gold-500 print:hidden" href="report_status.php?year=<?= $ry ?>&month=<?= $rm ?><?= $dist ? '&district=' . $dist : '' ?>">
+<a class="card-bar flex flex-wrap items-center justify-between gap-2 no-underline hover:border-gold-500 print:hidden" href="report_status.php?year=<?= $ry ?>&month=<?= $rm ?><?= $dist ? '&district=' . $dist : '' ?>">
   <span class="text-stone-800">รายงานประจำเดือน<?= e(TH_MONTHS[$rm]) ?> <?= $ry ?>: ส่งแล้ว <strong><?= $rs['sent'] ?></strong> จาก <?= $rs['total'] ?> วัด<?= $rs['late'] ? ' · <strong class="text-red-700">เกินกำหนด ' . $rs['late'] . ' วัด</strong>' : '' ?></span>
   <span class="font-semibold text-brand-700">ติดตามรายงาน →</span>
 </a>
 <?php endif; endif; ?>
 
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
     <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
       <h3 class="!mb-0">รายรับ–รายจ่ายรายเดือน</h3>
       <span class="flex items-center gap-3 text-sm text-stone-600">
@@ -115,11 +115,11 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 </section>
 
 <div class="mt-4 grid gap-4 md:grid-cols-2">
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section class="card">
     <h3>หมวดรายรับสูงสุด</h3>
     <?= category_bars($incCats, 'bg-emerald-600') ?>
   </section>
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section class="card">
     <h3>หมวดรายจ่ายสูงสุด</h3>
     <?= category_bars($expCats, 'bg-red-500') ?>
   </section>
@@ -132,7 +132,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
     <span class="text-sm text-stone-600">บันทึกบัญชีแล้ว <strong><?= $withData ?></strong> จาก <?= count($rows) ?> วัด
       <?php if ($rows): ?>(<?= round($withData / count($rows) * 100) ?>%)<?php endif; ?></span>
   </div>
-  <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <div class="card-table"><table class="data-table">
     <thead><tr><th class="text-right">#</th><th>วัด</th><th><?= e(unit_subdistrict()) ?></th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th><th class="text-right">รายการ</th><th>บันทึกล่าสุด</th></tr></thead>
     <tbody>
     <?php foreach ($rows as $i => $r): $none = (int)$r['n'] === 0; ?>
@@ -155,7 +155,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <?php else: ?>
 <section class="mt-4">
   <h3>เปรียบเทียบราย<?= e(unit_district()) ?></h3>
-  <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+  <div class="card-table"><table class="data-table">
     <thead><tr><th><?= e(unit_district()) ?></th><th class="text-right">วัด</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
     <tbody>
     <?php foreach ($rows as $r): ?>

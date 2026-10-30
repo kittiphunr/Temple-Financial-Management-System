@@ -133,18 +133,18 @@ require __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <?php if ($review): $pv = $review['preview']; ?>
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>ตรวจไฟล์ก่อนนำเข้า <span class="text-base font-normal text-stone-500">— <?= e($review['name']) ?> (<?= e($review['kind']) ?>)</span></h3>
-  <p class="mb-3 text-sm text-stone-600">ยังไม่มีการบันทึกใด ๆ ตรวจสรุปด้านล่างแล้วกด "ยืนยันนำเข้า" (ไม่ลบข้อมูลเดิมของระบบ: วัดที่มีอยู่แล้วจะถูกอัปเดตเฉพาะช่องที่ไฟล์มีค่า)</p>
-  <div class="mb-3 grid gap-2 sm:grid-cols-4">
+  <p class="mb-4 text-sm text-stone-600">ยังไม่มีการบันทึกใด ๆ ตรวจสรุปด้านล่างแล้วกด "ยืนยันนำเข้า" (ไม่ลบข้อมูลเดิมของระบบ: วัดที่มีอยู่แล้วจะถูกอัปเดตเฉพาะช่องที่ไฟล์มีค่า)</p>
+  <div class="mb-4 grid gap-2 sm:grid-cols-4">
     <div class="rounded-xl border border-stone-200 p-3"><div class="text-xs text-stone-500">วัดที่นำเข้าได้</div><div class="text-2xl font-bold"><?= count($review['rows']) ?></div></div>
     <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3"><div class="text-xs text-stone-500">วัดใหม่</div><div class="text-2xl font-bold text-emerald-800"><?= (int)$pv['new'] ?></div></div>
     <div class="rounded-xl border border-sky-200 bg-sky-50 p-3"><div class="text-xs text-stone-500">มีอยู่แล้ว (อัปเดต)</div><div class="text-2xl font-bold text-sky-800"><?= (int)$pv['update'] ?></div></div>
     <div class="rounded-xl border <?= $review['bad'] ? 'border-red-200 bg-red-50' : 'border-stone-200' ?> p-3"><div class="text-xs text-stone-500">ข้าม (ไม่ถูกต้อง/ซ้ำ)</div><div class="text-2xl font-bold"><?= count($review['bad']) ?></div></div>
   </div>
-  <?php if ($review['bad']): ?><p class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-900"><?= e(implode(' | ', array_slice($review['bad'], 0, 10))) ?><?= count($review['bad']) > 10 ? ' …' : '' ?></p><?php endif; ?>
+  <?php if ($review['bad']): ?><p class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-900"><?= e(implode(' | ', array_slice($review['bad'], 0, 10))) ?><?= count($review['bad']) > 10 ? ' …' : '' ?></p><?php endif; ?>
   <?php if ($review['province']): ?>
-  <p class="mb-3 text-sm">จังหวัดในไฟล์: <strong><?= e(implode(', ', $review['province'])) ?></strong> · จังหวัดที่ตั้งไว้ในระบบ: <strong><?= e($current) ?></strong>
+  <p class="mb-4 text-sm">จังหวัดในไฟล์: <strong><?= e(implode(', ', $review['province'])) ?></strong> · จังหวัดที่ตั้งไว้ในระบบ: <strong><?= e($current) ?></strong>
     <?php if ($provinceDiffers): ?><span class="badge">ต่างกัน</span><?php endif; ?></p>
   <?php endif; ?>
   <div class="mb-4 overflow-x-auto rounded-xl border border-stone-200"><table class="data-table">
@@ -168,7 +168,7 @@ require __DIR__ . '/../includes/header.php';
   <form method="post" class="mt-2"><?= csrf_field() ?><input type="hidden" name="action" value="cancel"><input type="hidden" name="token" value="<?= e($rtoken) ?>"><button class="btn btn-outline btn-sm">ยกเลิก</button></form>
 </div>
 <?php else: ?>
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3>นำเข้าจากไฟล์ Excel ของสำนักงานพระพุทธศาสนาแห่งชาติ</h3>
   <p class="text-sm text-stone-700">ใช้เริ่มต้นระบบในจังหวัดใดก็ได้: ส่งออกรายงานทะเบียนวัดของจังหวัดนั้นเป็น Excel (.xlsx) จาก
     <a href="https://binfo.onab.go.th/Temple/Temple-List-view.aspx" target="_blank" rel="noopener noreferrer">binfo.onab.go.th → ทะเบียนวัด</a> แล้วอัปโหลดที่นี่ ไม่ต้องแก้ไฟล์
@@ -183,7 +183,7 @@ require __DIR__ . '/../includes/header.php';
     <div><button class="btn">ตรวจไฟล์และดูสรุปก่อนนำเข้า</button></div>
   </form>
 </div>
-<div class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-600 shadow-sm">
+<div class="card text-sm text-stone-600">
   <h3>รูปแบบ CSV (UTF-8)</h3>
   คอลัมน์ตามลำดับ: <code><?= e(unit_district()) ?>, ชื่อวัด, <?= e(unit_subdistrict()) ?>, หมู่ที่, เจ้าอาวาส, โทรศัพท์, รหัสวัด, ประเภทวัด, นิกาย, ชื่อหมู่บ้าน, บ้านเลขที่, ซอย, ถนน, รหัสไปรษณีย์, ปีที่ตั้งวัด(พ.ศ.)</code> (คอลัมน์ที่ 7 เป็นต้นไปไม่บังคับ) ตัวอย่างที่ <code>data/temples_template.csv</code>
   — วัดที่รหัสวัดซ้ำ หรือชื่อ+<?= e(unit_subdistrict()) ?>ซ้ำ จะถูกอัปเดตแทนการเพิ่มใหม่

@@ -70,16 +70,16 @@ def _run(R, q, app, smtp):
 
     msg = spend(ca, tA, cex, 500)
     _, _, pg = ca.req(f'/budget.php')
-    check('B7 ใช้ 500 จาก 1,000 → ไม่เตือน และหน้างบแสดง 50%', '⚠️' not in msg and '50%' in pg)
+    check('B7 ใช้ 500 จาก 1,000 → ไม่เตือน และหน้างบแสดง 50%', 'คำเตือน' not in msg and '50%' in pg)
     msg = spend(ca, tA, cex, 350)
-    check('B8 ใช้ถึง 85% → เตือน "ใช้ไปแล้ว 85%" ตอนบันทึกรายจ่าย', '⚠️' in msg and '85%' in msg, msg)
+    check('B8 ใช้ถึง 85% → เตือน "ใช้ไปแล้ว 85%" ตอนบันทึกรายจ่าย', 'คำเตือน' in msg and '85%' in msg, msg)
     msg = spend(ca, tA, cex, 300)
     _, _, pg = ca.req('/budget.php')
     check('B9 เกินงบ → เตือน "เกินงบ" และหน้างบแสดงสีแดง/เกินงบ', 'เกินงบปี' in msg and 'เกินงบ' in pg and 'text-red-700' in pg, msg)
     msg = spend(ca, tA, cex2, 100)
-    check('B10 หมวดที่ไม่ได้ตั้งงบ ไม่เตือน', '⚠️' not in msg)
+    check('B10 หมวดที่ไม่ได้ตั้งงบ ไม่เตือน', 'คำเตือน' not in msg)
     msg = spend(ca, tA, cin, 100, 'income')
-    check('B11 รายรับไม่เตือนเรื่องงบ', '⚠️' not in msg)
+    check('B11 รายรับไม่เตือนเรื่องงบ', 'คำเตือน' not in msg)
 
     # ผลจริงไม่นับรายการที่ลบ / ของวัดอื่น
     spend(cb, tB, cex, 9999)

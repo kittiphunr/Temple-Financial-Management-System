@@ -34,7 +34,7 @@ $features = [
 
 <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($features as [$ttl, $desc, $href, $iconCls, $icon]): ?>
-  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? ((in_array($u['role'], ['province', 'subdistrict'], true) && str_starts_with($href, 'transactions')) ? 'dashboard.php' : $href) : 'login.php' ?>">
+  <a class="card group flex gap-3 no-underline transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? ((in_array($u['role'], ['province', 'subdistrict'], true) && str_starts_with($href, 'transactions')) ? 'dashboard.php' : $href) : 'login.php' ?>">
     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold <?= $iconCls ?>"><?= $icon ?></span>
     <span>
       <span class="block font-bold text-brand-700"><?= e($ttl) ?></span>
@@ -50,7 +50,7 @@ $features = [
     $max = 1;
     foreach ($rows as $r) { $max = max($max, $r['income'], $r['expense']); }
 ?>
-<div class="mb-3 mt-8 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-4 mt-8 flex flex-wrap items-end justify-between gap-3">
   <h2 class="!my-0">ภาพรวมบัญชีวัด (ปี พ.ศ. <?= $year ?>)</h2>
   <form method="get">
     <label class="sr-only" for="year">ปี พ.ศ.</label>
@@ -64,7 +64,7 @@ $features = [
 <?= stat_cards($sum, $year, temple_count(), 'ในสังกัด' . province_phrase()) ?>
 
 <h2 class="mt-8">สรุปตาม<?= e(unit_district()) ?> <a class="ml-2 text-base font-semibold" href="dashboard.php?year=<?= $year ?>">ดูแดชบอร์ดแต่ละ<?= e(unit_district()) ?> →</a></h2>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <thead><tr><th><?= e(unit_district()) ?></th><th class="text-right">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
   <tbody>
   <?php foreach ($rows as $r): ?>

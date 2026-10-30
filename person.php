@@ -96,7 +96,7 @@ $v = fn(string $k) => $form[$k] ?? '';
 <h2><?= $person ? 'แก้ไขข้อมูลบุคคล' : 'เพิ่มบุคคล' ?> <span class="text-lg font-semibold text-stone-600">— <?= e($t['name']) ?></span></h2>
 
 <?php if ($revealed !== null): ?>
-<div class="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+<div class="card border-amber-300 bg-amber-50 text-amber-950">
   <p class="text-sm">เลขบัตรประชาชน (การดูครั้งนี้ถูกบันทึกในประวัติการใช้งาน)</p>
   <p class="font-mono text-2xl font-bold tracking-wider"><?= e($revealed) ?></p>
 </div>
@@ -104,7 +104,7 @@ $v = fn(string $k) => $form[$k] ?? '';
 
 <form method="post" enctype="multipart/form-data" class="grid gap-4 lg:grid-cols-[1fr_16rem]">
   <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= $pid ?>"><input type="hidden" name="temple" value="<?= $tid ?>">
-  <div class="grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:grid-cols-2">
+  <div class="card grid gap-3 sm:grid-cols-2">
     <div><label for="position">ตำแหน่ง</label>
       <select id="position" name="position" class="w-full">
         <?php foreach (PERSON_POSITIONS as $k => $label): ?><option value="<?= $k ?>" <?= $v('position') === $k ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
@@ -132,7 +132,7 @@ $v = fn(string $k) => $form[$k] ?? '';
     </div>
   </div>
 
-  <aside class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <aside class="card">
     <h3>รูปถ่าย</h3>
     <?php if ($person && $person['photo_media_id']): ?>
       <img class="mb-2 h-48 w-36 rounded-lg border border-stone-200 object-cover" src="<?= e(media_url((int)$person['photo_media_id'])) ?>" alt="รูปถ่าย">

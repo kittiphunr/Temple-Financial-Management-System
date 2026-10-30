@@ -39,14 +39,14 @@ $pageTitle = 'งบแสดงรายรับ-รายจ่ายปร�
 require __DIR__ . '/includes/header.php';
 ?>
 <h2 class="print:hidden">งบแสดงรายรับ-รายจ่ายประจำปี</h2>
-<form method="get" class="my-3 flex flex-wrap items-end gap-3 print:hidden">
+<form method="get" class="my-4 flex flex-wrap items-end gap-3 print:hidden">
   <?php if ($u['role'] !== 'temple'): ?>
   <div><label>วัด</label><select name="temple" onchange="this.form.submit()"><option value="0">— เลือกวัด —</option>
     <?php foreach ($groups as $dn => $list): ?><optgroup label="<?= e(unit_district()) ?><?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $tid ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <?php endif; ?>
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <button class="btn" type="submit">แสดง</button>
-  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button><?php endif; ?>
+  <?php if ($temple): ?><button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์ / บันทึก PDF</button><?php endif; ?>
   <a class="btn btn-outline" href="reports.php?year=<?= $year ?>">รายงานภาพรวม</a>
 </form>
 <?php if (!$temple): ?>
@@ -90,7 +90,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <?= letterhead($pdo, $tid, 0, 'งบแสดงรายรับ-รายจ่ายประจำปี', 'ปี พ.ศ. ' . $year . ' (1 มกราคม – 31 ธันวาคม ' . $year . ')', false) ?>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm print:border-0 print:shadow-none"><table class="data-table">
+<div class="card-table print:border-0 print:shadow-none"><table class="data-table">
   <tr><th>รายการ</th><th class="text-right whitespace-nowrap">ปี <?= $year ?></th><th class="text-right whitespace-nowrap">ปี <?= $year - 1 ?></th><th class="text-right whitespace-nowrap">เปลี่ยนแปลง</th><?php if ($hasBud): ?><th class="text-right whitespace-nowrap">งบประมาณ</th><th class="text-right whitespace-nowrap">ผลต่างจากงบ</th><?php endif; ?></tr>
   <tr class="bg-stone-50"><td class="font-semibold">เงินคงเหลือยกมา ต้นปี (1 ม.ค. <?= $year ?>)</td><td class="text-right font-semibold"><?= money($openTotal) ?></td><td></td><td></td><?php if ($hasBud): ?><td></td><td></td><?php endif; ?></tr>
   <?php foreach ($sections as $type => [$title, $sum, $psum, $bsum]):
@@ -110,7 +110,7 @@ require __DIR__ . '/includes/header.php';
 </table></div>
 
 <h3 class="mt-6">เงินคงเหลือแยกตามบัญชี</h3>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm print:border-0 print:shadow-none"><table class="data-table">
+<div class="card-table print:border-0 print:shadow-none"><table class="data-table">
   <tr><th>บัญชี</th><th class="text-right">ต้นปี</th><th class="text-right">ปลายปี</th></tr>
   <?php foreach ($accRows as [$lab, $o, $c]): ?><tr><td><?= e($lab) ?></td><td class="text-right"><?= money($o) ?></td><td class="text-right"><?= money($c) ?></td></tr><?php endforeach; ?>
   <tr class="font-semibold"><td>รวม</td><td class="text-right"><?= money($openTotal) ?></td><td class="text-right"><?= money($closeTotal) ?></td></tr>
@@ -123,7 +123,7 @@ require __DIR__ . '/includes/header.php';
     foreach ($fy->fetchAll() as $r) $fyr[(int)$r['fund_id']][$r['type']] = (float)$r['s'];
 ?>
 <h3 class="mt-6">กองทุน/โครงการ</h3>
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm print:border-0 print:shadow-none"><table class="data-table">
+<div class="card-table print:border-0 print:shadow-none"><table class="data-table">
   <tr><th>กองทุน/โครงการ</th><th class="text-right">รับในปี</th><th class="text-right">ใช้ในปี</th><th class="text-right">คงเหลือสะสม</th></tr>
   <?php foreach ($fl as $f): $yi = $fyr[(int)$f['id']]['income'] ?? 0.0; $ye = $fyr[(int)$f['id']]['expense'] ?? 0.0; if (!$f['is_active'] && $yi == 0.0 && $ye == 0.0 && abs($f['balance']) < 0.005) continue; ?>
   <tr><td><?= e($f['name']) ?></td><td class="text-right"><?= money($yi) ?></td><td class="text-right"><?= money($ye) ?></td><td class="text-right"><?= money($f['balance']) ?></td></tr>

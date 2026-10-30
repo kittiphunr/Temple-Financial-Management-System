@@ -34,7 +34,7 @@ function about_html(): string
     $li = implode('', array_map(fn($p) => '<li>' . e($p) . '</li>', about_points()));
     return '<div class="about">'
         . '<div class="about-head"><img src="' . e(BASE) . 'assets/img/logo.svg" alt="" width="72" height="72"><div><h3>เกี่ยวกับ ' . e($CONFIG['app_name']) . '</h3>'
-        . '<div class="about-sub">' . e(app_subtitle()) . '</div></div></div>'
+        . '<div class="about-sub">' . e(app_subtitle()) . '</div><div class="about-sub" data-app-version>' . e(app_version()['label']) . (app_version()['built_at'] ? ' · สร้างเมื่อ ' . e(app_version()['built_at']) : '') . '</div></div></div>'
         . '<h4>ผู้พัฒนา</h4>'
         . '<div class="about-dev"><img class="about-photo" src="' . e(BASE) . 'assets/img/developer.jpg" alt="' . e($d['name']) . '" width="96" height="96">'
         . '<div><div class="about-name">' . e($d['name']) . '</div><div class="about-sub">' . e($d['name_en']) . '</div>'
@@ -63,7 +63,8 @@ function alert_box(string $msg, string $type = 'ok'): string
         'info' => 'bg-sky-50 text-sky-900',
         default => 'bg-emerald-50 text-emerald-900',
     };
-    return '<div class="mb-4 rounded-lg px-4 py-2.5 ' . $cls . '" role="alert" data-swal="' . e($type) . '">' . e($msg) . '</div>';
+    $ic = match ($type) { 'err' => 'alert-circle', 'info' => 'info', default => 'check-circle' };
+    return '<div class="mb-4 rounded-lg flex items-start gap-2 px-4 py-2.5 ' . $cls . '" role="alert" data-swal="' . e($type) . '">' . icon($ic, 'mt-1') . '<span>' . e($msg) . '</span></div>';
 }
 
 /** รายการเครดิตส่วนประกอบของผู้อื่นที่ระบบใช้ (data/credits.json — นโยบาย: ใช้ผลงานของใครต้องให้เครดิตเสมอ ดู CREDITS.md) */

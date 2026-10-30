@@ -24,8 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $money = fn(string $k) => round((float)str_replace(',', '', $_POST[$k] ?? '0'), 2);
     $txt = fn(string $k, int $max) => mb_substr(trim($_POST[$k] ?? ''), 0, $max);
 
+    // บัญชีธนาคารซ้ำ (ธนาคารและเลขที่บัญชีเดียวกันในวัดเดียวกัน) — เพิ่มได้หลายบัญชี แต่ไม่ควรซ้ำกัน
+    $dupBank = function (string $bank, string $no, int $exceptId = 0) use ($pdo, $tid): bool {
+        $st = $pdo->prepare("SELECT 1 FROM accounts WHERE temple_id = ? AND kind = 'bank' AND account_no = ? AND LOWER(bank_name) = LOWER(?) AND id <> ?");
+        $st->execute([$tid, $no, $bank, $exceptId]);
+        return (bool)$st->fetchColumn();
+    };
+
     if ($act === 'add_bank') {
-        $bank = $txt('bank_name', 100);
+        [$bankCode, $bank] = bank_from_input($_POST);
         $no = preg_replace('/[^0-9-]/', '', $_POST['account_no'] ?? '');
         $open = date_be_parse($_POST, 'opening_date');
         $bal = $money('opening_balance');
@@ -37,23 +44,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('วันที่เริ่มบัญชีหรือยอดยกมาไม่ถูกต้อง', 'err');
         } elseif (temple_has_closed_month($pdo, $tid)) {
             flash('วัดนี้มีเดือนที่ปิดงวดแล้ว เพิ่มบัญชีใหม่ที่มียอดยกมาไม่ได้ (กระทบยอดคงเหลือของงวดที่ปิด) — ให้แอดมินเปิดงวดก่อน', 'err');
+        } elseif ($dupBank($bank, $no)) {
+            flash('มีบัญชีธนาคารนี้ (ธนาคารและเลขที่บัญชีเดียวกัน) ในวัดแล้ว', 'err');
         } else {
-            $pdo->prepare("INSERT INTO accounts (temple_id, kind, name, bank_name, branch, account_no, opening_balance, opening_date) VALUES (?, 'bank', ?, ?, ?, ?, ?, ?)")
-                ->execute([$tid, $txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $bal, $open]);
-            audit('create', 'account', (int)$pdo->lastInsertId());
-            flash('เพิ่มบัญชีธนาคารแล้ว');
+            $cols = bank_book_available() ? ', bank_code' : '';
+            $pdo->prepare("INSERT INTO accounts (temple_id, kind, name, bank_name, branch, account_no, opening_balance, opening_date$cols) VALUES (?, 'bank', ?, ?, ?, ?, ?, ?" . ($cols ? ', ?' : '') . ')')
+                ->execute(array_merge([$tid, $txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $bal, $open], $cols ? [$bankCode] : []));
+            $newId = (int)$pdo->lastInsertId();
+            audit('create', 'account', $newId);
+            // แนบภาพหน้าบุ๊คแบงก์พร้อมกันตอนเพิ่มบัญชี (ไม่บังคับ)
+            if (bank_book_available() && !empty($_FILES['bookbank']['name'])) {
+                [$mid, $merr] = media_save_upload($pdo, $_FILES['bookbank'], 'photo', (int)$u['id'], 'evidence');
+                if ($mid) {
+                    $pdo->prepare('UPDATE accounts SET bookbank_media_id = ? WHERE id = ?')->execute([$mid, $newId]);
+                }
+                flash($merr === '' ? 'เพิ่มบัญชีธนาคารแล้ว' : 'เพิ่มบัญชีธนาคารแล้ว แต่แนบภาพหน้าบุ๊คแบงก์ไม่สำเร็จ: ' . $merr, $merr === '' ? 'ok' : 'err');
+            } else {
+                flash('เพิ่มบัญชีธนาคารแล้ว');
+            }
         }
     } elseif ($act === 'edit_bank' && $acc && $acc['kind'] === 'bank') {
-        $bank = $txt('bank_name', 100);
+        [$bankCode, $bank] = bank_from_input($_POST);
         $no = preg_replace('/[^0-9-]/', '', $_POST['account_no'] ?? '');
         if ($bank === '' || $no === '') {
             flash('กรุณาระบุธนาคารและเลขที่บัญชี', 'err');
+        } elseif ($dupBank($bank, $no, $aid)) {
+            flash('มีบัญชีธนาคารนี้ (ธนาคารและเลขที่บัญชีเดียวกัน) ในวัดแล้ว', 'err');
         } else {
-            $pdo->prepare('UPDATE accounts SET name = ?, bank_name = ?, branch = ?, account_no = ? WHERE id = ?')
-                ->execute([$txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no, $aid]);
+            $pdo->prepare('UPDATE accounts SET name = ?, bank_name = ?, branch = ?, account_no = ?' . (bank_book_available() ? ', bank_code = ?' : '') . ' WHERE id = ?')
+                ->execute(array_merge([$txt('name', 150) ?: $temple['name'], $bank, $txt('branch', 100) ?: null, $no], bank_book_available() ? [$bankCode] : [], [$aid]));
             audit('update', 'account', $aid);
             flash('บันทึกข้อมูลบัญชีแล้ว');
         }
+    } elseif ($act === 'bookbank_upload' && $acc && $acc['kind'] === 'bank' && bank_book_available()) {
+        [$mid, $merr] = media_save_upload($pdo, $_FILES['bookbank'] ?? null, 'photo', (int)$u['id'], 'evidence');
+        if ($merr !== '') {
+            flash($merr, 'err');
+        } elseif (!$mid) {
+            flash('กรุณาเลือกไฟล์ภาพหน้าบุ๊คแบงก์', 'err');
+        } else {
+            $pdo->prepare('UPDATE accounts SET bookbank_media_id = ? WHERE id = ?')->execute([$mid, $aid]);
+            if (!empty($acc['bookbank_media_id'])) {
+                media_delete($pdo, (int)$acc['bookbank_media_id']);   // ลบภาพเดิมที่ถูกแทนที่
+            }
+            audit('bookbank_upload', 'account', $aid);
+            flash('แนบภาพหน้าบุ๊คแบงก์แล้ว');
+        }
+    } elseif ($act === 'bookbank_remove' && $acc && !empty($acc['bookbank_media_id']) && bank_book_available()) {
+        $pdo->prepare('UPDATE accounts SET bookbank_media_id = NULL WHERE id = ?')->execute([$aid]);
+        media_delete($pdo, (int)$acc['bookbank_media_id']);
+        audit('bookbank_remove', 'account', $aid);
+        flash('ลบภาพหน้าบุ๊คแบงก์แล้ว');
     } elseif ($act === 'set_opening' && $acc) {
         $open = date_be_parse($_POST, 'opening_date');
         $bal = $money('opening_balance');
@@ -139,13 +180,13 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$temple): ?>
   <p class="text-stone-600">เลือกวัดเพื่อจัดการบัญชี</p>
 <?php else: ?>
-<p class="mb-3 text-sm text-stone-600">รายงานแบบที่ 1–3 ต้องรู้ <strong>ยอดยกมา</strong> ของเงินสดและบัญชีธนาคารแต่ละบัญชี ณ วันเริ่มใช้ระบบ แล้วระบบจะคำนวณยอดคงเหลือต่อให้เองจากรายการที่บันทึก
+<p class="mb-4 text-sm text-stone-600">รายงานแบบที่ 1–3 ต้องรู้ <strong>ยอดยกมา</strong> ของเงินสดและบัญชีธนาคารแต่ละบัญชี ณ วันเริ่มใช้ระบบ แล้วระบบจะคำนวณยอดคงเหลือต่อให้เองจากรายการที่บันทึก
   การนำเงินสดไปฝากธนาคาร/ถอนเงิน ให้บันทึกเป็น "โอน/ฝาก-ถอน" ด้านล่าง (ไม่นับเป็นรายรับ-รายจ่ายซ้ำ)</p>
 
 <?= ledger_accounts_panel($pdo, $temple, $canEdit, '') ?>
 
 <?php if ($canEdit): ?>
-<section class="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<section class="card">
   <h3>โอน / นำฝาก / ถอน ระหว่างบัญชี</h3>
   <p class="mb-2 text-sm text-stone-600">เช่น นำเงินสดฝากธนาคาร (จากเงินสด → ธนาคาร), ถอนเงินจากธนาคาร (ธนาคาร → เงินสด) ระบบบันทึกเป็นรายจ่ายของบัญชีต้นทางและรายรับของบัญชีปลายทางในรายงานแบบที่ 1–2 แต่ไม่นับเป็นรายรับ-รายจ่ายของวัดในแดชบอร์ดและรายงานสรุป</p>
   <?php $active = array_filter($accounts, fn($a) => $a['is_active']); ?>
@@ -164,12 +205,12 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <?php if ($transfers): ?>
-<section class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<section class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>จากบัญชี</th><th>ไปยังบัญชี</th><th>รายละเอียด</th><th class="text-right">จำนวนเงิน</th><th></th></tr>
   <?php foreach ($transfers as $t): ?>
   <tr><td class="whitespace-nowrap"><?= e(th_date($t['txn_date'])) ?></td><td><?= e($label($t['from_id'])) ?></td><td><?= e($label($t['to_id'])) ?></td><td><?= e($t['description']) ?></td>
     <td class="text-right whitespace-nowrap"><?= money($t['amount']) ?></td>
-    <td><?php if ($canEdit): ?><form method="post" data-confirm="ลบรายการโอน/ฝาก-ถอนนี้ (ทั้งสองบัญชี)?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_transfer"><input type="hidden" name="transfer_id" value="<?= (int)$t['transfer_id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>"><button class="btn btn-sm btn-danger">ลบ</button></form><?php endif; ?></td></tr>
+    <td><?php if ($canEdit): ?><form method="post" data-confirm="ลบรายการโอน/ฝาก-ถอนนี้ (ทั้งสองบัญชี)?"><?= csrf_field() ?><input type="hidden" name="action" value="delete_transfer"><input type="hidden" name="transfer_id" value="<?= (int)$t['transfer_id'] ?>"><input type="hidden" name="temple" value="<?= $tid ?>"><button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form><?php endif; ?></td></tr>
   <?php endforeach; ?>
 </table></section>
 <?php endif; ?>

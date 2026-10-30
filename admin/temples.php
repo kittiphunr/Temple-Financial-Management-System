@@ -56,7 +56,7 @@ $pageTitle = 'จัดการวัด';
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>จัดการวัด</h2>
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+<div class="card">
   <h3><?= $edit ? 'แก้ไขวัด' : 'เพิ่มวัด' ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($edit['id'] ?? 0) ?>">
@@ -71,13 +71,13 @@ require __DIR__ . '/../includes/header.php';
     <div class="col-span-full"><button class="btn">บันทึก</button> <?php if ($edit): ?><a class="btn btn-outline" href="temples.php">ยกเลิก</a><?php endif; ?></div>
   </form>
 </div>
-<div class="mt-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th><?= e(unit_district()) ?></th><th>วัด</th><th><?= e(unit_subdistrict()) ?></th><th>สถานะ</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr class="<?= $r['is_active'] ? '' : 'opacity-50' ?>">
     <td><?= e($r['dn']) ?></td><td><?= e($r['name']) ?></td><td><?= e($r['subdistrict']) ?></td>
     <td><?= $r['verified'] ? '<span class="badge badge-ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
-    <td class="whitespace-nowrap"><a class="btn btn-sm btn-outline" href="?edit=<?= (int)$r['id'] ?>">แก้ไข</a>
+    <td class="whitespace-nowrap"><a class="btn btn-sm btn-outline" href="?edit=<?= (int)$r['id'] ?>"><?= icon('edit-2') ?> แก้ไข</a>
       <a class="btn btn-sm btn-outline" href="../profile.php?temple=<?= (int)$r['id'] ?>">โลโก้/ที่อยู่</a>
       <a class="btn btn-sm btn-outline" href="../people.php?temple=<?= (int)$r['id'] ?>">บุคลากร</a>
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">

@@ -46,11 +46,11 @@ $pageTitle = 'โลโก้' . unit_district();
 require __DIR__ . '/../includes/header.php';
 ?>
 <h2>โลโก้<?= e(unit_district()) ?></h2>
-<p class="mb-3 text-sm text-stone-600">ติดตามโลโก้ของแต่ละ<?= e(unit_district()) ?>แล้วอัปโหลดที่นี่ (ใช้เป็นหัวเอกสารรายงานระดับ<?= e(unit_district()) ?>) ·
+<p class="mb-4 text-sm text-stone-600">ติดตามโลโก้ของแต่ละ<?= e(unit_district()) ?>แล้วอัปโหลดที่นี่ (ใช้เป็นหัวเอกสารรายงานระดับ<?= e(unit_district()) ?>) ·
   <?= $missing ? '<strong class="text-amber-700">ยังไม่มีโลโก้ ' . $missing . ' จาก ' . count($rows) . ' ' . unit_district() . '</strong>' : '<strong class="text-emerald-700">มีโลโก้ครบทุก' . unit_district() . 'แล้ว</strong>' ?></p>
 <?php $emptyCount = (int)$pdo->query('SELECT COUNT(*) FROM districts d WHERE NOT EXISTS (SELECT 1 FROM temples t WHERE t.district_id = d.id) AND NOT EXISTS (SELECT 1 FROM users u WHERE u.district_id = d.id)')->fetchColumn(); ?>
 <?php if ($emptyCount): ?>
-<form method="post" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" data-confirm="ลบ<?= e(unit_district()) ?>ที่ไม่มีวัดและไม่มีผู้ใช้ทั้งหมด?">
+<form method="post" class="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" data-confirm="ลบ<?= e(unit_district()) ?>ที่ไม่มีวัดและไม่มีผู้ใช้ทั้งหมด?">
   <?= csrf_field() ?><input type="hidden" name="action" value="prune">
   <span>มี <?= $emptyCount ?> <?= e(unit_district()) ?>ที่ยังไม่มีวัดและไม่มีผู้ใช้ (เช่น <?= e(unit_district()) ?>ตัวอย่างที่ติดมากับระบบ) — นับรวมในโควตาผู้ใช้ระดับจังหวัด</span>
   <button class="btn btn-sm btn-outline">ลบ<?= e(unit_district()) ?>ที่ว่าง</button>
@@ -58,12 +58,12 @@ require __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($rows as $r): ?>
-  <section class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+  <section class="card">
     <h3><?= e(unit_district()) ?><?= e($r['name']) ?></h3>
     <?php if ($r['logo_media_id']): ?>
-      <img class="mb-3 h-28 w-28 rounded-xl border border-stone-200 bg-white object-contain p-1" src="<?= e(media_url((int)$r['logo_media_id'])) ?>" alt="โลโก้<?= e(unit_district()) ?><?= e($r['name']) ?>">
+      <img class="mb-4 h-28 w-28 rounded-xl border border-stone-200 bg-white object-contain p-1" src="<?= e(media_url((int)$r['logo_media_id'])) ?>" alt="โลโก้<?= e(unit_district()) ?><?= e($r['name']) ?>">
     <?php else: ?>
-      <div class="mb-3 flex h-28 w-28 items-center justify-center rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 text-center text-sm text-amber-800">ยังไม่มีโลโก้</div>
+      <div class="mb-4 flex h-28 w-28 items-center justify-center rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 text-center text-sm text-amber-800">ยังไม่มีโลโก้</div>
     <?php endif; ?>
     <form method="post" enctype="multipart/form-data" class="grid gap-2">
       <?= csrf_field() ?><input type="hidden" name="action" value="logo_upload"><input type="hidden" name="district_id" value="<?= (int)$r['id'] ?>">

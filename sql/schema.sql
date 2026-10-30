@@ -114,15 +114,45 @@ CREATE TABLE IF NOT EXISTS accounts (
   cash_flag TINYINT NULL COMMENT '1 = บัญชีเงินสด (unique ต่อวัด) · NULL = บัญชีธนาคาร',
   name VARCHAR(150) NOT NULL COMMENT 'ชื่อบัญชี',
   bank_name VARCHAR(100) NULL,
+  bank_code VARCHAR(16) NULL COMMENT 'รหัสธนาคารในรายชื่อ (data/thai_banks.json) NULL = พิมพ์ชื่อเอง',
   branch VARCHAR(100) NULL,
   account_no VARCHAR(30) NULL,
+  bookbank_media_id INT UNSIGNED NULL COMMENT 'ภาพหน้าบุ๊คแบงก์',
   opening_balance DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'ยอดยกมา ณ วันเริ่มบัญชี (ก่อนรายการของวันนั้น)',
   opening_date DATE NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_cash (temple_id, cash_flag),
   KEY idx_account_temple (temple_id),
-  CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id)
+  CONSTRAINT fk_account_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_account_bookbank FOREIGN KEY (bookbank_media_id) REFERENCES media(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ทะเบียนทรัพย์สินของวัด (ที่ดิน อาคาร ครุภัณฑ์ ยานพาหนะ) ผูกกับรายจ่ายซื้อ/ซ่อมได้
+
+CREATE TABLE IF NOT EXISTS assets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  asset_no VARCHAR(30) NULL COMMENT 'เลขทะเบียนทรัพย์สิน กรอกเอง ไม่ซ้ำภายในวัด',
+  name VARCHAR(200) NOT NULL,
+  category ENUM('land','building','equipment','vehicle','other') NOT NULL,
+  acquired_date DATE NULL,
+  acquired_how VARCHAR(100) NULL COMMENT 'ได้มาโดย เช่น ซื้อ ผู้มีจิตศรัทธาถวาย',
+  value DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT 'มูลค่า/ราคาทุน',
+  status ENUM('good','fair','poor','disposed') NOT NULL DEFAULT 'good',
+  location VARCHAR(150) NULL,
+  holder VARCHAR(150) NULL COMMENT 'ผู้รับผิดชอบดูแล',
+  detail VARCHAR(500) NULL COMMENT 'รายละเอียด เช่น เลขโฉนดและเนื้อที่ ทะเบียนรถ ยี่ห้อรุ่น',
+  photo_media_id INT UNSIGNED NULL,
+  disposed_date DATE NULL,
+  disposed_note VARCHAR(255) NULL,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_asset_no (temple_id, asset_no),
+  KEY idx_asset_temple (temple_id, status),
+  CONSTRAINT fk_asset_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_asset_photo FOREIGN KEY (photo_media_id) REFERENCES media(id) ON DELETE SET NULL,
+  CONSTRAINT fk_asset_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- กองทุน/โครงการของวัด (กฐิน ผ้าป่า สร้างอาคาร ฯลฯ) ใช้แยกยอดรับ-จ่ายตามวัตถุประสงค์
@@ -152,6 +182,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   amount DECIMAL(14,2) NOT NULL,
   account_id INT UNSIGNED NULL COMMENT 'บัญชีที่รายการเกิดขึ้น (NULL = เงินสด)',
   fund_id INT UNSIGNED NULL COMMENT 'กองทุน/โครงการที่รายการนี้เป็นของ NULL = เงินทั่วไป',
+  asset_id INT UNSIGNED NULL COMMENT 'ทรัพย์สินที่รายจ่ายนี้ซื้อหรือซ่อม',
+  asset_kind ENUM('purchase','repair') NULL COMMENT 'ซื้อ หรือ ซ่อมบำรุง',
   transfer_id INT UNSIGNED NULL COMMENT 'รหัสกลุ่มรายการโอน/ฝาก-ถอนระหว่างบัญชี (ไม่นับเป็นรายรับ-รายจ่ายในสถิติ)',
   created_by INT UNSIGNED NULL,
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
@@ -162,18 +194,42 @@ CREATE TABLE IF NOT EXISTS transactions (
   KEY idx_txn_account (account_id, txn_date),
   KEY idx_txn_transfer (transfer_id),
   KEY idx_txn_fund (fund_id),
+  KEY idx_txn_asset (asset_id),
   CONSTRAINT fk_txn_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_txn_cat FOREIGN KEY (category_id) REFERENCES categories(id),
   CONSTRAINT fk_txn_account FOREIGN KEY (account_id) REFERENCES accounts(id),
   CONSTRAINT fk_txn_fund FOREIGN KEY (fund_id) REFERENCES funds(id),
+  CONSTRAINT fk_txn_asset FOREIGN KEY (asset_id) REFERENCES assets(id),
   CONSTRAINT fk_txn_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
 -- อนุโมทนาบัตร (ใบอนุโมทนาบัตรสำหรับรายรับประเภทบริจาค) — เก็บสำเนาข้อมูลตอนออก ไม่ลบ ยกเลิกได้โดยระบุเหตุผล
+-- ทะเบียนผู้บริจาค (ไม่บังคับ) เก็บเฉพาะผู้ที่ให้ความยินยอมตาม PDPA ที่อยู่/เบอร์โทรเข้ารหัส
+
+CREATE TABLE IF NOT EXISTS donors (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  address_enc VARBINARY(2000) NULL COMMENT 'ที่อยู่ เข้ารหัสด้วยกุญแจระบบ',
+  phone_enc VARBINARY(300) NULL COMMENT 'เบอร์โทร เข้ารหัสด้วยกุญแจระบบ',
+  note VARCHAR(255) NULL,
+  consent_at DATETIME NOT NULL COMMENT 'วันเวลาที่บันทึกว่าผู้บริจาคให้ความยินยอม',
+  consent_channel VARCHAR(40) NOT NULL COMMENT 'ช่องทางที่ได้รับความยินยอม เช่น เป็นลายลักษณ์อักษร ด้วยวาจา',
+  consent_by INT UNSIGNED NULL,
+  withdrawn_at DATETIME NULL COMMENT 'ถอนความยินยอมแล้ว ข้อมูลส่วนบุคคลถูกลบ',
+  withdrawn_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  KEY idx_donor_temple (temple_id, name),
+  CONSTRAINT fk_donor_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_donor_consent_user FOREIGN KEY (consent_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_donor_withdraw_user FOREIGN KEY (withdrawn_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS donation_receipts (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   temple_id INT UNSIGNED NOT NULL,
   transaction_id INT UNSIGNED NOT NULL,
+  donor_id INT UNSIGNED NULL COMMENT 'ผู้บริจาคในทะเบียน (ถ้ามี) ชื่อ/ที่อยู่บนใบยังเก็บสำเนาไว้ตามหลักฐานทางบัญชี',
   receipt_year SMALLINT UNSIGNED NOT NULL COMMENT 'ปี พ.ศ. ที่ออก (เลขที่รันใหม่ทุกปี)',
   verify_code CHAR(16) NULL COMMENT 'รหัสสุ่มสำหรับตรวจสอบใบผ่าน QR code (verify.php)',
   book_no VARCHAR(20) NOT NULL DEFAULT '1',
@@ -194,8 +250,10 @@ CREATE TABLE IF NOT EXISTS donation_receipts (
   UNIQUE KEY uq_receipt_no (temple_id, receipt_year, receipt_no),
   UNIQUE KEY uq_receipt_verify (verify_code),
   KEY idx_receipt_txn (transaction_id),
+  KEY idx_receipt_donor (donor_id),
   CONSTRAINT fk_receipt_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_receipt_txn FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+  CONSTRAINT fk_receipt_donor FOREIGN KEY (donor_id) REFERENCES donors(id) ON DELETE SET NULL,
   CONSTRAINT fk_receipt_user FOREIGN KEY (issued_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 

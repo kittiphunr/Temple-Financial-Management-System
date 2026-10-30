@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'เข้าสู่ระบบ';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm mx-auto my-10 max-w-sm">
+<div class="card mx-auto my-10 max-w-sm">
   <h2>เข้าสู่ระบบ</h2>
   <?php if ($error): ?><?= alert_box($error, 'err') ?><?php endif; ?>
   <form method="post" class="grid gap-3">

@@ -3,29 +3,75 @@
 @tailwind utilities;
 
 @layer base {
+  /* ขนาดมาตรฐานของตัวควบคุมทั้งระบบ: ช่องกรอก/ตัวเลือก/ปุ่ม สูงเท่ากัน (2.75rem) ขอบมนเท่ากัน (rounded-xl) · ปุ่มเล็ก 2.25rem ขอบ rounded-lg */
+  :root { --ctl-h: 2.75rem; --ctl-h-sm: 2.25rem; }
   body { @apply bg-[#fbf8f3] font-sans text-stone-800 antialiased; }
   a { @apply text-brand-600; }
-  h2 { @apply mb-3 mt-2 text-2xl font-bold text-brand-700; }
-  h3 { @apply mb-2 text-lg font-semibold; }
+  h2 { @apply mb-3 mt-2 text-2xl font-bold leading-snug text-brand-700; }
+  h3 { @apply mb-2 text-lg font-semibold leading-snug; }
+  /* ช่องกรอกใช้ input:where(...) (specificity เท่ากฎรีเซ็ต input{padding:0} ของ Tailwind แต่เขียนทีหลังจึงชนะ) และยังถูก .ctl-sm/.form-lg เขียนทับได้ */
   label { @apply mb-1 block text-sm text-stone-500; }
-  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']),
-  select,
-  textarea {
-    @apply max-w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-800
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden'])), select, textarea {
+    @apply max-w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-stone-800
       focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200;
   }
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden'])), select { min-height: var(--ctl-h); }
+  textarea { min-height: calc(var(--ctl-h) * 2); }
+  /* กล่องที่ทำหน้าที่เหมือนช่องกรอก (เช่น ตัวเลือกธนาคารพร้อมโลโก้) ใช้ความสูง/ขอบมนมาตรฐานเดียวกัน */
+  .ctl-box { @apply rounded-xl border border-stone-300 bg-white px-3.5 py-2; min-height: var(--ctl-h); }
+  details[open] > .ctl-box { @apply border-gold-500 ring-2 ring-gold-200; }
+  /* ช่องกรอก/ตัวเลือกขนาดกะทัดรัด (ฟอร์มในแถวตาราง) วางคู่ปุ่มเล็ก: สูงและขอบมนเท่าปุ่มเล็ก */
+  input[type='file'].ctl-sm { height: var(--ctl-h-sm); padding: 0.125rem; border-radius: 0.5rem; }
+  :is(input, select).ctl-sm { min-height: var(--ctl-h-sm); padding-block: 0.25rem; font-size: 0.875rem; border-radius: 0.5rem; }
+  /* ลูกศร dropdown: ตัวเลือกวาดเอง (Feather chevron-down) ชิดขวาและกึ่งกลางแนวตั้งเสมอ เว้นพื้นที่ให้ข้อความไม่ชนลูกศร */
+  select:not([multiple]):not([size]) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378716c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem 1.1rem;
+    text-overflow: ellipsis;
+  }
+  select:not([multiple]):not([size]):focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b1c1c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  }
+  select:disabled { @apply cursor-not-allowed bg-stone-100 text-stone-500; }
+  input[type='file'] {
+    @apply max-w-full rounded-xl border border-stone-300 bg-white p-1 text-sm text-stone-600;
+    height: var(--ctl-h);
+  }
+  input[type='file']::file-selector-button {
+    @apply mr-3 h-full cursor-pointer rounded-lg border-0 bg-gold-100 px-3 font-semibold text-stone-800 transition hover:bg-gold-200;
+  }
+  input[type='checkbox'], input[type='radio'] { accent-color: #9b1c1c; }
   code { @apply rounded bg-stone-100 px-1 text-sm; }
+  summary::-webkit-details-marker { display: none; }
 }
 
 @layer components {
+  /* ปุ่ม: สูงเท่าช่องกรอก ขอบโปร่งใสกว้างเท่าปุ่มขอบ (outline) จึงสูงเท่ากันทุกแบบ · จัดไอคอน+ข้อความกึ่งกลางด้วย inline-flex */
   .btn {
-    @apply inline-block cursor-pointer rounded-xl bg-brand-600 px-5 py-2 font-semibold text-white no-underline transition hover:bg-brand-700;
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-transparent bg-brand-600 px-5 py-2 font-semibold leading-snug text-white no-underline transition hover:bg-brand-700;
+    min-height: var(--ctl-h);
   }
   .btn-outline {
-    @apply border-[1.5px] border-brand-600 bg-transparent text-brand-600 hover:bg-gold-100 hover:text-brand-700;
+    @apply border-brand-600 bg-transparent text-brand-600 hover:bg-gold-100 hover:text-brand-700;
   }
-  .btn-danger { @apply bg-red-700 hover:bg-red-800; }
-  .btn-sm { @apply rounded-lg px-3 py-1 text-sm; }
+  .btn-danger { @apply border-transparent bg-red-700 text-white hover:bg-red-800; }
+  .btn-sm { @apply rounded-lg px-3 py-1 text-sm; min-height: var(--ctl-h-sm); }
+  /* ฟอร์มขนาดใหญ่ (หน้าบันทึกด่วนบนมือถือ): ช่องกรอก ตัวเลือก และปุ่ม สูงเท่ากันที่ 3.5rem */
+  .form-lg :is(input:not([type='checkbox'], [type='radio'], [type='hidden'], [type='file']), select) { min-height: 3.5rem; font-size: 1.125rem; }
+  .form-lg .btn { min-height: 3.5rem; font-size: 1.25rem; }
+  /* แถวฟอร์ม (items-end) ที่มีช่องกรอกอยู่ด้วย: ปุ่มเล็กขยายเป็นขนาดมาตรฐานให้สูงเท่าช่องกรอก และข้อความกำกับท้ายแถวสูงเท่าช่อง จัดกึ่งกลางแนวตั้งตรงกับช่อง */
+  .items-end > :is(button, a).btn-sm { min-height: var(--ctl-h); border-radius: 0.75rem; padding-inline: 1.25rem; font-size: 1rem; }
+  .items-end > :is(span, p):not(.grid) { display: flex; align-items: center; min-height: var(--ctl-h); }
+  .btn:disabled, .btn[disabled] { @apply cursor-not-allowed opacity-50; }
+  .icon {
+    @apply inline-block h-[1.15em] w-[1.15em] shrink-0 align-[-0.2em];
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
   .badge {
     @apply inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800;
   }
@@ -33,11 +79,30 @@
   .badge-err { @apply bg-red-100 text-red-800; }
   .badge-mute { @apply bg-stone-200 text-stone-700; }
 
+  /* ---- การ์ดกลางของระบบ: ช่องว่างในการ์ดเท่ากันทุกด้าน (p-5) ระยะห่างระหว่างการ์ดคงที่ (mb-4) ----
+     .card = กล่องเนื้อหา · .card-table = กล่องตาราง (ไม่มี padding แต่คอลัมน์แรก/สุดท้ายเว้นเท่าการ์ด) · .card-bar = แถบสั้น (ตัวกรอง/ลิงก์สรุป)
+     .callout = ข้อความแจ้ง/คำเตือนเต็มความกว้าง — ใส่สีเพิ่มด้วยคลาสสี bg- border- text- ของ Tailwind ได้ */
+  .card { @apply mb-4 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm; }
+  .card-table { @apply mb-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm; }
+  .card-bar { @apply mb-4 rounded-2xl border border-stone-200 bg-white px-5 py-3 shadow-sm; }
+  .callout { @apply mb-4 rounded-xl border px-5 py-3; }
+  .card > :first-child, .card-bar > :first-child { margin-top: 0; }
+  .card > :last-child, .card-bar > :last-child { margin-bottom: 0; }
+  .card > h3:first-child, .card > h2:first-child { margin-top: 0; }
+  /* การ์ดที่อยู่ในกริด/แถวแนวนอน/กลุ่ม space-y ใช้ระยะห่างของตัวจัดวางเอง ไม่บวก mb-4 ซ้ำ */
+  .grid > :is(.card, .card-table, .card-bar, .callout),
+  .flex > :is(.card, .card-table, .card-bar, .callout),
+  [class*='space-y-'] > :is(.card, .card-table, .card-bar, .callout) { margin-bottom: 0; }
+  /* กริด/แถวที่ห่อการ์ดไว้: ช่องไฟระหว่างการ์ด 1rem เท่ากันหมด และเว้นล่างเท่าการ์ดเดี่ยว */
+  :is(.grid, .flex):has(> :is(.card, .card-table, .card-bar)) { gap: 1rem; margin-bottom: 1rem; }
+
   .data-table { @apply w-full text-left; }
   .data-table th {
-    @apply whitespace-nowrap border-b border-stone-200 bg-gold-100 px-3 py-2 font-bold text-stone-800;
+    @apply whitespace-nowrap border-b border-stone-200 bg-gold-100 px-4 py-2.5 font-bold text-stone-800;
   }
-  .data-table td { @apply border-b border-stone-100 px-3 py-2 align-top; }
+  .data-table td { @apply border-b border-stone-100 px-4 py-2.5 align-top; }
+  .card-table .data-table :is(th, td):first-child { @apply pl-5; }
+  .card-table .data-table :is(th, td):last-child { @apply pr-5; }
   .data-table tr:last-child td { @apply border-b-0; }
   .data-table tbody tr:hover td { @apply bg-gold-50; }
 }
@@ -45,6 +110,7 @@
 /* หน้าต่าง "เกี่ยวกับ" (SweetAlert2) และปรับธีมกล่องแจ้งเตือนให้เข้ากับระบบ */
 @layer components {
   .swal2-popup { @apply font-sans; font-family: inherit; }
+  .swal2-popup .swal2-styled { border-radius: 0.75rem; min-height: var(--ctl-h); padding: 0.5rem 1.25rem; font-weight: 600; }
   .swal2-popup.about-popup { @apply rounded-3xl p-2 text-left sm:p-4; }
   .swal2-html-container.about-body { @apply m-0 px-3 pb-4 pt-2 text-left text-base text-stone-800; }
   .about-head { @apply flex items-center gap-4 border-b border-stone-200 pb-4; }

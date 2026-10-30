@@ -68,7 +68,7 @@ $wait = otp_cooldown_left($pdo, $uid);
 $pageTitle = 'ยืนยันตัวตน';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="mx-auto my-10 max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+<div class="card mx-auto my-10 max-w-sm">
   <h2>ยืนยันตัวตนสองชั้น</h2>
   <p class="mb-4 text-stone-600">ระบบส่งรหัส 6 หลักไปที่อีเมล <strong class="whitespace-nowrap"><?= e(mask_email($mailTo)) ?></strong>
     รหัสใช้ได้ครั้งเดียวและหมดอายุใน <?= OTP_PURPOSES['login']['ttl'] / 60 ?> นาที</p>

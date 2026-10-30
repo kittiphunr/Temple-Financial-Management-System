@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'save') {
         $templeId = (int)($_POST['temple_id'] ?? 0);
+        // บันทึกจากหน้า "บันทึกด่วน" (มือถือ) ให้กลับไปหน้านั้นหลังบันทึก/ผิดพลาด
+        $backTo = ($_POST['back'] ?? '') === 'quick' ? 'quick.php' . ($u['role'] === 'temple' ? '' : '?temple=' . $templeId) : null;
         $catId = (int)($_POST['category_id'] ?? 0);
         $date = date_be_parse($_POST, 'txn_date');
         $amount = round((float)str_replace(',', '', $_POST['amount'] ?? '0'), 2);
@@ -59,6 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$fundId, $fe] = fund_resolve($pdo, $_POST['fund_id'] ?? 0, $templeId, $curFund ? (int)$curFund : null);
             if ($fe !== '') $errs[] = $fe;
         }
+        $assetId = null;
+        $assetKind = null;
+        if ($type === 'expense' && asset_available() && $templeId && can_access_temple($templeId)) {
+            $curAsset = null;
+            if ($id) {
+                $ca = $pdo->prepare('SELECT asset_id FROM transactions WHERE id = ?');
+                $ca->execute([$id]);
+                $curAsset = $ca->fetchColumn() ?: null;
+            }
+            [$assetId, $ae, $assetKind] = asset_resolve($pdo, $_POST['asset_id'] ?? 0, $_POST['asset_kind'] ?? '', $templeId, $curAsset ? (int)$curAsset : null);
+            if ($ae !== '') $errs[] = $ae;
+        }
         if ($date === null) $errs[] = 'วันที่ไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ.)';
         if ($amount <= 0 || $amount > 999999999999) $errs[] = 'จำนวนเงินต้องมากกว่า 0';
         if ($templeId && can_access_temple($templeId) && ($lock = period_lock_error($pdo, $templeId, $date)) !== '') $errs[] = $lock;
@@ -70,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($errs) {
             flash(implode(', ', $errs), 'err');
-            redirect("transactions.php?type=$type" . ($id ? "&edit=$id" : ''));
+            redirect($backTo ?? "transactions.php?type=$type" . ($id ? "&edit=$id" : ''));
         }
         $desc = mb_substr(trim($_POST['description'] ?? ''), 0, 255);
         $doc = mb_substr(trim($_POST['doc_no'] ?? ''), 0, 50);
@@ -86,17 +100,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะแก้ไขได้', 'err');
                 redirect("transactions.php?type=$type");
             }
-            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=?, account_id=?' . (fund_available() ? ', fund_id=?' : '') . ' WHERE id=?')
-                ->execute(array_merge([$templeId, $catId, $date, $doc, $desc, $amount, $acc['id']], fund_available() ? [$fundId] : [], [$id]));
+            $extra = (fund_available() ? ['fund_id' => $fundId] : []) + (asset_available() && $type === 'expense' ? ['asset_id' => $assetId, 'asset_kind' => $assetKind] : []);
+            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=?, account_id=?' . implode('', array_map(fn($c) => ", $c=?", array_keys($extra))) . ' WHERE id=?')
+                ->execute(array_merge([$templeId, $catId, $date, $doc, $desc, $amount, $acc['id']], array_values($extra), [$id]));
             audit('update', 'transaction', $id, "$type $amount");
         } else {
-            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,account_id,created_by' . (fund_available() ? ',fund_id' : '') . ') VALUES (?,?,?,?,?,?,?,?,?' . (fund_available() ? ',?' : '') . ')')
-                ->execute(array_merge([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']], fund_available() ? [$fundId] : []));
+            $extra = (fund_available() ? ['fund_id' => $fundId] : []) + (asset_available() && $type === 'expense' ? ['asset_id' => $assetId, 'asset_kind' => $assetKind] : []);
+            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,account_id,created_by' . implode('', array_map(fn($c) => ",$c", array_keys($extra))) . ') VALUES (?,?,?,?,?,?,?,?,?' . str_repeat(',?', count($extra)) . ')')
+                ->execute(array_merge([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']], array_values($extra)));
             audit('create', 'transaction', (int)$pdo->lastInsertId(), "$type $amount");
         }
         $bw = $type === 'expense' ? budget_warning($pdo, $templeId, $catId, $date) : '';
-        flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — ⚠️ $bw" : ''));
-        redirect("transactions.php?type=$type");
+        flash("บันทึก$label เรียบร้อย" . ($bw !== '' ? " — คำเตือน: $bw" : ''));
+        redirect($backTo ?? "transactions.php?type=$type");
     }
 }
 
@@ -120,6 +136,7 @@ if (!empty($_GET['edit'])) {
 
 $sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation, a.kind AS acc_kind, a.bank_name AS acc_bank, a.account_no AS acc_no,
       " . (fund_available() ? "(SELECT f.name FROM funds f WHERE f.id = x.fund_id) AS fund_name," : "NULL AS fund_name,") . "
+      " . (asset_available() ? "(SELECT a.name FROM assets a WHERE a.id = x.asset_id) AS asset_name, x.asset_kind AS asset_kind," : "NULL AS asset_name, NULL AS asset_kind,") . "
       (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id" . (attachments_available()
       ? ", (SELECT COUNT(*) FROM transaction_attachments ta WHERE ta.transaction_id = x.id) AS att_n" : ', 0 AS att_n') . (month_close_available()
       ? ",
@@ -145,6 +162,7 @@ foreach ($bs->fetchAll() as $b) {
     $bankMap[(int)$b['temple_id']][] = [(string)$b['id'], ledger_account_label(['kind' => 'bank'] + $b)];
 }
 $fundMap = fund_available() ? fund_map($pdo) : [];
+$assetMap = $type === 'expense' && asset_available() ? asset_map($pdo) : [];
 $formTemple = (int)($edit['temple_id'] ?? ($u['temple_id'] ?? 0));
 $editAcc = $edit && $edit['account_id'] ? (string)$edit['account_id'] : 'cash';
 $accLabel = fn(array $r) => ($r['acc_kind'] ?? 'cash') === 'bank' ? ledger_account_label(['kind' => 'bank', 'bank_name' => $r['acc_bank'], 'account_no' => $r['acc_no']]) : 'เงินสด';
@@ -171,7 +189,7 @@ function temple_options(array $groups, int $sel): string
   <span class="flex flex-wrap gap-2"><a class="btn btn-outline btn-sm" href="accounts.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">บัญชีเงินสด/ธนาคาร · โอน-ฝาก-ถอน</a>
   <a class="btn btn-outline btn-sm" href="statements.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">รายงานแบบที่ 1–3 ประจำเดือน</a></span></div>
 
-<div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:hidden">
+<div class="card print:hidden">
   <h3><?= $edit ? "แก้ไขรายการ$label" : "เพิ่มรายการ$label" ?></h3>
   <form method="post" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">
     <?= csrf_field() ?>
@@ -189,6 +207,9 @@ function temple_options(array $groups, int $sel): string
     <?php if (fund_available()): ?><div><label>กองทุน/โครงการ</label><select name="fund_id" data-fund-map='<?= e(json_encode($fundMap, JSON_UNESCAPED_UNICODE)) ?>' data-temple-select="temple_id" data-selected="<?= (int)($edit['fund_id'] ?? 0) ?>">
       <option value="0">เงินทั่วไป (ไม่ระบุกองทุน)</option>
     </select></div><?php endif; ?>
+    <?php if ($type === 'expense' && asset_available()): ?><div><label>ทรัพย์สินที่ซื้อ/ซ่อม (ถ้ามี)</label><span class="grid grid-cols-[1fr_7rem] gap-1"><select name="asset_id" data-asset-map='<?= e(json_encode($assetMap, JSON_UNESCAPED_UNICODE)) ?>' data-temple-select="temple_id" data-selected="<?= (int)($edit['asset_id'] ?? 0) ?>">
+      <option value="0">ไม่เกี่ยวกับทรัพย์สิน</option></select>
+      <select name="asset_kind" aria-label="ซื้อหรือซ่อม"><?php foreach (ASSET_KINDS as $k => $lab): ?><option value="<?= $k ?>" <?= ($edit['asset_kind'] ?? 'repair') === $k ? 'selected' : '' ?>><?= e($lab) ?></option><?php endforeach; ?></select></span></div><?php endif; ?>
     <div><label>จำนวนเงิน (บาท)</label><input name="amount" inputmode="decimal" required value="<?= e($edit['amount'] ?? '') ?>"></div>
     <div><label>เลขที่เอกสาร</label><input name="doc_no" maxlength="50" value="<?= e($edit['doc_no'] ?? '') ?>"></div>
     <div class="col-span-full"><label>รายละเอียด</label><input name="description" maxlength="255" value="<?= e($edit['description'] ?? '') ?>"></div>
@@ -202,31 +223,31 @@ function temple_options(array $groups, int $sel): string
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <div><label>วัด</label><select name="temple"><option value="0">ทุกวัด</option><?= temple_options($groups, $fTemple) ?></select></div>
   <button class="btn" type="submit">แสดง</button>
-  <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์</button>
+  <button class="btn btn-outline" type="button" onclick="window.print()"><?= icon('printer') ?> พิมพ์</button>
 </form>
 
-<div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
+<div class="card-table"><table class="data-table">
   <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>บัญชี</th><th>รายละเอียด</th><th>เลขที่</th><th class="text-right whitespace-nowrap">จำนวนเงิน</th><th class="print:hidden"></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
     <td><?= e(th_date($r['txn_date'])) ?></td>
     <td><?= e($r['temple']) ?><br><small class="text-stone-500">อ.<?= e($r['district']) ?></small></td>
-    <td><?= e($r['category']) ?><?= !empty($r['fund_name']) ? '<br><small class="text-stone-500">🏛️ ' . e($r['fund_name']) . '</small>' : '' ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
+    <td><?= e($r['category']) ?><?= !empty($r['fund_name']) ? '<br><small class="text-stone-500">' . icon('layers') . ' ' . e($r['fund_name']) . '</small>' : '' ?><?= !empty($r['asset_name']) ? '<br><small class="text-stone-500">' . icon('tool') . ' ' . e($r['asset_name']) . ' (' . e(ASSET_KINDS[$r['asset_kind']] ?? '') . ')</small>' : '' ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
       <?php if (attachments_available()): ?>
-        <a class="btn btn-sm btn-outline" href="attachments.php?txn=<?= (int)$r['id'] ?>" title="หลักฐานแนบ (ใบเสร็จ/สลิป)">📎<?= $r['att_n'] ? ' ' . (int)$r['att_n'] : '' ?></a>
+        <a class="btn btn-sm btn-outline" href="attachments.php?txn=<?= (int)$r['id'] ?>" title="หลักฐานแนบ (ใบเสร็จ/สลิป)" aria-label="หลักฐานแนบ"><?= icon('paperclip') ?><?= $r['att_n'] ? ' ' . (int)$r['att_n'] : '' ?></a>
       <?php endif; ?>
       <?php if ($type === 'income' && $r['is_donation']): ?>
         <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
       <?php endif; ?>
       <?php if (!empty($r['locked'])): ?>
-        <span class="badge badge-mute" title="ปิดงวดแล้ว แก้ไขไม่ได้ (แอดมินหลัก/อำเภอเปิดงวดได้ที่หน้ารายงานประจำเดือน)">🔒 ปิดงวด</span>
+        <span class="badge badge-mute" title="ปิดงวดแล้ว แก้ไขไม่ได้ (แอดมินหลัก/อำเภอเปิดงวดได้ที่หน้ารายงานประจำเดือน)"><?= icon('lock') ?> ปิดงวด</span>
       <?php else: ?>
-      <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>">แก้ไข</a>
+      <a class="btn btn-sm btn-outline" href="transactions.php?type=<?= $type ?>&edit=<?= (int)$r['id'] ?>"><?= icon('edit-2') ?> แก้ไข</a>
       <form method="post" class="inline" data-confirm="ยืนยันการลบรายการนี้?">
         <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-        <button class="btn btn-sm btn-danger">ลบ</button></form>
+        <button class="btn btn-sm btn-danger"><?= icon('trash-2') ?> ลบ</button></form>
       <?php endif; ?>
     </td>
   </tr>

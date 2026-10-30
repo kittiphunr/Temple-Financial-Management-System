@@ -93,11 +93,11 @@ def _run(R, q, app, smtp):
     post_stm(t, {'action': 'close_month'}, yc, mc)
     check('A2 เดือนปัจจุบัน (ยังไม่สิ้นเดือน) ปิดงวดไม่ได้ แม้ส่งรายงานแล้ว', q(f"SELECT closed_at IS NULL FROM monthly_reports WHERE temple_id={tA} AND report_year={yc} AND report_month={mc}") == '1')
     c, _, b = stm(t)
-    check('A3 หน้ารายงานมีปุ่ม "ปิดงวดเดือนนี้" เมื่อส่งรายงานแล้วและยอดตรงกัน', '🔒 ปิดงวดเดือนนี้' in b and 'ปิดงวดแล้ว' not in txt(b))
+    check('A3 หน้ารายงานมีปุ่ม "ปิดงวดเดือนนี้" เมื่อส่งรายงานแล้วและยอดตรงกัน', re.search(r'#lock"></use></svg> ปิดงวดเดือนนี้', b) is not None and 'ปิดงวดแล้ว' not in txt(b))
     # แก้ไขหลังส่ง → ปิดไม่ได้
     add_txn(day3, 50, 'เพิ่มหลังส่ง')
     post_stm(t, {'action': 'close_month'})
-    check('A4 มีการแก้ไขหลังส่งรายงาน → ปิดงวดไม่ได้ ต้องส่งใหม่ก่อน', q(f"SELECT closed_at IS NULL FROM monthly_reports WHERE temple_id={tA} AND report_year={y3} AND report_month={m3}") == '1' and '🔒 ปิดงวดเดือนนี้' not in stm(t)[2])
+    check('A4 มีการแก้ไขหลังส่งรายงาน → ปิดงวดไม่ได้ ต้องส่งใหม่ก่อน', q(f"SELECT closed_at IS NULL FROM monthly_reports WHERE temple_id={tA} AND report_year={y3} AND report_month={m3}") == '1' and 'ปิดงวดเดือนนี้' not in stm(t)[2])
     post_stm(t, {'action': 'submit_report', 'note': ''})
     post_stm(t, {'action': 'close_month'})
     check('A5 ส่งรายงานใหม่แล้วปิดงวดสำเร็จ (บันทึกเวลา/ผู้ปิด/ประวัติ)',
@@ -142,9 +142,9 @@ def _run(R, q, app, smtp):
     t.post('/accounts.php', {'action': 'add_bank', 'bank_name': 'กรุงไทย', 'account_no': '999-9-99999-9', 'opening_balance': '0', **be_date('opening_date', d2)}, '/accounts.php')
     check('B12 เพิ่มบัญชีธนาคารใหม่เมื่อมีเดือนที่ปิดงวด → ปฏิเสธ', q(f"SELECT COUNT(*) FROM accounts WHERE temple_id={tA} AND kind='bank'") == '1')
     c, _, b = t.req(f'/transactions.php?type=income&year={y3}')
-    check('B13 รายการบัญชีรายรับของงวดที่ปิดแสดง "🔒 ปิดงวด" และไม่มีปุ่มแก้ไข/ลบของรายการนั้น', '🔒 ปิดงวด' in b and f'edit={idA}"' not in b and f'edit={idN}"' in b)
+    check('B13 รายการบัญชีรายรับของงวดที่ปิดแสดงไอคอนล็อก "ปิดงวด" และไม่มีปุ่มแก้ไข/ลบของรายการนั้น', re.search(r'#lock"></use></svg> ปิดงวด', b) is not None and f'edit={idA}"' not in b and f'edit={idN}"' in b)
     c, _, b = adm.req(f'/report_status.php?year={y3}&month={m3}&status=closed')
-    check('B14 หน้าติดตามรายงานกรองสถานะ "ปิดงวดแล้ว" ได้ 1 วัด มีการ์ดสรุปและส่งออก CSV', c == 200 and b.count('ดูรายงาน') == 1 and '🔒 ปิดงวดแล้ว' in b and 'ปิดงวดเมื่อ' in adm.req(f'/report_status.php?year={y3}&month={m3}&export=csv')[2])
+    check('B14 หน้าติดตามรายงานกรองสถานะ "ปิดงวดแล้ว" ได้ 1 วัด มีการ์ดสรุปและส่งออก CSV', c == 200 and b.count('ดูรายงาน') == 1 and re.search(r'#lock"></use></svg> ปิดงวดแล้ว', b) is not None and 'ปิดงวดเมื่อ' in adm.req(f'/report_status.php?year={y3}&month={m3}&export=csv')[2])
 
     # ---- C: เปิดงวด
     post_stm(t, {'action': 'reopen_month', 'reason': 'ขอแก้ไขรายการให้ถูกต้อง'})
