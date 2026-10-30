@@ -107,7 +107,8 @@ if (!empty($_GET['edit'])) {
 }
 
 $sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation, a.kind AS acc_kind, a.bank_name AS acc_bank, a.account_no AS acc_no,
-      (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id" . (month_close_available()
+      (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id" . (attachments_available()
+      ? ", (SELECT COUNT(*) FROM transaction_attachments ta WHERE ta.transaction_id = x.id) AS att_n" : ', 0 AS att_n') . (month_close_available()
       ? ",
       (SELECT 1 FROM monthly_reports m WHERE m.temple_id = x.temple_id AND m.report_year = YEAR(x.txn_date) + 543 AND m.report_month = MONTH(x.txn_date) AND m.closed_at IS NOT NULL) AS locked" : ', NULL AS locked') . "
 
@@ -196,6 +197,9 @@ function temple_options(array $groups, int $sel): string
     <td><?= e($r['category']) ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
+      <?php if (attachments_available()): ?>
+        <a class="btn btn-sm btn-outline" href="attachments.php?txn=<?= (int)$r['id'] ?>" title="หลักฐานแนบ (ใบเสร็จ/สลิป)">📎<?= $r['att_n'] ? ' ' . (int)$r['att_n'] : '' ?></a>
+      <?php endif; ?>
       <?php if ($type === 'income' && $r['is_donation']): ?>
         <a class="btn btn-sm btn-outline" href="receipt.php?<?= $r['receipt_id'] ? 'id=' . (int)$r['receipt_id'] : 'txn=' . (int)$r['id'] ?>"><?= $r['receipt_id'] ? 'ดูอนุโมทนาบัตร' : 'อนุโมทนาบัตร' ?></a>
       <?php endif; ?>

@@ -281,3 +281,20 @@ CREATE TABLE IF NOT EXISTS temple_people (
   CONSTRAINT fk_person_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_person_photo FOREIGN KEY (photo_media_id) REFERENCES media(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+-- หลักฐานแนบรายการ (ใบเสร็จ/สลิป) ภาพถูกแปลงใหม่ด้วย GD ส่วน PDF เก็บตามต้นฉบับ — เปิดได้ผ่าน attachment.php ที่ตรวจสิทธิ์เท่านั้น
+CREATE TABLE IF NOT EXISTS transaction_attachments (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  transaction_id INT UNSIGNED NOT NULL,
+  temple_id INT UNSIGNED NOT NULL,
+  filename VARCHAR(120) NOT NULL,
+  mime VARCHAR(40) NOT NULL,
+  size INT UNSIGNED NOT NULL,
+  data MEDIUMBLOB NOT NULL,
+  created_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  KEY idx_att_txn (transaction_id),
+  CONSTRAINT fk_att_txn FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+  CONSTRAINT fk_att_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_att_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
