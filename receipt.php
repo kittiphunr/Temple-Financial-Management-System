@@ -124,27 +124,26 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <?php ob_start(); ?>
-<article class="receipt-font relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+<article class="receipt-font rc-page relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
   <?php if ($void): ?><div class="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/20 -rotate-12">ยกเลิก</div><?php endif; ?>
-  <?= letterhead($pdo, $tid, 0, 'อนุโมทนาบัตร') ?>
-  <div class="flex justify-between text-sm"><div>เล่มที่ <?= e($r['book_no']) ?> เลขที่ <?= (int)$r['receipt_no'] ?>/<?= (int)$r['receipt_year'] ?></div><div>วันที่ <?= e(th_date($r['receipt_date'])) ?></div></div>
-  <div class="mt-5 space-y-3 leading-8">
-    <p class="indent-10">ขออนุโมทนาบุญแก่ <strong><?= e($r['donor_name']) ?></strong><?= $r['donor_address'] ? ' ที่อยู่ ' . e($r['donor_address']) : '' ?></p>
-    <p class="indent-10">ได้บริจาคทรัพย์ (<?= e($r['category']) ?>) จำนวน <strong><?= money($r['amount']) ?> บาท</strong> (<?= e(thai_baht_text($r['amount'])) ?>)
+  <?= letterhead($pdo, $tid, 0, 'อนุโมทนาบัตร', '', false, true) ?>
+  <div class="rc-meta"><div>เล่มที่ <?= e($r['book_no']) ?> เลขที่ <?= (int)$r['receipt_no'] ?>/<?= (int)$r['receipt_year'] ?></div><div>วันที่ <?= e(th_date($r['receipt_date'])) ?></div></div>
+  <div class="rc-body">
+    <p>ขออนุโมทนาบุญแก่ <strong><?= e($r['donor_name']) ?></strong><?= $r['donor_address'] ? ' ที่อยู่ ' . e($r['donor_address']) : '' ?></p>
+    <p>ได้บริจาคทรัพย์ (<?= e($r['category']) ?>) จำนวน <strong><?= money($r['amount']) ?> บาท</strong> (<?= e(thai_baht_text($r['amount'])) ?>)
       <?= $r['purpose'] ? ' เพื่อ ' . e($r['purpose']) : ' เพื่อถวาย' . e($t['name']) ?> เมื่อวันที่ <?= e(th_date($r['txn_date'])) ?></p>
-    <p class="indent-10">ขออนุโมทนาในกุศลเจตนา ขอให้ผลบุญนี้จงเป็นปัจจัยอำนวยให้ท่านและครอบครัวเจริญด้วยจตุรพิธพรชัย คือ อายุ วรรณะ สุขะ พละ ตลอดกาลนาน เทอญ</p>
+    <p>ขออนุโมทนาในกุศลเจตนา ขอให้ผลบุญนี้จงเป็นปัจจัยอำนวยให้ท่านและครอบครัวเจริญด้วยจตุรพิธพรชัย คือ อายุ วรรณะ สุขะ พละ ตลอดกาลนาน เทอญ</p>
   </div>
-  <div class="mt-10 grid grid-cols-2 gap-10">
-    <?php
-    $box = fn(string $role, string $n) => '<div class="text-center"><div class="mb-1 mt-12 border-b border-dotted border-stone-500"></div><div class="text-sm">('
-        . ($n !== '' ? e($n) : str_repeat('&hellip;', 10)) . ')</div><div class="text-sm font-semibold">' . e($role) . '</div></div>';
-    echo $box($r['receiver_position'] ?: 'ผู้รับเงิน', (string)$r['receiver_name']), $box('เจ้าอาวาส ' . $t['name'], (string)$r['abbot_name']);
-    ?>
+  <?php
+  $box = fn(string $role, string $n) => '<div class="rc-sig"><div class="rc-sig-line"></div><div class="text-sm">('
+      . ($n !== '' ? e($n) : str_repeat('&hellip;', 10)) . ')</div><div class="text-sm font-semibold">' . e($role) . '</div></div>';
+  ?>
+  <div class="rc-sign">
+    <?= $box($r['receiver_position'] ?: 'ผู้รับเงิน', (string)$r['receiver_name']) ?>
+    <div class="rc-stamp">ตราประทับ<br>วัด</div>
+    <?= $box('เจ้าอาวาส ' . $t['name'], (string)$r['abbot_name']) ?>
   </div>
-  <div class="mt-6 flex items-end justify-between text-xs text-stone-500">
-    <div><?= $t['tax_id'] ? 'เลขประจำตัวผู้เสียภาษีของวัด ' . e($t['tax_id']) : '' ?><br>ต้องมีลายมือชื่อและตราประทับของวัดจึงจะสมบูรณ์</div>
-    <div class="flex h-20 w-20 items-center justify-center rounded-full border border-dashed border-stone-400 text-center">ตราประทับ<br>วัด</div>
-  </div>
+  <div class="rc-foot text-xs text-stone-500"><?= $t['tax_id'] ? 'เลขประจำตัวผู้เสียภาษีของวัด ' . e($t['tax_id']) . ' · ' : '' ?>ต้องมีลายมือชื่อและตราประทับของวัดจึงจะสมบูรณ์</div>
   <?php if ($void): ?><p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">ยกเลิกเมื่อ <?= e(th_date(substr((string)$r['voided_at'], 0, 10))) ?> — <?= e($r['void_reason']) ?></p><?php endif; ?>
 </article>
 <?= thai_digits_html((string)ob_get_clean()) ?>   <?php /* เอกสารอนุโมทนาบัตรใช้เลขไทยทั้งฉบับ (ส่วนปุ่ม/ฟอร์มรอบนอกยังเป็นเลขอารบิก) */ ?>

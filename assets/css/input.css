@@ -120,16 +120,33 @@
    JS Chanok มีตัวอักษรเล็ก (ขนาด em เล็ก) จึงขยายขนาดตัวอักษรของตัวเอกสารให้อ่านง่ายเทียบเท่าฟอนต์ทั่วไป */
 @font-face { font-family: 'JS Chanok'; src: url('../fonts/JS-Chanok-Normal.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
 @layer components {
-  .receipt-font { font-family: 'JS Chanok', 'Sarabun', sans-serif; font-size: 1.95rem; line-height: 2.7rem; }
-  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 1.5rem; line-height: 2rem; }
-  .receipt-font .text-lg { font-size: 2.3rem; line-height: 3rem; }
-  .receipt-font .text-xl { font-size: 2.7rem; line-height: 3.3rem; }
+  .receipt-font { font-family: 'JS Chanok', 'Sarabun', sans-serif; font-size: 2.2rem; line-height: 3rem; }
+  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 1.65rem; line-height: 2.2rem; }
+  .receipt-font .text-xl { font-size: 3.1rem; line-height: 3.6rem; }
   .receipt-font .print\:hidden { font-family: 'Sarabun', sans-serif; font-size: .95rem; line-height: 1.4rem; }
+  /* จัดเอกสารสมมาตรกึ่งกลางกระดาษ: หัวกระดาษ/ชื่อเอกสาร/ตราประทับอยู่กึ่งกลาง ช่องลงนามสองฝั่งเท่ากัน */
+  .rc-page { display: flex; flex-direction: column; justify-content: space-between; gap: .6rem; }
+  .rc-head { @apply grid grid-cols-[5.5rem_1fr_5.5rem] items-center gap-3 border-b-2 border-gold-500 pb-2; }
+  .rc-logo { @apply h-[5.5rem] w-[5.5rem] object-contain; }
+  .rc-title { @apply text-center font-bold; font-size: 2.7rem; line-height: 3.2rem; }
+  .rc-meta { @apply flex justify-between px-[4%]; }
+  .rc-body { @apply px-[6%] text-justify; }
+  .rc-body p { @apply my-1; text-indent: 2.2em; }
+  .rc-sign { @apply grid grid-cols-[1fr_auto_1fr] items-end gap-5 px-[4%]; }
+  .rc-sig { @apply text-center; }
+  .rc-sig-line { @apply mb-1 mt-8 border-b border-dotted border-stone-500; }
+  .rc-stamp { @apply flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-stone-400 text-center text-stone-500; font-size: 1.4rem; line-height: 1.8rem; }
+  .rc-foot { @apply text-center; }
 }
 @media print {
   @page receipt { size: B5 landscape; margin: 8mm; }
-  .receipt-font { page: receipt; font-size: 23px; line-height: 1.45; }
-  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 18px; line-height: 1.35; }
-  .receipt-font .text-lg { font-size: 27px; line-height: 1.3; }
-  .receipt-font .text-xl { font-size: 31px; line-height: 1.25; }
+  .receipt-font { page: receipt; font-size: 27px; line-height: 1.38; }
+  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 21px; line-height: 1.3; }
+  .receipt-font .text-xl { font-size: 36px; line-height: 1.2; }
+  .rc-page { height: 157mm; overflow: hidden; }
+  .rc-title { font-size: 34px; line-height: 1.2; }
+  .rc-logo { height: 4.6rem; width: 4.6rem; }
+  .rc-head { grid-template-columns: 4.6rem 1fr 4.6rem; }
+  .rc-sig-line { margin-top: 1.4rem; }
+  .rc-stamp { height: 5.2rem; width: 5.2rem; font-size: 17px; line-height: 1.2; }
 }
