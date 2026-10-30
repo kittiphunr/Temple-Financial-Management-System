@@ -12,6 +12,7 @@ require __DIR__ . '/includes/install_lib.php';
 require __DIR__ . '/includes/mailer.php';
 require __DIR__ . '/includes/accounts.php';
 require __DIR__ . '/includes/temple_import.php';
+require __DIR__ . '/includes/crypto.php';
 
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
@@ -69,6 +70,7 @@ function page(string $title, int $step, string $body, int $status = 200): never
 <meta name="robots" content="noindex,nofollow">
 <title><?= h($title) ?> | ตัวช่วยติดตั้งระบบ</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
 <link rel="stylesheet" href="assets/css/tailwind.css">
 </head>
 <body class="min-h-screen">
@@ -130,6 +132,9 @@ if (is_installed($CONFIG)) {
           <ol class="ml-5 list-decimal">
             <li>เข้าสู่ระบบ → จัดการระบบ → <strong>บัญชีวัด</strong> แล้วลงอีเมลของแต่ละวัด (วัดที่ยังไม่มีอีเมลจะเข้าสู่ระบบไม่ได้)</li>
             <li>แจกชื่อผู้ใช้/รหัสผ่านเริ่มต้นให้วัด</li>
+            <li><strong>สำรองไฟล์ <code>storage/app.key</code></strong> ไว้ในที่ปลอดภัย — เป็นกุญแจเข้ารหัสเลขบัตรประชาชนของบุคลากรวัด ถ้าสูญหายจะถอดรหัสไม่ได้อีก</li>
+            <li>ผู้ใช้ระดับจังหวัด/อำเภอสร้างได้ไม่เกิน (จำนวนอำเภอ + 2) คน = แอดมินประจำอำเภอ อำเภอละ 1 + แอดมินหลัก 1 + เจ้าคณะจังหวัด 1 ที่ จัดการระบบ → ผู้ใช้</li>
+            <li>ตามหาโลโก้ของแต่ละอำเภอมาใส่ที่ จัดการระบบ → โลโก้อำเภอ และแจ้งแอดมินวัดให้ใส่โลโก้วัดของตน (ระบบเตือนอัตโนมัติ)</li>
             <li>ตัวช่วยติดตั้งถูกล็อกแล้ว แนะนำให้ลบไฟล์ <code>install.php</code> ออกจากเซิร์ฟเวอร์</li>
           </ol>
         </div>
@@ -345,6 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!install_write_config($values)) {
                 throw new RuntimeException('เขียนไฟล์ config.local.php ไม่ได้ — ตรวจสิทธิ์เขียนโฟลเดอร์โปรเจกต์ แล้วกดติดตั้งอีกครั้ง (ฐานข้อมูลที่สร้างไว้แล้วจะถูกใช้ต่อ)');
             }
+            app_key();   // สร้างกุญแจเข้ารหัสข้อมูลส่วนบุคคล (storage/app.key) ตั้งแต่ตอนติดตั้ง
             if (!mark_installed()) {
                 throw new RuntimeException('สร้างไฟล์ storage/installed.lock ไม่ได้ — ตรวจสิทธิ์เขียนโฟลเดอร์ storage/');
             }

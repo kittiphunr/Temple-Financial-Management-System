@@ -9,6 +9,7 @@ $config = [
     'app_name' => 'ระบบบัญชีรายรับ-รายจ่ายวัด',
     'app_sub'  => 'สำหรับคณะสงฆ์จังหวัดแพร่',
     'timezone' => 'Asia/Bangkok',
+    'province_name' => 'แพร่',   // ใช้ในหัวเอกสาร (ถ้านำไปใช้จังหวัดอื่น ตั้งค่านี้ใน config.local.php)
     // การส่งอีเมล (รหัส 2FA): smtp | mail (PHP mail()) | log (ทดสอบเท่านั้น เขียนลง storage/mail.log)
     'mail_driver'    => getenv('TFMS_MAIL_DRIVER') ?: 'smtp',
     'smtp_host'      => getenv('TFMS_SMTP_HOST') ?: '',

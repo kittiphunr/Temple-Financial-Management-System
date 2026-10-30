@@ -146,13 +146,13 @@ $total = (int)$cnt->fetchColumn();
 $pages = max(1, (int)ceil($total / $per));
 $page = min($page, $pages);
 
-$st = $pdo->prepare('SELECT t.id, t.name, t.temple_code, t.subdistrict, t.email, d.name AS dn,
+$st = $pdo->prepare('SELECT t.id, t.name, t.temple_code, t.subdistrict, t.email, (t.logo_media_id IS NOT NULL) AS has_logo, d.name AS dn,
     u.id AS uid, u.username, u.is_active AS ua, u.last_login_at, (u.locked_until > NOW()) AS locked'
     . $from . $where . ' ORDER BY d.sort_order, t.subdistrict, t.name LIMIT ' . $per . ' OFFSET ' . (($page - 1) * $per));
 $st->execute($p);
 $rows = $st->fetchAll();
 
-$stat = $pdo->query("SELECT COUNT(*) AS n, SUM(t.email IS NOT NULL AND t.email <> '') AS with_email, SUM(u.id IS NULL) AS no_acct
+$stat = $pdo->query("SELECT COUNT(*) AS n, SUM(t.email IS NOT NULL AND t.email <> '') AS with_email, SUM(u.id IS NULL) AS no_acct, SUM(t.logo_media_id IS NULL) AS no_logo
     FROM temples t LEFT JOIN users u ON u.temple_id = t.id AND u.role = 'temple' WHERE t.is_active = 1")->fetch();
 $districts = $pdo->query('SELECT id, name FROM districts ORDER BY sort_order')->fetchAll();
 $hasCreds = !empty($_SESSION['new_creds']);
@@ -165,10 +165,11 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <h2>บัญชีวัด (1 วัด = 1 บัญชี)</h2>
 
-<div class="grid gap-4 sm:grid-cols-3">
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">วัดทั้งหมดในระบบ</div><div class="text-2xl font-bold"><?= (int)$stat['n'] ?></div></div>
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ลงทะเบียนอีเมลแล้ว (เข้าสู่ระบบได้)</div><div class="text-2xl font-bold text-emerald-700"><?= (int)$stat['with_email'] ?></div></div>
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยังไม่มีอีเมล (เข้าสู่ระบบไม่ได้)</div><div class="text-2xl font-bold text-red-700"><?= (int)$stat['n'] - (int)$stat['with_email'] ?></div></div>
+  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยังไม่ได้ใส่โลโก้วัด</div><div class="text-2xl font-bold text-amber-700"><?= (int)$stat['no_logo'] ?></div></div>
 </div>
 
 <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -207,7 +208,7 @@ require __DIR__ . '/../includes/header.php';
   <tr><th>วัด</th><th>ชื่อผู้ใช้ (ล็อก)</th><th>อีเมลวัด (แก้ได้เฉพาะแอดมินหลัก)</th><th>สถานะ</th><th>เข้าสู่ระบบล่าสุด</th><th></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
-    <td><div class="font-semibold"><?= e($r['name']) ?></div><div class="text-xs text-stone-500">อ.<?= e($r['dn']) ?><?= $r['subdistrict'] ? ' · ต.' . e($r['subdistrict']) : '' ?></div></td>
+    <td><div class="font-semibold"><?= e($r['name']) ?></div><div class="text-xs text-stone-500">อ.<?= e($r['dn']) ?><?= $r['subdistrict'] ? ' · ต.' . e($r['subdistrict']) : '' ?> · <?= $r['has_logo'] ? '<span class="text-emerald-700">มีโลโก้</span>' : '<span class="text-amber-700">ยังไม่มีโลโก้</span>' ?></div></td>
     <td class="font-mono text-sm"><?= $r['username'] ? e($r['username']) : '<span class="text-stone-400">ยังไม่มีบัญชี</span>' ?></td>
     <td>
       <form method="post" class="flex gap-1">

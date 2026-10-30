@@ -77,7 +77,9 @@ require __DIR__ . '/../includes/header.php';
   <tr class="<?= $r['is_active'] ? '' : 'opacity-50' ?>">
     <td><?= e($r['dn']) ?></td><td><?= e($r['name']) ?></td><td><?= e($r['subdistrict']) ?></td>
     <td><?= $r['verified'] ? '<span class="badge badge-ok">ตรวจสอบแล้ว</span>' : '<span class="badge">รอตรวจสอบ</span>' ?></td>
-    <td><a class="btn btn-sm btn-outline" href="?edit=<?= (int)$r['id'] ?>">แก้ไข</a>
+    <td class="whitespace-nowrap"><a class="btn btn-sm btn-outline" href="?edit=<?= (int)$r['id'] ?>">แก้ไข</a>
+      <a class="btn btn-sm btn-outline" href="../profile.php?temple=<?= (int)$r['id'] ?>">โลโก้/ที่อยู่</a>
+      <a class="btn btn-sm btn-outline" href="../people.php?temple=<?= (int)$r['id'] ?>">บุคลากร</a>
       <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <button class="btn btn-sm btn-outline"><?= $r['is_active'] ? 'ปิดใช้งาน' : 'เปิดใช้งาน' ?></button></form></td>
   </tr>

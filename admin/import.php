@@ -33,7 +33,7 @@ require __DIR__ . '/../includes/header.php';
   <?php if ($result['bad']): ?><div class="mb-4 rounded-lg px-4 py-2.5 bg-red-50 text-red-900">ข้ามรายการที่ไม่ถูกต้อง <?= count($result['bad']) ?> บรรทัด:<br><?= e(implode(' | ', array_slice($result['bad'], 0, 20))) ?></div><?php endif; ?>
 <?php endif; ?>
 <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-  <p>ไฟล์ CSV (UTF-8) คอลัมน์ตามลำดับ: <code>อำเภอ, ชื่อวัด, ตำบล, หมู่ที่, เจ้าอาวาส, โทรศัพท์, รหัสวัด, ประเภทวัด, นิกาย</code> (สามคอลัมน์หลังไม่บังคับ)<br>
+  <p>ไฟล์ CSV (UTF-8) คอลัมน์ตามลำดับ: <code>อำเภอ, ชื่อวัด, ตำบล, หมู่ที่, เจ้าอาวาส, โทรศัพท์, รหัสวัด, ประเภทวัด, นิกาย, ชื่อหมู่บ้าน, บ้านเลขที่, ซอย, ถนน, รหัสไปรษณีย์, ปีที่ตั้งวัด(พ.ศ.)</code> (คอลัมน์ที่ 7 เป็นต้นไปไม่บังคับ)<br>
   ชื่ออำเภอต้องเป็นหนึ่งใน 8 อำเภอของจังหวัดแพร่ (เมืองแพร่, ร้องกวาง, ลอง, สูงเม่น, เด่นชัย, สอง, วังชิ้น, หนองม่วงไข่)
   วัดที่รหัสวัดซ้ำ หรือชื่อ+ตำบลซ้ำ จะถูกอัปเดตแทนการเพิ่มใหม่ ดูตัวอย่างที่ <code>data/temples_template.csv</code> (ทะเบียนที่นำเข้าแล้วอยู่ที่ <code>data/temples_phrae.csv</code>)</p>
   <form method="post" enctype="multipart/form-data" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 [&_input:not([type=checkbox])]:w-full [&_select]:w-full">

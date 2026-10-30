@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/stats.php';
-require_login();
+$u = require_login();
 
 $pdo = db();
 $year = (int)($_GET['year'] ?? be_year());
@@ -59,7 +59,7 @@ $groups = temples_grouped();
 $pageTitle = 'รายงาน';
 require __DIR__ . '/includes/header.php';
 ?>
-<h2>รายงานสรุปรายรับ-รายจ่าย ปี พ.ศ. <?= $year ?></h2>
+<h2 class="print:hidden">รายงานสรุปรายรับ-รายจ่าย ปี พ.ศ. <?= $year ?></h2>
 <form class="my-4 flex flex-wrap items-end gap-3 print:hidden" method="get">
   <div><label>ปี พ.ศ.</label><select name="year"><?php for ($y = be_year() + 1; $y >= be_year() - 6; $y--): ?><option <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option><?php endfor; ?></select></div>
   <div><label>อำเภอ</label><select name="district"><option value="0">ทุกอำเภอ</option>
@@ -70,6 +70,12 @@ require __DIR__ . '/includes/header.php';
   <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>">ส่งออก CSV (Excel)</a>
   <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
 </form>
+
+<?php
+$lhTemple = $temple ?: ($u['role'] === 'temple' ? (int)$u['temple_id'] : 0);
+$lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['district_id'] : 0));
+?>
+<?= letterhead($pdo, $lhTemple, $lhDist, 'รายงานสรุปรายรับ-รายจ่าย', 'ปี พ.ศ. ' . $year) ?>
 
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?></div></div>
@@ -107,4 +113,5 @@ require __DIR__ . '/includes/header.php';
     </table></div>
   </div>
 </div>
+<?php if ($lhTemple): ?><?= signature_block($pdo, $lhTemple) ?><?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

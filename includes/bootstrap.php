@@ -127,7 +127,8 @@ function require_admin(): array
 function scope_sql(string $templeAlias = 't'): array
 {
     $u = user();
-    if (!$u || $u['role'] === 'admin') {
+    // แอดมินหลักและเจ้าคณะจังหวัดเห็นข้อมูลทุกวัด (เจ้าคณะจังหวัดดูได้อย่างเดียว — ห้ามเขียนผ่าน can_access_temple)
+    if (!$u || in_array($u['role'], ['admin', 'province'], true)) {
         return ['', []];
     }
     if ($u['role'] === 'district') {
@@ -150,6 +151,9 @@ function can_access_temple(int $templeId): bool
     }
     if ($u['role'] === 'admin') {
         return true;
+    }
+    if ($u['role'] === 'province') {
+        return false; // เจ้าคณะจังหวัดดูข้อมูลได้อย่างเดียว
     }
     return $u['role'] === 'district'
         ? (int)$row['district_id'] === (int)$u['district_id']
@@ -191,6 +195,12 @@ function temples_grouped(): array
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/accounts.php';
 require_once __DIR__ . '/twofactor.php';
+require_once __DIR__ . '/crypto.php';
+require_once __DIR__ . '/images.php';
+require_once __DIR__ . '/people.php';
+require_once __DIR__ . '/staff.php';
+require_once __DIR__ . '/letterhead.php';
+require_once __DIR__ . '/receipts.php';
 
 // ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน: ทุกหน้า (ยกเว้นหน้าเปลี่ยนรหัสผ่านและออกจากระบบ) ถูกส่งไปหน้าเปลี่ยนรหัสผ่าน
 if (!empty($_SESSION['user']['must_change'])

@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/stats.php';
+require __DIR__ . '/includes/dashboard_ui.php';
 
 $u = user();
 $year = (int)($_GET['year'] ?? be_year());
@@ -33,7 +34,7 @@ $features = [
 
 <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
   <?php foreach ($features as [$ttl, $desc, $href, $iconCls, $icon]): ?>
-  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? $href : 'login.php' ?>">
+  <a class="group flex gap-3 rounded-2xl border border-stone-200 bg-white p-4 no-underline shadow-sm transition hover:border-gold-500 hover:shadow-md" href="<?= $u ? (($u['role'] === 'province' && str_starts_with($href, 'transactions')) ? 'dashboard.php' : $href) : 'login.php' ?>">
     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold <?= $iconCls ?>"><?= $icon ?></span>
     <span>
       <span class="block font-bold text-brand-700"><?= e($ttl) ?></span>
@@ -60,20 +61,15 @@ $features = [
     </select>
   </form>
 </div>
-<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายรับรวม</div><div class="text-2xl font-bold text-emerald-700"><?= money($sum['income']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายการทั้งหมด <?= $sum['n_income'] ?> รายการ</div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">รายจ่ายรวม</div><div class="text-2xl font-bold text-red-700"><?= money($sum['expense']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายการทั้งหมด <?= $sum['n_expense'] ?> รายการ</div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">ยอดคงเหลือ</div><div class="text-2xl font-bold text-sky-800"><?= money($sum['balance']) ?> <span class="text-base font-semibold">บาท</span></div><div class="text-sm text-stone-500">รายรับ − รายจ่าย</div></div>
-  <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"><div class="text-sm text-stone-500">จำนวนวัดในระบบ</div><div class="text-2xl font-bold text-violet-800"><?= temple_count() ?> <span class="text-base font-semibold">วัด</span></div><div class="text-sm text-stone-500">ในสังกัดจังหวัดแพร่</div></div>
-</div>
+<?= stat_cards($sum, $year, temple_count(), 'ในสังกัดจังหวัดแพร่') ?>
 
-<h2 class="mt-8">สรุปตามอำเภอ</h2>
+<h2 class="mt-8">สรุปตามอำเภอ <a class="ml-2 text-base font-semibold" href="dashboard.php?year=<?= $year ?>">ดูแดชบอร์ดแต่ละอำเภอ →</a></h2>
 <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
   <thead><tr><th>อำเภอ</th><th class="text-right">วัด</th><th>รายรับ</th><th>รายจ่าย</th><th class="text-right">คงเหลือ</th></tr></thead>
   <tbody>
   <?php foreach ($rows as $r): ?>
   <tr>
-    <td><a class="font-semibold" href="reports.php?year=<?= $year ?>&district=<?= (int)$r['id'] ?>"><?= e($r['name']) ?></a></td>
+    <td><a class="font-semibold" href="dashboard.php?year=<?= $year ?>&amp;district=<?= (int)$r['id'] ?>"><?= e($r['name']) ?></a></td>
     <td class="text-right"><?= (int)$r['temples'] ?></td>
     <td class="min-w-[160px]"><div class="h-2.5 overflow-hidden rounded-full bg-stone-200"><i class="block h-full bg-emerald-600" style="width:<?= round($r['income'] / $max * 100) ?>%"></i></div><span class="text-emerald-700"><?= money($r['income']) ?></span></td>
     <td class="min-w-[160px]"><div class="h-2.5 overflow-hidden rounded-full bg-stone-200"><i class="block h-full bg-red-600" style="width:<?= round($r['expense'] / $max * 100) ?>%"></i></div><span class="text-red-700"><?= money($r['expense']) ?></span></td>

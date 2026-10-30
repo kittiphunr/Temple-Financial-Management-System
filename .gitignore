@@ -3,3 +3,4 @@
 .env
 node_modules/
 config.local.php
+__pycache__/
