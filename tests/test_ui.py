@@ -27,7 +27,7 @@ def _run(R, q, app):
     _, _, b = g.req('/login.php')
     check('U1 ทุกหน้าโหลด SweetAlert2 และสคริปต์แจ้งเตือนจากเซิร์ฟเวอร์เอง (ไม่พึ่ง CDN)',
           'assets/vendor/sweetalert2.all.min.js' in b and 'assets/js/app.js' in b and 'cdn' not in b.lower())
-    for path, ctype in (('/assets/vendor/sweetalert2.all.min.js', b'sweetalert2'), ('/assets/js/app.js', b'Swal'), ('/assets/img/developer.jpg', b''), ('/assets/img/mcu.png', b'')):
+    for path, ctype in (('/assets/vendor/sweetalert2.all.min.js', b'sweetalert2'), ('/assets/js/app.js', b'Swal'), ('/assets/img/developer.jpg', b''), ('/assets/img/logo.svg', b'<svg')):
         c, h, body = g.raw(path)
         check(f'U2 ไฟล์ {path} เปิดได้', c == 200 and len(body) > 1000 and ctype in body, str(c))
     g.post('/login.php', {'username': 'admin', 'password': 'wrong-password'})
@@ -58,5 +58,6 @@ def _run(R, q, app):
     tpl = re.search(r'<template id="about-template">(.*?)</template>', b, re.S).group(1)
     check('U9 หน้าต่างเกี่ยวกับมีผู้พัฒนา อีเมล โทร GitHub เว็บไซต์ และคำอธิบายเว็บไซต์',
           all(x in tpl for x in ('ผู้พัฒนา', 'Kittiphun Ruttanakorn', 'mailto:kittiphun.rut@mcu.ac.th', 'tel:0899554194', 'github.com/kittiphunr', 'kittiphunr.github.io', 'เกี่ยวกับเว็บไซต์')))
+    check('U9b หัวหน้าต่างเป็นชื่อระบบและตราคณะสงฆ์จังหวัดแพร่ (ไม่ใช่ชื่อหน่วยงานของผู้พัฒนา)', 'เกี่ยวกับ ระบบบัญชีรายรับ-รายจ่ายวัด' in tpl and 'assets/img/logo.svg' in tpl and 'เกี่ยวกับ มหาวิทยาลัย' not in tpl)
     check('U10 ลิงก์ภายนอกเปิดแท็บใหม่แบบปลอดภัย (noopener noreferrer)', len(re.findall(r'target="_blank" rel="noopener noreferrer"', tpl)) == 2)
     check('U11 หน้าสาธารณะ (ก่อนเข้าสู่ระบบ) ก็มีหน้าต่างเกี่ยวกับ', 'id="about-template"' in Client(base).req('/')[2] or 'id="about-template"' in Client(base).req('/login.php')[2])

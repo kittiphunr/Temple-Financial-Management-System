@@ -46,6 +46,7 @@
   .swal2-popup.about-popup { @apply rounded-3xl p-2 text-left sm:p-4; }
   .swal2-html-container.about-body { @apply m-0 px-3 pb-4 pt-2 text-left text-base text-stone-800; }
   .about-head { @apply flex items-center gap-4 border-b border-stone-200 pb-4; }
+  .about-head img { @apply h-[4.5rem] w-[4.5rem] shrink-0 object-contain; }
   .about-head h3 { @apply m-0 text-xl font-bold leading-snug text-stone-900 sm:text-2xl; }
   .about h4 { @apply mb-3 mt-5 text-xl font-bold text-stone-900; }
   .about-dev { @apply flex flex-wrap items-center gap-4; }

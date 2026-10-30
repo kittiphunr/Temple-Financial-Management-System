@@ -29,7 +29,8 @@ function about_html(): string
         '<dt>' . e($label) . '</dt><dd><a href="' . e($href) . '"' . ($ext ? ' target="_blank" rel="noopener noreferrer"' : '') . '>' . e($text) . '</a></dd>';
     $li = implode('', array_map(fn($p) => '<li>' . e($p) . '</li>', ABOUT_POINTS));
     return '<div class="about">'
-        . '<div class="about-head"><img src="' . e(BASE) . 'assets/img/mcu.png" alt="" width="64"><h3>เกี่ยวกับ ' . e(ABOUT_ORG) . '</h3></div>'
+        . '<div class="about-head"><img src="' . e(BASE) . 'assets/img/logo.svg" alt="" width="72" height="72"><div><h3>เกี่ยวกับ ' . e($CONFIG['app_name']) . '</h3>'
+        . '<div class="about-sub">' . e($CONFIG['app_sub']) . '</div></div></div>'
         . '<h4>ผู้พัฒนา</h4>'
         . '<div class="about-dev"><img class="about-photo" src="' . e(BASE) . 'assets/img/developer.jpg" alt="' . e($d['name']) . '" width="96" height="96">'
         . '<div><div class="about-name">' . e($d['name']) . '</div><div class="about-sub">' . e($d['name_en']) . '</div>'
