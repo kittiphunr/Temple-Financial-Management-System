@@ -2,7 +2,7 @@
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/stats.php';
 $u = require_login();
-if ($u['role'] === 'province') {   // เจ้าคณะจังหวัดดูข้อมูลได้อย่างเดียว
+if (in_array($u['role'], ['province', 'subdistrict'], true)) {   // เจ้าคณะจังหวัด/ตำบลดูข้อมูลได้อย่างเดียว
     redirect('dashboard.php');
 }
 

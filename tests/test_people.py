@@ -31,7 +31,7 @@ def run(db, R):
 
 def _run(db, R, smtp, q, app):
     check = R.check
-    p = app.php('setup.php', 'Test12345pw')
+    p = app.php('setup.php', 'Test12345pw', '--no-staff')
     check('S1 ติดตั้งด้วย setup.php (สร้างกุญแจเข้ารหัส storage/app.key)', p.returncode == 0 and (app.dir / 'storage' / 'app.key').is_file(), p.stdout + p.stderr)
     creds = parse_creds_csv(sorted((app.dir / 'storage').glob('temple_accounts_*.csv'))[0].read_text(encoding='utf-8'))
     q("UPDATE users SET must_change_password = 0 WHERE role = 'temple'")

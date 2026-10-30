@@ -1,6 +1,6 @@
 <?php
 /**
- * โควตาผู้ใช้ระดับจังหวัด/อำเภอ (ไม่นับแอดมินประจำวัด)
+ * โควตาผู้ใช้ระดับจังหวัด/อำเภอ (ไม่นับแอดมินประจำวัดและเจ้าคณะตำบล)
  * = แอดมินประจำอำเภอ (อำเภอละ 1 คน) + แอดมินหลัก 1 คน + ผู้ใช้เจ้าคณะจังหวัด 1 คน = จำนวนอำเภอ + 2 (จังหวัดแพร่ 8 อำเภอ = 10 คน)
  */
 
@@ -11,7 +11,7 @@ function staff_capacity(PDO $pdo): int
 
 function staff_count(PDO $pdo): int
 {
-    return (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role <> 'temple'")->fetchColumn();
+    return (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role NOT IN ('temple','subdistrict')")->fetchColumn();
 }
 
 /** ช่องตำแหน่งทั้งหมดพร้อมผู้ใช้ที่ครองอยู่ (หรือ null = ว่าง) */
@@ -44,7 +44,7 @@ function staff_extras(PDO $pdo): array
         if ($s['user']) $used[(int)$s['user']['id']] = true;
     }
     return array_values(array_filter(
-        $pdo->query("SELECT id, username, full_name, role, district_id, is_active FROM users WHERE role <> 'temple' ORDER BY id")->fetchAll(),
+        $pdo->query("SELECT id, username, full_name, role, district_id, is_active FROM users WHERE role NOT IN ('temple','subdistrict') ORDER BY id")->fetchAll(),
         fn($u) => !isset($used[(int)$u['id']])
     ));
 }

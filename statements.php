@@ -20,7 +20,7 @@ require __DIR__ . '/includes/header.php';
 <div class="flex flex-wrap items-center justify-between gap-2 print:hidden">
   <h2>รายงานประจำเดือนตามแบบฟอร์มของวัด</h2>
   <span class="flex flex-wrap gap-2"><a class="btn btn-outline btn-sm" href="reports.php">รายงานสรุป</a>
-    <?php if ($temple && $u['role'] !== 'province'): ?><a class="btn btn-outline btn-sm" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร · ยอดยกมา</a><?php endif; ?></span>
+    <?php if ($temple && !in_array($u['role'], ['province', 'subdistrict'], true)): ?><a class="btn btn-outline btn-sm" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร · ยอดยกมา</a><?php endif; ?></span>
 </div>
 <form class="my-4 flex flex-wrap items-end gap-3 print:hidden" method="get">
   <?php if ($u['role'] !== 'temple'): ?>
@@ -47,7 +47,7 @@ if (!$temple) {
     $c = stmt_context($pdo, $tid);
     $cash = ledger_account($pdo, ledger_cash_account($pdo, $tid));
     $needOpening = !$cash['opening_date'];
-    if ($needOpening && $u['role'] !== 'province'): ?>
+    if ($needOpening && !in_array($u['role'], ['province', 'subdistrict'], true)): ?>
 <p class="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 print:hidden">ยังไม่ได้ตั้ง <strong>ยอดยกมา</strong> ของบัญชีเงินสด — ยอดยกมาในรายงานจะเริ่มที่ 0
   ตั้งได้ที่ <a class="underline" href="accounts.php<?= $u['role'] === 'temple' ? '' : '?temple=' . $tid ?>">บัญชีเงินสด/ธนาคาร</a></p>
     <?php endif;

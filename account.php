@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('account.php');
 }
 
-$roleTh = ['admin' => 'ผู้ดูแลระบบหลัก', 'province' => 'เจ้าคณะจังหวัด (ดูข้อมูลอย่างเดียว)', 'district' => 'แอดมินประจำอำเภอ', 'temple' => 'ผู้ดูแลวัด'];
+$roleTh = ['admin' => 'ผู้ดูแลระบบหลัก', 'province' => 'เจ้าคณะจังหวัด (ดูข้อมูลอย่างเดียว)', 'district' => 'แอดมินประจำอำเภอ', 'subdistrict' => 'เจ้าคณะตำบล (ดูข้อมูลอย่างเดียว)', 'temple' => 'ผู้ดูแลวัด'];
 $pageTitle = $forced ? 'ตั้งรหัสผ่านใหม่' : 'บัญชีของฉัน';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -73,6 +73,9 @@ require __DIR__ . '/includes/header.php';
     <dl class="grid grid-cols-[8rem_1fr] gap-y-2">
       <dt class="text-stone-500">ชื่อผู้ใช้</dt><dd class="font-mono font-semibold"><?= e($me['username']) ?> <span class="badge">ล็อก — เปลี่ยนไม่ได้</span></dd>
       <dt class="text-stone-500">บทบาท</dt><dd><?= e($roleTh[$me['role']]) ?></dd>
+      <?php if ($me['role'] === 'subdistrict'): ?>
+      <dt class="text-stone-500">ตำบลที่ดูแล</dt><dd><?= e(subdistrict_label(subdistrict_assignments($pdo, (int)$me['id']))) ?></dd>
+      <?php endif; ?>
       <?php if ($me['role'] === 'temple'): ?>
       <dt class="text-stone-500">วัด</dt><dd><?= e($me['temple_name']) ?> <span class="text-stone-500">(อ.<?= e($me['district_name']) ?>)</span></dd>
       <dt class="text-stone-500">อีเมลวัด</dt><dd><?= $me['temple_email'] ? e(mask_email($me['temple_email'])) : '<span class="text-red-700">ยังไม่ได้ลงทะเบียน</span>' ?></dd>

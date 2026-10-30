@@ -302,7 +302,8 @@ function temple_import_apply(PDO $pdo, array $rows, array $opt): array
 function districts_prune_empty(PDO $pdo): array
 {
     $rows = $pdo->query('SELECT d.id, d.name, d.logo_media_id FROM districts d
-        WHERE NOT EXISTS (SELECT 1 FROM temples t WHERE t.district_id = d.id) AND NOT EXISTS (SELECT 1 FROM users u WHERE u.district_id = d.id)')->fetchAll();
+        WHERE NOT EXISTS (SELECT 1 FROM temples t WHERE t.district_id = d.id) AND NOT EXISTS (SELECT 1 FROM users u WHERE u.district_id = d.id)
+        AND NOT EXISTS (SELECT 1 FROM user_subdistricts s WHERE s.district_id = d.id)')->fetchAll();
     $names = [];
     foreach ($rows as $r) {
         $pdo->prepare('DELETE FROM districts WHERE id = ?')->execute([$r['id']]);

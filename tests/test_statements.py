@@ -37,7 +37,7 @@ def sheets(html):
 
 def _run(R, smtp, q, app):
     check = R.check
-    app.php('setup.php', 'Test12345pw')
+    app.php('setup.php', 'Test12345pw', '--no-staff')
     creds = parse_creds_csv(sorted((app.dir / 'storage').glob('temple_accounts_*.csv'))[0].read_text(encoding='utf-8'))
     q("UPDATE users SET must_change_password = 0 WHERE role = 'temple'")
     base = app.serve()

@@ -17,6 +17,11 @@ if (in_array($u['role'], ['admin', 'province'], true)) {
     }
 } elseif ($u['role'] === 'district') {
     $dist = (int)$u['district_id'];
+} elseif ($u['role'] === 'subdistrict') {
+    // เจ้าคณะตำบล: ตำบลที่ดูแลอยู่อำเภอเดียวกันทั้งหมด = แสดงเป็นอำเภอนั้น (ขอบเขตข้อมูลยังจำกัดเฉพาะตำบลที่ดูแลผ่าน scope_sql) ไม่งั้นแสดงรวมหลายอำเภอ
+    $assign = subdistrict_assignments($pdo, (int)$u['id']);
+    $ds = array_values(array_unique(array_column($assign, 'district_id')));
+    $dist = count($ds) === 1 ? $ds[0] : 0;
 } else {
     $st = $pdo->prepare('SELECT district_id FROM temples WHERE id = ?');
     $st->execute([(int)$u['temple_id']]);
@@ -35,8 +40,10 @@ $expCats = top_categories($year, 'expense', $dist);
 $rows = $dist ? temple_breakdown($year, $dist) : summary_by_district($year);
 $withData = $dist ? count(array_filter($rows, fn($r) => (int)$r['n'] > 0)) : 0;
 
-$scopeText = $u['role'] === 'temple' ? 'เฉพาะวัดของท่าน' : ($dist ? 'ในสังกัดอำเภอ' . $distName : 'ในสังกัดจังหวัดแพร่');
-$title = $dist ? 'แดชบอร์ดอำเภอ' . $distName : 'แดชบอร์ดทั้งจังหวัดแพร่';
+$pv = province_name();
+$subLabel = $u['role'] === 'subdistrict' ? subdistrict_label($assign ?? []) : '';
+$scopeText = $u['role'] === 'temple' ? 'เฉพาะวัดของท่าน' : ($subLabel !== '' ? 'ในตำบลที่ท่านดูแล' : ($dist ? 'ในสังกัดอำเภอ' . $distName : 'ในสังกัดจังหวัด' . $pv));
+$title = $subLabel !== '' ? 'แดชบอร์ดเจ้าคณะตำบล' : ($dist ? 'แดชบอร์ดอำเภอ' . $distName : 'แดชบอร์ดทั้งจังหวัด' . $pv);
 $q = fn(array $o = []) => http_build_query(array_merge(['district' => $dist, 'year' => $year], $o));
 
 $pageTitle = $title;
@@ -49,7 +56,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h2 class="!my-0"><?= e($title) ?> <span class="text-xl font-semibold text-stone-600">(ปี พ.ศ. <?= $year ?>)</span></h2>
-    <p class="mt-1 text-sm text-stone-600">สรุปข้อมูลบัญชีรายรับ-รายจ่ายของวัด<?= $dist ? 'ในสังกัดคณะสงฆ์อำเภอ' . e($distName) . ' ' : '' ?>จังหวัดแพร่</p>
+    <p class="mt-1 text-sm text-stone-600">สรุปข้อมูลบัญชีรายรับ-รายจ่ายของวัด<?= $subLabel !== '' ? 'ในตำบลที่ท่านดูแล: ' . e($subLabel) : ($dist ? 'ในสังกัดคณะสงฆ์อำเภอ' . e($distName) . ' ' : '') . 'จังหวัด' . e($pv) ?></p>
   </div>
   <form method="get" class="flex items-center gap-2 print:hidden">
     <input type="hidden" name="district" value="<?= $dist ?>">
@@ -111,7 +118,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <?php if ($dist): ?>
 <section class="mt-4">
   <div class="mb-2 flex flex-wrap items-end justify-between gap-3">
-    <h3 class="!mb-0">วัดในอำเภอ<?= e($distName) ?></h3>
+    <h3 class="!mb-0"><?= $subLabel !== '' ? 'วัดในตำบลที่ท่านดูแล' : 'วัดในอำเภอ' . e($distName) ?></h3>
     <span class="text-sm text-stone-600">บันทึกบัญชีแล้ว <strong><?= $withData ?></strong> จาก <?= count($rows) ?> วัด
       <?php if ($rows): ?>(<?= round($withData / count($rows) * 100) ?>%)<?php endif; ?></span>
   </div>

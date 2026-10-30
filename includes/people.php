@@ -11,7 +11,7 @@ function temple_row(int $templeId): ?array
 }
 
 /**
- * ใครดูข้อมูลบุคลากรของวัดได้: แอดมินหลัก/เจ้าคณะจังหวัด = ทุกวัด, แอดมินอำเภอ = วัดในอำเภอตน, แอดมินวัด = วัดตน
+ * ใครดูข้อมูลบุคลากรของวัดได้: แอดมินหลัก/เจ้าคณะจังหวัด = ทุกวัด, แอดมินอำเภอ = วัดในอำเภอตน, เจ้าคณะตำบล = วัดในตำบลที่ดูแล, แอดมินวัด = วัดตน
  * (เลขบัตรเต็มดูได้เฉพาะผู้ที่ people_can_reveal ผ่าน — คนอื่นเห็นแบบปิดบังเสมอ)
  */
 function people_can_view(int $templeId): bool
@@ -24,6 +24,7 @@ function people_can_view(int $templeId): bool
     return match ($u['role']) {
         'admin', 'province' => true,
         'district' => (int)$t['district_id'] === (int)$u['district_id'],
+        'subdistrict' => subdistrict_can_view_temple($templeId, (int)$u['id']),
         'temple' => $templeId === (int)$u['temple_id'],
         default => false,
     };

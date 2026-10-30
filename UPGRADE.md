@@ -26,6 +26,7 @@ SHOW TABLES LIKE 'settings';                              -- มี = ทำ 8 �
 | 6 | `2026_accounts_statements.sql` | บัญชีเงินสด/ธนาคาร, ยอดยกมา, รายการโอน/ฝาก-ถอน สำหรับรายงานแบบที่ 1-3 — รายการเดิมทั้งหมดถูกผูกเข้า "เงินสด" ของวัดนั้น |
 | 7 | `2026_receipt_verify.sql` | รหัสตรวจสอบใบอนุโมทนาด้วย QR code (ใบเก่าได้รหัสอัตโนมัติเมื่อเปิดดูครั้งแรก — ตั้ง `app_url` ใน `config.local.php` ให้ QR ชี้โดเมนสาธารณะ) |
 | 8 | `2026_settings.sql` | ตารางค่าตั้ง (ชื่อจังหวัด/ข้อความใต้ชื่อระบบ) สำหรับการนำเข้าทะเบียนวัดของจังหวัดอื่น — ยังไม่รันก็ใช้ระบบเดิมได้ (ใช้ค่าจาก config) แต่ต้องรันก่อนนำเข้าจังหวัดอื่น |
+| 9 | `2026_subdistrict_role.sql` | บทบาทเจ้าคณะตำบล (ดูข้อมูลวัดในตำบลที่ดูแลได้อย่างเดียว) และตาราง `user_subdistricts` — ไม่นับในโควตาผู้ใช้ระดับจังหวัด/อำเภอ |
 
 ฐานข้อมูลที่เก่ากว่า 1 (ไม่มีอีเมลวัด) เริ่มจากไฟล์ 1 แล้วไล่ต่อจนครบ
 
@@ -51,7 +52,7 @@ SHOW TABLES LIKE 'settings';                              -- มี = ทำ 8 �
 
 ```bash
 DB=ชื่อฐานข้อมูลของคุณ
-for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements 2026_receipt_verify 2026_settings; do
+for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements 2026_receipt_verify 2026_settings 2026_subdistrict_role; do
   sed "s/USE tfms_phrae;/USE $DB;/" sql/migrations/$f.sql | mysql -u USER -p || break
 done
 ```
