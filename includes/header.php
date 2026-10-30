@@ -54,6 +54,7 @@ $items .= $u
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="<?= BASE ?>assets/img/logo.svg">
+<?= $extraHead ?? '' ?>
 <link rel="stylesheet" href="<?= BASE ?>assets/css/tailwind.css">
 </head>
 <body class="min-h-screen">

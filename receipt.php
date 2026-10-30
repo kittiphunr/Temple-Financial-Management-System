@@ -115,6 +115,8 @@ $tid = (int)$r['temple_id'];
 $t = temple_row($tid);
 $void = $r['status'] === 'void';
 $pageTitle = 'อนุโมทนาบัตร ' . receipt_label($r);
+// ฟอนต์ Charmonman (Google Fonts) เฉพาะตัวเอกสารอนุโมทนาบัตร
+$extraHead = '<link href="https://fonts.googleapis.com/css2?family=Charmonman:wght@400;700&display=swap" rel="stylesheet">';
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="mb-3 flex flex-wrap items-center gap-2 print:hidden">
@@ -123,7 +125,7 @@ require __DIR__ . '/includes/header.php';
   <a class="btn btn-outline" href="receipts.php?temple=<?= $tid ?>">รายการทั้งหมด</a>
 </div>
 
-<article class="relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+<article class="receipt-font relative mx-auto max-w-3xl rounded-2xl border-2 border-gold-500 bg-white p-8 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
   <?php if ($void): ?><div class="pointer-events-none absolute inset-0 flex items-center justify-center text-7xl font-bold text-red-600/20 -rotate-12">ยกเลิก</div><?php endif; ?>
   <?= letterhead($pdo, $tid, 0, 'อนุโมทนาบัตร') ?>
   <div class="flex justify-between text-sm"><div>เล่มที่ <?= e($r['book_no']) ?> เลขที่ <?= (int)$r['receipt_no'] ?>/<?= (int)$r['receipt_year'] ?></div><div>วันที่ <?= e(th_date($r['receipt_date'])) ?></div></div>

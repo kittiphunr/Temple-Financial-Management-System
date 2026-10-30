@@ -88,6 +88,7 @@ def _run(R, smtp, q, app):
     year = date.today().year + 543
     check('R6 หน้าอนุโมทนาบัตรแสดงชื่อ จำนวนเงิน ตัวอักษร เลขที่ และช่องลงนาม',
           c == 200 and 'นายสมชาย ใจบุญ' in b and '1,250.50' in b and 'หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์' in b and f'เลขที่ 1/{year}' in b and 'ตราประทับ' in b and 'ไวยาวัจกร' in b, b[:200])
+    check('R6b อนุโมทนาบัตรใช้ฟอนต์ Charmonman จาก Google Fonts (โหลดเฉพาะหน้านี้) และฟอนต์ระบบสำรองเป็น Sarabun', 'family=Charmonman' in b and 'receipt-font' in b and 'family=Charmonman' not in ta.req('/receipts.php')[2])
     c, loc, b = ta.post('/receipt.php', form, f'/receipt.php?txn={x1}')
     check('R7 รายการเดียวออกซ้ำไม่ได้', q("SELECT COUNT(*) FROM donation_receipts") == '1')
     c, loc, _ = ta.req(f'/receipt.php?txn={x1}')

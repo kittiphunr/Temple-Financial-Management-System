@@ -115,3 +115,13 @@
   .stmt-note { margin-top: .5rem; }
   .stmt-logo { height: 3.2rem; width: 3.2rem; }
 }
+
+/* อนุโมทนาบัตรใช้ฟอนต์ Charmonman (โหลดจาก Google Fonts ที่ receipt.php) ตัวอักษรเล็กกว่าฟอนต์ทั่วไปจึงขยายขนาดและระยะบรรทัด */
+@layer components {
+  .receipt-font { font-family: 'Charmonman', 'Sarabun', serif; font-size: 1.2rem; line-height: 2.1rem; }
+  .receipt-font strong, .receipt-font b { font-weight: 700; }
+  .receipt-font .text-sm, .receipt-font .text-xs { font-size: 1rem; line-height: 1.6rem; }
+  .receipt-font .text-xl { font-size: 1.7rem; line-height: 2.2rem; }
+  .receipt-font .print\:hidden { font-family: 'Sarabun', sans-serif; font-size: .95rem; line-height: 1.4rem; }   /* ข้อความเตือนบนหน้าจอใช้ฟอนต์ปกติ */
+  .receipt-font .text-lg { font-size: 1.5rem; line-height: 2rem; }
+}
