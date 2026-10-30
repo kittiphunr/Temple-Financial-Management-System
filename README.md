@@ -160,3 +160,9 @@ deploy/    build.sh (สร้างชุดติดตั้งขึ้น�
 tests/     ชุดทดสอบ end-to-end (python3 tests/run_all.py)
 tailwind.config.js  package.json  config.php (ค่าเริ่มต้น)  config.local.php (สร้างโดยตัวช่วยติดตั้ง ห้าม commit)
 ```
+
+## สัญญาอนุญาต (License)
+โค้ดของระบบเผยแพร่ภายใต้ [MIT License](LICENSE) © 2026 Kittiphun Ruttanakorn — **ไม่รวม** รายการต่อไปนี้ ซึ่งอยู่ภายใต้สัญญาหรือสิทธิ์ของตนเอง:
+- ฟอนต์ JS Chanok (`assets/fonts/JS-Chanok-Normal.ttf`) — GNU GPL v2 (`assets/fonts/GPL-License-JS.pdf`)
+- ไลบรารีใน `assets/vendor/` — SweetAlert2 และ qrcode ตามไฟล์ `*.LICENSE` ในโฟลเดอร์เดียวกัน
+- ตราสัญลักษณ์ `assets/img/logo.svg` (ตราคณะสงฆ์จังหวัดแพร่) และรูปผู้พัฒนา `assets/img/developer.jpg` — ไม่ได้อนุญาตให้นำไปใช้ต่อ ให้เปลี่ยนเป็นของหน่วยงานตนเองเมื่อนำระบบไปใช้

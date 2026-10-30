@@ -26,7 +26,7 @@ rsync -a --prune-empty-dirs \
   --include='/data/' --include='/data/temples_phrae.csv' --include='/data/temples_template.csv' \
   --include='/sql/' --include='/sql/*.sql' --include='/sql/migrations/' --include='/sql/migrations/*.sql' \
   --exclude='*' ./ "$OUT/"
-cp README.md UPGRADE.md "$OUT/" 2>/dev/null || true
+cp README.md UPGRADE.md LICENSE "$OUT/" 2>/dev/null || true
 
 # ---- storage/ เปล่า + กันเข้าถึงจากเว็บ ----
 mkdir -p "$OUT/storage"
