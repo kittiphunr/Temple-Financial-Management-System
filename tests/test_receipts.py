@@ -159,7 +159,7 @@ def _run(R, smtp, q, app):
     check('S1 เลขผู้เสียภาษีไม่ครบ 13 หลักถูกปฏิเสธ', q(f"SELECT COALESCE(tax_id,'') FROM temples WHERE id={ida}") == '')
     ta.post('/profile.php', {'action': 'save_profile', 'phone': '', 'tax_id': '0-9940-00123-45-6'}, '/profile.php')
     c, _, b = ta.req(f'/receipt.php?id={r3}')
-    check('S2 บันทึกเลขผู้เสียภาษีแล้วแสดงในใบ (เลขไทย)', '๐๙๙๔๐๐๐๑๒๓๔๕๖' in b)
+    check('S2 บันทึกเลขผู้เสียภาษีแล้วแสดงในใบ (เลขไทย)', '๐๙๙-๔-๐๐๐๑๒๓๔๕-๖' in b and 'หมายเลขประจำตัวผู้เสียภาษี' in b)
     adm.post('/admin/categories.php', {'action': 'toggle_donation', 'id': plain}, '/admin/categories.php')
     check('S3 แอดมินหลักกำหนดหมวดเป็นหมวดรับบริจาคได้', q(f"SELECT is_donation FROM categories WHERE id={plain}") == '1')
     ta.post('/profile.php', {'action': 'x'}, '/profile.php')
