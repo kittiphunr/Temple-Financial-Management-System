@@ -54,3 +54,22 @@
     });
   });
 })();
+
+/* ช่อง "บัญชี" ในฟอร์มรายการ: แสดงบัญชีธนาคารของวัดที่เลือก (data-bank-map = {รหัสวัด: [[รหัสบัญชี, ชื่อ], ...]}) */
+(function () {
+  'use strict';
+  document.querySelectorAll('select[data-bank-map]').forEach(function (sel) {
+    var form = sel.form, temple = form && form.elements[sel.getAttribute('data-temple-select')], map;
+    try { map = JSON.parse(sel.getAttribute('data-bank-map')); } catch (e) { return; }
+    if (!temple) return;
+    function render(keep) {
+      var want = keep || 'cash';
+      sel.innerHTML = '';
+      sel.add(new Option('เงินสด / เช็ค', 'cash'));
+      (map[temple.value] || []).forEach(function (b) { sel.add(new Option(b[1], b[0])); });
+      sel.value = Array.prototype.some.call(sel.options, function (o) { return o.value === want; }) ? want : 'cash';
+    }
+    temple.addEventListener('change', function () { render('cash'); });
+    render(sel.getAttribute('data-selected'));
+  });
+})();

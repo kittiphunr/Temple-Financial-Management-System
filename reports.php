@@ -10,7 +10,7 @@ $temple = (int)($_GET['temple'] ?? 0);
 [$from, $to] = year_range($year);
 [$sc, $sp] = scope_sql('t');
 
-$where = " WHERE x.is_deleted = 0 AND x.txn_date BETWEEN ? AND ? $sc";
+$where = " WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.txn_date BETWEEN ? AND ? $sc";
 $params = array_merge([$from, $to], $sp);
 if ($dist)   { $where .= ' AND t.district_id = ?'; $params[] = $dist; }
 if ($temple) { $where .= ' AND t.id = ?'; $params[] = $temple; }
@@ -68,6 +68,7 @@ require __DIR__ . '/includes/header.php';
     <?php foreach ($groups as $dn => $list): ?><optgroup label="อำเภอ<?= e($dn) ?>"><?php foreach ($list as $t): ?><option value="<?= (int)$t['id'] ?>" <?= $temple === (int)$t['id'] ? 'selected' : '' ?>><?= e($t['name']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
   <button class="btn" type="submit">แสดงรายงาน</button>
   <a class="btn btn-outline" href="?<?= e(http_build_query(['year' => $year, 'district' => $dist, 'temple' => $temple, 'export' => 'csv'])) ?>">ส่งออก CSV (Excel)</a>
+  <a class="btn btn-outline" href="statements.php<?= $temple ? '?temple=' . $temple : '' ?>">แบบฟอร์มรายงานประจำเดือน (แบบที่ 1–3)</a>
   <button class="btn btn-outline" type="button" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
 </form>
 

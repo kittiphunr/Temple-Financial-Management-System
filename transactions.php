@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
 
     if ($action === 'delete' && $id) {
-        $st = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0');
+        $st = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0 AND transfer_id IS NULL');
         $st->execute([$id]);
         $row = $st->fetch();
         if ($row && can_access_temple((int)$row['temple_id']) && ($rc = receipt_active_for($pdo, $id))) {
@@ -37,9 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $amount = round((float)str_replace(',', '', $_POST['amount'] ?? '0'), 2);
         $errs = [];
         if (!can_access_temple($templeId)) $errs[] = 'ไม่มีสิทธิ์บันทึกข้อมูลของวัดนี้';
-        $cs = $pdo->prepare('SELECT COUNT(*) FROM categories WHERE id = ? AND type = ? AND is_active = 1');
+        $cs = $pdo->prepare('SELECT COUNT(*) FROM categories WHERE id = ? AND type = ? AND is_active = 1 AND is_transfer = 0');
         $cs->execute([$catId, $type]);
         if (!$cs->fetchColumn()) $errs[] = 'หมวดไม่ถูกต้อง';
+        $acc = null;
+        if ($templeId && can_access_temple($templeId)) {
+            $accIn = (string)($_POST['account_id'] ?? 'cash');
+            $acc = $accIn === 'cash' || $accIn === '' ? ledger_account($pdo, ledger_cash_account($pdo, $templeId)) : ledger_account($pdo, (int)$accIn, $templeId);
+            if (!$acc || !$acc['is_active']) $errs[] = 'เลือกบัญชีของวัดนี้ (เงินสดหรือบัญชีธนาคาร)';
+        }
         if ($date === null) $errs[] = 'วันที่ไม่ถูกต้อง (เลือกวัน เดือน และปี พ.ศ.)';
         if ($amount <= 0 || $amount > 999999999999) $errs[] = 'จำนวนเงินต้องมากกว่า 0';
 
@@ -50,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $desc = mb_substr(trim($_POST['description'] ?? ''), 0, 255);
         $doc = mb_substr(trim($_POST['doc_no'] ?? ''), 0, 50);
         if ($id) {
-            $own = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0 AND type = ?');
+            $own = $pdo->prepare('SELECT temple_id FROM transactions WHERE id = ? AND is_deleted = 0 AND transfer_id IS NULL AND type = ?');
             $own->execute([$id, $type]);
             $o = $own->fetch();
             if (!$o || !can_access_temple((int)$o['temple_id'])) {
@@ -61,12 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('รายการนี้ออกอนุโมทนาบัตรแล้ว (' . receipt_label($rc) . ') ต้องยกเลิกอนุโมทนาบัตรก่อนจึงจะแก้ไขได้', 'err');
                 redirect("transactions.php?type=$type");
             }
-            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=? WHERE id=?')
-                ->execute([$templeId, $catId, $date, $doc, $desc, $amount, $id]);
+            $pdo->prepare('UPDATE transactions SET temple_id=?, category_id=?, txn_date=?, doc_no=?, description=?, amount=?, account_id=? WHERE id=?')
+                ->execute([$templeId, $catId, $date, $doc, $desc, $amount, $acc['id'], $id]);
             audit('update', 'transaction', $id, "$type $amount");
         } else {
-            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,created_by) VALUES (?,?,?,?,?,?,?,?)')
-                ->execute([$templeId, $type, $catId, $date, $doc, $desc, $amount, $u['id']]);
+            $pdo->prepare('INSERT INTO transactions (temple_id,type,category_id,txn_date,doc_no,description,amount,account_id,created_by) VALUES (?,?,?,?,?,?,?,?,?)')
+                ->execute([$templeId, $type, $catId, $date, $doc, $desc, $amount, $acc['id'], $u['id']]);
             audit('create', 'transaction', (int)$pdo->lastInsertId(), "$type $amount");
         }
         flash("บันทึก$label เรียบร้อย");
@@ -80,23 +86,23 @@ $year = (int)($_GET['year'] ?? be_year());
 $fTemple = (int)($_GET['temple'] ?? 0);
 [$sc, $sp] = scope_sql('t');
 
-$cats = $pdo->prepare('SELECT id, name FROM categories WHERE type = ? AND is_active = 1 ORDER BY sort_order, name');
+$cats = $pdo->prepare('SELECT id, name FROM categories WHERE type = ? AND is_active = 1 AND is_transfer = 0 ORDER BY sort_order, name');
 $cats->execute([$type]);
 $cats = $cats->fetchAll();
 $groups = temples_grouped();
 
 $edit = null;
 if (!empty($_GET['edit'])) {
-    $st = $pdo->prepare('SELECT x.* FROM transactions x JOIN temples t ON t.id = x.temple_id WHERE x.id = ? AND x.type = ? AND x.is_deleted = 0' . $sc);
+    $st = $pdo->prepare('SELECT x.* FROM transactions x JOIN temples t ON t.id = x.temple_id WHERE x.id = ? AND x.type = ? AND x.is_deleted = 0 AND x.transfer_id IS NULL' . $sc);
     $st->execute(array_merge([(int)$_GET['edit'], $type], $sp));
     $edit = $st->fetch() ?: null;
 }
 
-$sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation,
+$sql = "SELECT x.*, t.name AS temple, d.name AS district, c.name AS category, c.is_donation, a.kind AS acc_kind, a.bank_name AS acc_bank, a.account_no AS acc_no,
       (SELECT r.id FROM donation_receipts r WHERE r.transaction_id = x.id AND r.status = 'issued' ORDER BY r.id DESC LIMIT 1) AS receipt_id
     FROM transactions x JOIN temples t ON t.id = x.temple_id
-    JOIN districts d ON d.id = t.district_id JOIN categories c ON c.id = x.category_id
-    WHERE x.is_deleted = 0 AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
+    JOIN districts d ON d.id = t.district_id JOIN categories c ON c.id = x.category_id LEFT JOIN accounts a ON a.id = x.account_id
+    WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
 $p = array_merge([$type, $from, $to], $sp);
 if ($fTemple) { $sql .= ' AND t.id = ?'; $p[] = $fTemple; }
 $sql .= ' ORDER BY x.txn_date DESC, x.id DESC LIMIT 500';
@@ -104,6 +110,18 @@ $st = $pdo->prepare($sql);
 $st->execute($p);
 $rows = $st->fetchAll();
 $total = array_sum(array_column($rows, 'amount'));
+
+// บัญชีธนาคารของวัดที่ผู้ใช้เข้าถึงได้ (ให้ช่อง "บัญชี" ในฟอร์มเปลี่ยนตามวัดที่เลือก)
+$bankMap = [];
+$bs = $pdo->prepare("SELECT a.id, a.temple_id, a.bank_name, a.account_no FROM accounts a JOIN temples t ON t.id = a.temple_id
+    WHERE a.kind = 'bank' AND a.is_active = 1 AND t.is_active = 1 $sc ORDER BY a.id");
+$bs->execute($sp);
+foreach ($bs->fetchAll() as $b) {
+    $bankMap[(int)$b['temple_id']][] = [(string)$b['id'], ledger_account_label(['kind' => 'bank'] + $b)];
+}
+$formTemple = (int)($edit['temple_id'] ?? ($u['temple_id'] ?? 0));
+$editAcc = $edit && $edit['account_id'] ? (string)$edit['account_id'] : 'cash';
+$accLabel = fn(array $r) => ($r['acc_kind'] ?? 'cash') === 'bank' ? ledger_account_label(['kind' => 'bank', 'bank_name' => $r['acc_bank'], 'account_no' => $r['acc_no']]) : 'เงินสด';
 
 $pageTitle = "บัญชี$label";
 require __DIR__ . '/includes/header.php';
@@ -123,7 +141,9 @@ function temple_options(array $groups, int $sel): string
 ?>
 <?php $lhTemple = $fTemple ?: ($u['role'] === 'temple' ? (int)$u['temple_id'] : 0); ?>
 <?= $lhTemple ? letterhead($pdo, $lhTemple, 0, 'บัญชี' . $label, 'ปี พ.ศ. ' . $year, true) : '' ?>
-<h2 class="print:hidden">บัญชี<?= $label ?></h2>
+<div class="flex flex-wrap items-center justify-between gap-2 print:hidden"><h2>บัญชี<?= $label ?></h2>
+  <span class="flex flex-wrap gap-2"><a class="btn btn-outline btn-sm" href="accounts.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">บัญชีเงินสด/ธนาคาร · โอน-ฝาก-ถอน</a>
+  <a class="btn btn-outline btn-sm" href="statements.php<?= $fTemple ? '?temple=' . $fTemple : '' ?>">รายงานแบบที่ 1–3 ประจำเดือน</a></span></div>
 
 <div class="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:hidden">
   <h3><?= $edit ? "แก้ไขรายการ$label" : "เพิ่มรายการ$label" ?></h3>
@@ -135,6 +155,10 @@ function temple_options(array $groups, int $sel): string
     <div><label>วันที่</label><?= date_be_field('txn_date', $edit['txn_date'] ?? null) ?></div>
     <div><label>หมวด</label><select name="category_id" required>
       <?php foreach ($cats as $c): ?><option value="<?= (int)$c['id'] ?>" <?= ($edit['category_id'] ?? 0) == $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
+    </select></div>
+    <div><label>บัญชี</label><select name="account_id" data-bank-map='<?= e(json_encode($bankMap, JSON_UNESCAPED_UNICODE)) ?>' data-temple-select="temple_id" data-selected="<?= e($editAcc) ?>">
+      <option value="cash">เงินสด / เช็ค</option>
+      <?php foreach ($bankMap[$formTemple] ?? [] as [$bid, $bl]): ?><option value="<?= e($bid) ?>" <?= $editAcc === $bid ? 'selected' : '' ?>><?= e($bl) ?></option><?php endforeach; ?>
     </select></div>
     <div><label>จำนวนเงิน (บาท)</label><input name="amount" inputmode="decimal" required value="<?= e($edit['amount'] ?? '') ?>"></div>
     <div><label>เลขที่เอกสาร</label><input name="doc_no" maxlength="50" value="<?= e($edit['doc_no'] ?? '') ?>"></div>
@@ -153,12 +177,12 @@ function temple_options(array $groups, int $sel): string
 </form>
 
 <div class="overflow-x-auto rounded-2xl border border-stone-200 bg-white shadow-sm"><table class="data-table">
-  <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>รายละเอียด</th><th>เลขที่</th><th class="text-right whitespace-nowrap">จำนวนเงิน</th><th class="print:hidden"></th></tr>
+  <tr><th>วันที่</th><th>วัด</th><th>หมวด</th><th>บัญชี</th><th>รายละเอียด</th><th>เลขที่</th><th class="text-right whitespace-nowrap">จำนวนเงิน</th><th class="print:hidden"></th></tr>
   <?php foreach ($rows as $r): ?>
   <tr>
     <td><?= e(th_date($r['txn_date'])) ?></td>
     <td><?= e($r['temple']) ?><br><small class="text-stone-500">อ.<?= e($r['district']) ?></small></td>
-    <td><?= e($r['category']) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
+    <td><?= e($r['category']) ?></td><td class="text-sm"><?= e($accLabel($r)) ?></td><td><?= e($r['description']) ?></td><td><?= e($r['doc_no']) ?></td>
     <td class="text-right whitespace-nowrap <?= $type === 'income' ? 'text-emerald-700' : 'text-red-700' ?>"><?= money($r['amount']) ?></td>
     <td class="print:hidden">
       <?php if ($type === 'income' && $r['is_donation']): ?>
@@ -171,8 +195,8 @@ function temple_options(array $groups, int $sel): string
     </td>
   </tr>
   <?php endforeach; ?>
-  <?php if (!$rows): ?><tr><td colspan="7" class="text-stone-500">ยังไม่มีรายการในช่วงที่เลือก</td></tr><?php endif; ?>
-  <tr><th colspan="5" class="text-right whitespace-nowrap">รวม (<?= count($rows) ?> รายการ)</th><th class="text-right whitespace-nowrap"><?= money($total) ?></th><th class="print:hidden"></th></tr>
+  <?php if (!$rows): ?><tr><td colspan="8" class="text-stone-500">ยังไม่มีรายการในช่วงที่เลือก</td></tr><?php endif; ?>
+  <tr><th colspan="6" class="text-right whitespace-nowrap">รวม (<?= count($rows) ?> รายการ)</th><th class="text-right whitespace-nowrap"><?= money($total) ?></th><th class="print:hidden"></th></tr>
 </table></div>
 <?php if (count($rows) === 500): ?><p class="text-stone-500">แสดง 500 รายการล่าสุด กรุณากรองตามวัดเพื่อดูเพิ่มเติม</p><?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

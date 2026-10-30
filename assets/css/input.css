@@ -62,3 +62,56 @@
 }
 
 .swal2-popup.about-popup .swal2-html-container.about-body, .about { text-align: left !important; }
+
+/* แบบฟอร์มรายงานประจำเดือน (แบบที่ 1-3): หน้าจอเป็นการ์ดขาว พิมพ์เป็น A4 (แบบ 1-2 แนวนอน, แบบ 3 แนวตั้ง) */
+@layer components {
+  .stmt-sheet { @apply relative mb-6 rounded-2xl border border-stone-200 bg-white p-5 text-[15px] leading-relaxed text-black shadow-sm; }
+  .stmt-logo { @apply absolute left-4 top-4 h-16 w-16 object-contain; }
+  .stmt-form-no { @apply mb-2 text-right font-bold; }
+  .stmt-head { @apply mb-3 text-center; }
+  .stmt-head p { @apply my-1; }
+  .dots { @apply inline-block min-w-[3rem] border-b border-dotted border-stone-700 px-2 text-center; }
+  .dots.wide { @apply min-w-[11rem]; }
+  .stmt { @apply w-full border-collapse text-[13px]; min-width: 960px; table-layout: fixed; }
+  .stmt th, .stmt td { @apply border border-black px-1.5 py-1 align-middle; }
+  .stmt th { @apply text-center font-bold; }
+  .stmt td.c { @apply text-center; }
+  .stmt td.r { @apply text-right tabular-nums; }
+  .stmt td.muted { @apply text-stone-600; }
+  .stmt tbody tr { height: 1.9rem; }
+  .stmt .stmt-sep { border-left-width: 3px; }
+  .stmt td.nb { @apply border-0; }
+  .stmt td.box { @apply border-2 border-black font-bold; }
+  .stmt td.strong { border-width: 3px; }
+  .stmt tfoot td { height: 1.9rem; }
+  .stmt-sign { @apply mt-5 text-center; }
+  .stmt-sign-two { @apply grid grid-cols-2 gap-8; }
+  .stmt-sign-center { @apply mx-auto max-w-md; }
+  .stmt-sign .dots.wide { min-width: 13rem; }
+  .stmt-note { @apply mt-6 text-sm; }
+  .stmt-balance { @apply mx-auto max-w-3xl; }
+  .bal-line { @apply my-2 flex items-baseline gap-2; }
+  .bal-line > span:first-child { @apply grow; }
+  .bal-amt { @apply min-w-[8rem] text-right tabular-nums; }
+  .bal-unit { @apply font-bold; }
+  .bal-bank { @apply ml-4 mt-2; }
+  .bal-words { @apply mt-1 text-center; }
+}
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  @page land { size: A4 landscape; margin: 8mm; }
+  .stmt-sheet { border: 0; box-shadow: none; padding: 0; margin: 0; border-radius: 0; break-after: page; }
+  .stmt-sheet:last-child { break-after: auto; }
+  .sheet-land { page: land; }
+  body { background: #fff !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .stmt-sheet { font-size: 13px; line-height: 1.3; }
+  .stmt { min-width: 0; font-size: 11.5px; }
+  .stmt tbody tr, .stmt tfoot td { height: 1.45rem; }
+  .stmt th, .stmt td { padding-top: 1px; padding-bottom: 1px; }
+  .stmt-head { margin-bottom: .4rem; }
+  .stmt-head p { margin: 1px 0; }
+  .stmt-sign { margin-top: .5rem; }
+  .stmt-note { margin-top: .5rem; }
+  .stmt-logo { height: 3.2rem; width: 3.2rem; }
+}

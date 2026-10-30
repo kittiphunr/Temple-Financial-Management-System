@@ -18,7 +18,7 @@ function summary(int $beYear, int $districtId = 0, int $templeId = 0): array
         COALESCE(SUM(CASE WHEN x.type='expense' THEN x.amount END),0) AS expense,
         SUM(x.type='income') AS n_income, SUM(x.type='expense') AS n_expense
         FROM transactions x JOIN temples t ON t.id = x.temple_id
-        WHERE x.is_deleted = 0 AND x.txn_date BETWEEN ? AND ? $sc";
+        WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.txn_date BETWEEN ? AND ? $sc";
     $p = array_merge([$from, $to], $sp);
     if ($districtId) { $sql .= ' AND t.district_id = ?'; $p[] = $districtId; }
     if ($templeId)   { $sql .= ' AND t.id = ?'; $p[] = $templeId; }
@@ -42,7 +42,7 @@ function summary_by_district(int $beYear): array
         COALESCE(SUM(CASE WHEN x.type='expense' THEN x.amount END),0) AS expense
         FROM districts d
         JOIN temples t ON t.district_id = d.id AND t.is_active = 1
-        LEFT JOIN transactions x ON x.temple_id = t.id AND x.is_deleted = 0 AND x.txn_date BETWEEN ? AND ?
+        LEFT JOIN transactions x ON x.temple_id = t.id AND x.is_deleted = 0 AND x.transfer_id IS NULL AND x.txn_date BETWEEN ? AND ?
         WHERE 1=1 $sc
         GROUP BY d.id, d.name, d.sort_order ORDER BY d.sort_order");
     $st->execute(array_merge([$from, $to], $sp));
@@ -80,7 +80,7 @@ function monthly_series(int $beYear, int $districtId = 0): array
         COALESCE(SUM(CASE WHEN x.type='income' THEN x.amount END),0) AS inc,
         COALESCE(SUM(CASE WHEN x.type='expense' THEN x.amount END),0) AS exp
         FROM transactions x JOIN temples t ON t.id = x.temple_id
-        WHERE x.is_deleted = 0 AND x.txn_date BETWEEN ? AND ? $sc";
+        WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.txn_date BETWEEN ? AND ? $sc";
     $p = array_merge([$from, $to], $sp);
     if ($districtId) {
         $sql .= ' AND t.district_id = ?';
@@ -102,7 +102,7 @@ function top_categories(int $beYear, string $type, int $districtId = 0, int $lim
     [$sc, $sp] = scope_sql('t');
     $sql = "SELECT c.name, SUM(x.amount) AS total, COUNT(*) AS n
         FROM transactions x JOIN temples t ON t.id = x.temple_id JOIN categories c ON c.id = x.category_id
-        WHERE x.is_deleted = 0 AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
+        WHERE x.is_deleted = 0 AND x.transfer_id IS NULL AND x.type = ? AND x.txn_date BETWEEN ? AND ? $sc";
     $p = array_merge([$type === 'expense' ? 'expense' : 'income', $from, $to], $sp);
     if ($districtId) {
         $sql .= ' AND t.district_id = ?';
@@ -123,7 +123,7 @@ function temple_breakdown(int $beYear, int $districtId = 0): array
         COALESCE(SUM(CASE WHEN x.type='expense' THEN x.amount END),0) AS expense,
         COUNT(x.id) AS n, MAX(x.txn_date) AS last_date
         FROM temples t JOIN districts d ON d.id = t.district_id
-        LEFT JOIN transactions x ON x.temple_id = t.id AND x.is_deleted = 0 AND x.txn_date BETWEEN ? AND ?
+        LEFT JOIN transactions x ON x.temple_id = t.id AND x.is_deleted = 0 AND x.transfer_id IS NULL AND x.txn_date BETWEEN ? AND ?
         WHERE t.is_active = 1 $sc";
     $p = array_merge([$from, $to], $sp);
     if ($districtId) {
