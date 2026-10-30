@@ -1,6 +1,13 @@
 <?php
 /** อนุโมทนาบัตร: ออกให้รายรับในหมวดรับบริจาค (categories.is_donation = 1) เลขที่รันต่อวัดต่อปี พ.ศ. */
 
+/** แปลงเลขอารบิกเป็นเลขไทย (๐-๙) เฉพาะข้อความ — ไม่แตะแท็ก/แอตทริบิวต์/เอนทิตี (เช่น &#039;) ของ HTML ที่ส่งเข้ามา */
+function thai_digits_html(string $html): string
+{
+    $map = ['0' => '๐', '1' => '๑', '2' => '๒', '3' => '๓', '4' => '๔', '5' => '๕', '6' => '๖', '7' => '๗', '8' => '๘', '9' => '๙'];
+    return preg_replace_callback('/(<[^>]*>|&#?\w+;)|([^<&]+|&)/u', fn($m) => ($m[1] ?? '') !== '' ? $m[1] : strtr($m[2], $map), $html);
+}
+
 /** จำนวนเงินเป็นตัวอักษรไทย เช่น 1,250.50 => หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์ */
 function thai_baht_text(string|float $amount): string
 {
@@ -37,6 +44,74 @@ function thai_baht_text(string|float $amount): string
     $text = $int($b) ?: 'ศูนย์';
     $text .= 'บาท';
     return $s === '00' ? $text . 'ถ้วน' : $text . $int($s) . 'สตางค์';
+}
+
+/** รหัสตรวจสอบสุ่ม 16 ตัว (A-Z, 2-7 ไม่มีตัวที่สับสน) = 80 บิต เดาไม่ได้ */
+function receipt_new_code(): string
+{
+    $alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $bytes = random_bytes(16);
+    $out = '';
+    for ($i = 0; $i < 16; $i++) {
+        $out .= $alpha[ord($bytes[$i]) & 31];
+    }
+    return $out;
+}
+
+/** แสดงรหัสเป็น XXXX-XXXX-XXXX-XXXX */
+function receipt_code_format(string $code): string
+{
+    return implode('-', str_split($code, 4));
+}
+
+/** รหัสของใบ (สร้างให้ถ้ายังไม่มี เช่น ใบที่ออกก่อนมีระบบ QR) */
+function receipt_ensure_code(PDO $pdo, array $r): string
+{
+    if (!empty($r['verify_code'])) {
+        return $r['verify_code'];
+    }
+    for ($i = 0; $i < 5; $i++) {
+        $code = receipt_new_code();
+        try {
+            $n = $pdo->prepare('UPDATE donation_receipts SET verify_code = ? WHERE id = ? AND verify_code IS NULL');
+            $n->execute([$code, (int)$r['id']]);
+            if ($n->rowCount()) {
+                return $code;
+            }
+            $st = $pdo->prepare('SELECT verify_code FROM donation_receipts WHERE id = ?');
+            $st->execute([(int)$r['id']]);
+            return (string)$st->fetchColumn();
+        } catch (PDOException) {
+            // รหัสซ้ำ (แทบเป็นไปไม่ได้) — สุ่มใหม่
+        }
+    }
+    throw new RuntimeException('สร้างรหัสตรวจสอบไม่สำเร็จ');
+}
+
+/** ที่อยู่ตรวจสอบใบ: ใช้ app_url (config/TFMS_APP_URL) ถ้าตั้งไว้ ไม่งั้นเป็นที่อยู่แบบสัมพัทธ์ให้เบราว์เซอร์ต่อกับโดเมนที่เปิดอยู่ */
+function receipt_verify_url(string $code): string
+{
+    global $CONFIG;
+    $base = trim((string)($CONFIG['app_url'] ?? ''));
+    $path = 'verify.php?c=' . $code;
+    return $base !== '' ? rtrim($base, '/') . '/' . $path : (defined('BASE') ? BASE : '/') . $path;
+}
+
+/** ปิดบังชื่อผู้บริจาคในหน้าตรวจสอบสาธารณะ: คำแรกแสดงเต็ม คำถัดไปแสดงอักษรแรกแล้ว *** */
+function receipt_mask_name(string $name): string
+{
+    $parts = preg_split('/\s+/u', trim($name)) ?: [];
+    if (count($parts) <= 1) {
+        return mb_substr($name, 0, 3) . '***';
+    }
+    $first = array_shift($parts);
+    return $first . ' ' . implode(' ', array_map(fn($p) => mb_substr($p, 0, 1) . '***', $parts));
+}
+
+/** แทนตัวเลขด้วยเอนทิตี (&#48;…) เพื่อให้แสดงเป็นเลขอารบิกเสมอแม้ผ่าน thai_digits_html() */
+function keep_ascii_digits(string $html): string
+{
+    return preg_replace_callback('/\d/', fn($m) => '&#' . (48 + (int)$m[0]) . ';', $html);
 }
 
 /** อนุโมทนาบัตรที่ยังใช้ได้ของรายการ (ถ้ามี) */
@@ -101,9 +176,9 @@ function receipt_issue(PDO $pdo, int $txnId, array $in, ?int $userId): array
         $n->execute([$templeId, $year]);
         $no = (int)$n->fetchColumn();
         $pdo->prepare('INSERT INTO donation_receipts (temple_id, transaction_id, receipt_year, book_no, receipt_no, receipt_date, donor_name, donor_address,
-            purpose, amount, receiver_name, receiver_position, abbot_name, issued_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            purpose, amount, receiver_name, receiver_position, abbot_name, issued_by, verify_code) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
             ->execute([$templeId, $txnId, $year, $book, $no, $date, $donor, $addr ?: null, $purpose ?: null, $x['amount'],
-                $rname ?: null, $rpos ?: null, $a ? person_full_name($a, false) : null, $userId]);
+                $rname ?: null, $rpos ?: null, $a ? person_full_name($a, false) : null, $userId, receipt_new_code()]);
         return [(int)$pdo->lastInsertId(), ''];
     } finally {
         $pdo->query('SELECT RELEASE_LOCK(' . $pdo->quote($lock) . ')');

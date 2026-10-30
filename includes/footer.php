@@ -5,6 +5,7 @@
 </footer>
 <template id="about-template"><?= about_html() ?></template>
 <script src="<?= BASE ?>assets/vendor/sweetalert2.all.min.js"></script>
+<?= $extraScripts ?? '' ?>
 <script src="<?= BASE ?>assets/js/app.js"></script>
 </body>
 </html>

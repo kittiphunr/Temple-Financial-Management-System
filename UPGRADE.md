@@ -12,6 +12,7 @@ SHOW TABLES LIKE 'temple_people';                        -- มี = ทำ 3 �
 SHOW TABLES LIKE 'donation_receipts';                    -- มี = ทำ 4 แล้ว
 SHOW COLUMNS FROM users LIKE 'email';                     -- มี = ทำ 5 แล้ว
 SHOW TABLES LIKE 'accounts';                              -- มี = ทำ 6 แล้ว
+SHOW COLUMNS FROM donation_receipts LIKE 'verify_code';   -- มี = ทำ 7 แล้ว
 ```
 
 | ลำดับ | ไฟล์ | เพิ่มอะไร |
@@ -22,6 +23,7 @@ SHOW TABLES LIKE 'accounts';                              -- มี = ทำ 6 �
 | 4 | `2026_donation_receipts.sql` | อนุโมทนาบัตร, หมวดรับบริจาค, เลขผู้เสียภาษีของวัด |
 | 5 | `2026_staff_2fa_password_reset.sql` | อีเมลของผู้ใช้ระดับอำเภอ/จังหวัด, 2FA ของแอดมินหลัก/อำเภอ/เจ้าคณะจังหวัด, ลืมรหัสผ่านทางอีเมล |
 | 6 | `2026_accounts_statements.sql` | บัญชีเงินสด/ธนาคาร, ยอดยกมา, รายการโอน/ฝาก-ถอน สำหรับรายงานแบบที่ 1-3 — รายการเดิมทั้งหมดถูกผูกเข้า "เงินสด" ของวัดนั้น |
+| 7 | `2026_receipt_verify.sql` | รหัสตรวจสอบใบอนุโมทนาด้วย QR code (ใบเก่าได้รหัสอัตโนมัติเมื่อเปิดดูครั้งแรก — ตั้ง `app_url` ใน `config.local.php` ให้ QR ชี้โดเมนสาธารณะ) |
 
 ฐานข้อมูลที่เก่ากว่า 1 (ไม่มีอีเมลวัด) เริ่มจากไฟล์ 1 แล้วไล่ต่อจนครบ
 
@@ -47,7 +49,7 @@ SHOW TABLES LIKE 'accounts';                              -- มี = ทำ 6 �
 
 ```bash
 DB=ชื่อฐานข้อมูลของคุณ
-for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements; do
+for f in 2026_temple_accounts 2026_must_change_password 2026_logos_people_staff 2026_donation_receipts 2026_staff_2fa_password_reset 2026_accounts_statements 2026_receipt_verify; do
   sed "s/USE tfms_phrae;/USE $DB;/" sql/migrations/$f.sql | mysql -u USER -p || break
 done
 ```
