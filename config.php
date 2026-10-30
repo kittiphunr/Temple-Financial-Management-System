@@ -1,6 +1,6 @@
 <?php
-// ตั้งค่าการเชื่อมต่อฐานข้อมูล — แก้ได้ หรือกำหนดผ่านตัวแปรสภาพแวดล้อม
-return [
+// ตั้งค่าเริ่มต้น — กำหนดผ่านตัวแปรสภาพแวดล้อม หรือให้ตัวช่วยติดตั้ง (install.php) สร้าง config.local.php มาตั้งทับ
+$config = [
     'db_host' => getenv('TFMS_DB_HOST') ?: '127.0.0.1',
     'db_port' => getenv('TFMS_DB_PORT') ?: '3306',
     'db_name' => getenv('TFMS_DB_NAME') ?: 'tfms_phrae',
@@ -19,3 +19,9 @@ return [
     'mail_from'      => getenv('TFMS_MAIL_FROM') ?: 'no-reply@example.org',
     'mail_from_name' => 'ระบบบัญชีวัด จังหวัดแพร่',
 ];
+
+if (is_file(__DIR__ . '/config.local.php')) {
+    $config = array_replace($config, (array)require __DIR__ . '/config.local.php');
+}
+
+return $config;

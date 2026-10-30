@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
   district_id INT UNSIGNED NULL,
   temple_id INT UNSIGNED NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
+  must_change_password TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน (หลังผ่าน 2FA)',
   failed_logins TINYINT UNSIGNED NOT NULL DEFAULT 0,
   locked_until DATETIME NULL,
   last_login_at DATETIME NULL,

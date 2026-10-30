@@ -1,36 +1,37 @@
 <?php
-// ติดตั้งระบบ (รันจากบรรทัดคำสั่งเท่านั้น):  php setup.php [รหัสผ่านผู้ดูแล]
+// ติดตั้งระบบจากบรรทัดคำสั่ง (ทางเลือกแทนตัวช่วยติดตั้ง install.php):  php setup.php [รหัสผ่านแอดมินหลัก]
+// ใช้ค่าฐานข้อมูลจาก config.php / config.local.php / ตัวแปรสภาพแวดล้อม TFMS_DB_*
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
 }
 $cfg = require __DIR__ . '/config.php';
+require __DIR__ . '/includes/install_lib.php';
+require __DIR__ . '/includes/mailer.php';
+require __DIR__ . '/includes/accounts.php';
+require __DIR__ . '/includes/temple_import.php';
+
 $pw = $argv[1] ?? bin2hex(random_bytes(6));
 if (strlen($pw) < 8) {
     fwrite(STDERR, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร\n");
     exit(1);
 }
+if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', $cfg['db_name'])) {
+    fwrite(STDERR, "ชื่อฐานข้อมูลไม่ถูกต้อง (ใช้ได้เฉพาะ a-z A-Z 0-9 _)\n");
+    exit(1);
+}
 
-$pdo = new PDO(sprintf('mysql:host=%s;port=%s;charset=utf8mb4', $cfg['db_host'], $cfg['db_port']),
-    $cfg['db_user'], $cfg['db_pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+install_pdo($cfg, false)->exec('CREATE DATABASE IF NOT EXISTS `' . $cfg['db_name'] . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+$pdo = install_pdo($cfg);
 
 foreach (['schema.sql', 'seed.sql'] as $file) {
-    $sql = file_get_contents(__DIR__ . '/sql/' . $file);
-    $sql = preg_replace('/^\s*--.*$/m', '', $sql); // ตัดคอมเมนต์
-    foreach (array_filter(array_map('trim', explode(';', $sql))) as $stmt) {
-        $pdo->exec($stmt);
-    }
+    install_run_sql($pdo, __DIR__ . '/sql/' . $file);
     echo "นำเข้า $file แล้ว\n";
 }
 
-$pdo->exec('USE `' . $cfg['db_name'] . '`');
-
-require __DIR__ . '/includes/temple_import.php';
 $res = import_temples_csv($pdo, __DIR__ . '/data/temples_phrae.csv', true, 'ทะเบียนวัด พศ. (Report_Temple.xlsx)');
 echo "นำเข้าทะเบียนวัด {$res['ok']} วัด" . ($res['bad'] ? ' (ข้าม ' . count($res['bad']) . ' บรรทัด)' : '') . "\n";
 
-require __DIR__ . '/includes/mailer.php';
-require __DIR__ . '/includes/accounts.php';
 $created = provision_temple_accounts($pdo);
 echo 'สร้างบัญชีวัดอัตโนมัติ ' . count($created) . " บัญชี (1 วัด = 1 บัญชี)\n";
 if ($created) {
@@ -43,9 +44,11 @@ if ($created) {
     chmod($file, 0600);
     echo "บันทึกชื่อผู้ใช้/รหัสผ่านเริ่มต้นไว้ที่ $file\n";
     echo "→ นำไปแจกจ่ายให้วัด แล้วย้ายหรือลบไฟล์นี้ออกจากเซิร์ฟเวอร์ (ในฐานข้อมูลเก็บเฉพาะค่าแฮช)\n";
+    echo "→ วัดต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรก (หลังยืนยันอีเมล)\n";
 }
 
-$st = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role) VALUES ('admin', ?, 'ผู้ดูแลระบบ', 'admin')
+$st = $pdo->prepare("INSERT INTO users (username, password_hash, full_name, role, password_changed_at) VALUES ('admin', ?, 'ผู้ดูแลระบบ', 'admin', NOW())
     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)");
 $st->execute([password_hash($pw, PASSWORD_DEFAULT)]);
+mark_installed();
 echo "สร้างผู้ใช้ admin แล้ว รหัสผ่าน: $pw\n(กรุณาเปลี่ยนรหัสผ่านหลังเข้าสู่ระบบ)\n";

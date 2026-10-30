@@ -13,18 +13,21 @@ function nav_item(string $href, string $label, bool $active): string
     return '<a class="whitespace-nowrap rounded-lg px-3 py-2 font-semibold no-underline ' . $cls . '" href="' . e(BASE . $href) . '">' . e($label) . '</a>';
 }
 
-$items = nav_item('index.php', 'หน้าแรก', $cur === 'index.php' && !$inAdmin);
-if ($u) {
+$forced = !empty($u['must_change']);
+$items = $forced ? '' : nav_item('index.php', 'หน้าแรก', $cur === 'index.php' && !$inAdmin);
+if ($u && !$forced) {
     $items .= nav_item('transactions.php?type=income', 'บัญชีรายรับ', $cur === 'transactions.php' && $type === 'income');
     $items .= nav_item('transactions.php?type=expense', 'บัญชีรายจ่าย', $cur === 'transactions.php' && $type === 'expense');
     $items .= nav_item('reports.php', 'รายงาน', $cur === 'reports.php');
 }
-$items .= nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
-if ($u && $u['role'] === 'admin') {
+if (!$forced) {
+    $items .= nav_item('temples.php', 'ข้อมูลวัด', $cur === 'temples.php');
+}
+if ($u && !$forced && $u['role'] === 'admin') {
     $items .= nav_item('admin/index.php', 'จัดการระบบ', $inAdmin);
 }
 if ($u) {
-    $items .= nav_item('account.php', 'บัญชีของฉัน', $cur === 'account.php');
+    $items .= nav_item('account.php', $forced ? 'เปลี่ยนรหัสผ่าน' : 'บัญชีของฉัน', $cur === 'account.php');
 }
 $items .= $u
     ? '<a class="btn btn-outline btn-sm ml-1" href="' . BASE . 'logout.php">ออกจากระบบ</a>'
