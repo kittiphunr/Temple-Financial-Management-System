@@ -35,3 +35,10 @@ def run(db, R):
     check('C10 หน้าต่างเกี่ยวกับแสดงเครดิตครบทุกรายการ', all(c['author'].replace('&', '&amp;') in out for c in items) and out.count('<li>') == len(items), out[:200])
     build = (ROOT / 'deploy' / 'build.sh').read_text(encoding='utf-8')
     check('C11 ชุดติดตั้งแจกไฟล์เครดิตไปด้วย (data/credits.json, CREDITS.md)', 'credits.json' in build and 'CREDITS.md' in build)
+
+    # ข้อมูลผู้พัฒนาบนเว็บประชาสัมพันธ์ต้องตรงกับหน้าต่างเกี่ยวกับของระบบ (includes/about.php)
+    dev = json.loads(subprocess.run(['php', '-r', "require 'includes/about.php'; echo json_encode(ABOUT_DEVELOPER, JSON_UNESCAPED_UNICODE);"], cwd=ROOT, capture_output=True, text=True).stdout)
+    site = (ROOT / 'website' / 'index.html').read_text(encoding='utf-8')
+    check('C12 เว็บประชาสัมพันธ์แสดงข้อมูลผู้พัฒนา (ชื่อ ตำแหน่ง อีเมล GitHub เว็บไซต์) ตรงกับหน้าต่างเกี่ยวกับ',
+          all(dev[k] in site for k in ('name', 'name_en', 'title', 'email', 'github', 'website')), str([k for k in ('name', 'name_en', 'title', 'email', 'github', 'website') if dev[k] not in site]))
+    check('C13 รูปผู้พัฒนาบนเว็บมีอยู่จริง และไม่เปิดเผยเบอร์โทรส่วนตัวบนหน้าเว็บสาธารณะ', (ROOT / 'website' / 'assets' / 'developer.jpg').is_file() and dev['phone'] not in site)
