@@ -1,5 +1,7 @@
 # ระบบบัญชีรายรับ-รายจ่ายวัด (จังหวัดแพร่)
 
+[![Tests](https://github.com/kittiphunr/Temple-Financial-Management-System/actions/workflows/tests.yml/badge.svg)](https://github.com/kittiphunr/Temple-Financial-Management-System/actions/workflows/tests.yml)
+
 ระบบ PHP + MySQL สำหรับบันทึกบัญชีรายรับ-รายจ่ายของวัด จัดกลุ่มวัดตามอำเภอทั้ง 8 อำเภอของจังหวัดแพร่
 (เมืองแพร่, ร้องกวาง, ลอง, สูงเม่น, เด่นชัย, สอง, วังชิ้น, หนองม่วงไข่)
 
@@ -50,7 +52,7 @@
 - ความปลอดภัย: PDO prepared statements, CSRF token, `password_hash`, จำกัดสิทธิ์ตามขอบเขต, กัน CSV formula injection
 
 ## ติดตั้ง
-ต้องการ PHP 8.1+ (ส่วนขยาย pdo_mysql, mbstring; แนะนำ openssl) และ MySQL 5.7+ / MariaDB 10.3+
+ต้องการ PHP 8.1+ (ส่วนขยาย pdo_mysql, mbstring; แนะนำ openssl) และ MySQL 5.7+ / MariaDB 10.3+ (ชุดทดสอบผ่านบน MariaDB 10.11 และ MySQL 8.0 ทั้งการติดตั้งและโหมด strict — รันอัตโนมัติใน GitHub Actions ทุก PR)
 
 ### วิธีที่ 1: ตัวช่วยติดตั้งบนเว็บ (เหมือน WordPress)
 วางโค้ดบนเว็บเซิร์ฟเวอร์ (Apache/Nginx + PHP-FPM, ใช้ HTTPS) ให้ผู้ใช้เว็บเซิร์ฟเวอร์เขียนโฟลเดอร์โปรเจกต์และ `storage/` ได้ชั่วคราว
