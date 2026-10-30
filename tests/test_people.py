@@ -131,7 +131,7 @@ def _run(db, R, smtp, q, app):
 
     up_logo(ta, png_bytes(800, 600, (180, 20, 20, 200)))
     lid_a = q(f"SELECT logo_media_id FROM temples WHERE id={tid_a}")
-    check('L2 อัปโหลดโลโก้สำเร็จ (เก็บเป็น PNG ในฐานข้อมูล)', lid_a != '' and q(f"SELECT CONCAT(kind,'/',mime) FROM media WHERE id={lid_a}") == 'logo/image/png')
+    check('L2 อัปโหลดโลโก้สำเร็จ (เก็บเป็น WebP ในฐานข้อมูล)', lid_a != '' and q(f"SELECT CONCAT(kind,'/',mime) FROM media WHERE id={lid_a}") == 'logo/image/webp')
     code, hdr, body = ta.raw(f'/media.php?id={lid_a}')
     w, h = struct.unpack('>II', body[16:24]) if body[:4] == b'\x89PNG' else (0, 0)
     check('L3 รูปถูกย่อ (ไม่เกิน 512px) และส่งพร้อมหัวความปลอดภัย',
@@ -271,9 +271,9 @@ def _run(db, R, smtp, q, app):
 
     # รูปถ่าย
     pmedia = q(f"SELECT photo_media_id FROM temple_people WHERE id={pid_abbot}")
-    check('P8 รูปถ่ายเก็บเป็น JPEG ในฐานข้อมูล', q(f"SELECT CONCAT(kind,'/',mime) FROM media WHERE id={pmedia}") == 'photo/image/jpeg')
+    check('P8 รูปถ่ายเก็บเป็น WebP ในฐานข้อมูล', q(f"SELECT CONCAT(kind,'/',mime) FROM media WHERE id={pmedia}") == 'photo/image/webp')
     code, hdr, body = ta.raw(f'/media.php?id={pmedia}')
-    check('P8b แอดมินวัดเจ้าของข้อมูลเห็นรูปถ่าย (ไม่แคชแบบสาธารณะ)', code == 200 and body[:2] == b'\xff\xd8' and 'no-cache' in (hdr.get('Cache-Control') or ''))
+    check('P8b แอดมินวัดเจ้าของข้อมูลเห็นรูปถ่าย (ไม่แคชแบบสาธารณะ)', code == 200 and (body[:4] == b'RIFF' and body[8:12] == b'WEBP') and 'no-cache' in (hdr.get('Cache-Control') or ''))
     acl = {
         'แอดมินหลัก': (adm, 200), 'แอดมินอำเภอเมืองแพร่ (อำเภอเดียวกับวัด)': (dm, 200), 'เจ้าคณะจังหวัด': (chief, 200),
         'แอดมินอำเภอเด่นชัย (คนละอำเภอ)': (dd, 403), 'แอดมินวัดอื่นในอำเภอเดียวกัน': (tb, 403), 'แอดมินวัดอื่นต่างอำเภอ': (tc, 403), 'ผู้ที่ยังไม่ล็อกอิน': (Client(base), 302),

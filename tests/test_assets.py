@@ -81,7 +81,7 @@ def _run(R, q, app, smtp):
     code, hd, body = ca.raw(f'/media.php?id={mid}')
     code_b, _, _ = cb.raw(f'/media.php?id={mid}')
     code_n, _, _ = Client(base).raw(f'/media.php?id={mid}')
-    check('H5 แนบรูปทรัพย์สิน: เจ้าของเปิดได้ (JPEG) วัดอื่นเปิดไม่ได้ (403) ไม่ล็อกอินเปิดไม่ได้', code == 200 and body[:2] == b'\xff\xd8' and code_b == 403 and code_n in (302, 401, 403))
+    check('H5 แนบรูปทรัพย์สิน: เจ้าของเปิดได้ (WebP) วัดอื่นเปิดไม่ได้ (403) ไม่ล็อกอินเปิดไม่ได้', code == 200 and (body[:4] == b'RIFF' and body[8:12] == b'WEBP') and code_b == 403 and code_n in (302, 401, 403))
     add(ca, name='อุโบสถ', cat='building', no='ท-002', value='5000000', photo=png_bytes(100, 100, (1, 2, 3, 255)), aid=bid)
     mid2 = q(f"SELECT photo_media_id FROM assets WHERE id={bid}")
     check('H6 เปลี่ยนรูป: รูปเดิมถูกลบออกจากฐานข้อมูล', mid2 != mid and q(f"SELECT COUNT(*) FROM media WHERE id={mid}") == '0')

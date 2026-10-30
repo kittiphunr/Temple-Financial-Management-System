@@ -1,6 +1,6 @@
 <?php
 /**
- * รับรูปที่อัปโหลด (โลโก้/รูปถ่าย): ตรวจชนิดจากเนื้อไฟล์จริง จำกัดขนาด ย่อ และ "แปลงใหม่" ด้วย GD
+ * รับรูปที่อัปโหลด (โลโก้/รูปถ่าย/หลักฐาน): ตรวจชนิดจากเนื้อไฟล์จริง จำกัดขนาด ย่อตามโปรไฟล์ และ "แปลงใหม่" เป็น WebP ด้วย GD
  * การแปลงใหม่ลบข้อมูลแฝง (EXIF/GPS) และโค้ดที่ซ่อนในไฟล์ ไม่รับ SVG/GIF
  * เก็บผลลัพธ์ในตาราง media (ไม่เก็บเป็นไฟล์บนเว็บ)
  */
@@ -8,9 +8,30 @@
 const MEDIA_MAX_BYTES = 2 * 1024 * 1024;
 const MEDIA_MAX_PIXELS = 25000000;
 
-/** @return array{0:?string,1:?string,2:string} [ไบต์รูปที่แปลงแล้ว, mime, ข้อความผิดพลาด] */
-function image_process(string $bytes, string $kind): array
+/**
+ * โปรไฟล์ขนาดรูปที่เก็บในระบบ: กรอบสูงสุด (กว้าง x สูง) คุณภาพ WebP และขนาดไฟล์สูงสุดหลังแปลง
+ * logo = ตราวัด (คงความโปร่งใส) · photo = รูปบุคลากร/ทรัพย์สิน · evidence = หลักฐานแนบ (ใบเสร็จ/สลิป ต้องอ่านตัวเลขออก)
+ */
+const IMAGE_PROFILES = [
+    'logo' => ['w' => 512, 'h' => 512, 'quality' => 85, 'alpha' => true, 'max_bytes' => MEDIA_MAX_BYTES],
+    'photo' => ['w' => 600, 'h' => 800, 'quality' => 82, 'alpha' => false, 'max_bytes' => MEDIA_MAX_BYTES],
+    'evidence' => ['w' => 2000, 'h' => 2000, 'quality' => 82, 'alpha' => false, 'max_bytes' => 4 * 1024 * 1024],
+];
+
+/** GD เข้ารหัส WebP ได้หรือไม่ (ถ้าไม่ได้ จะใช้ PNG สำหรับโลโก้และ JPEG สำหรับรูปอื่นแทน) */
+function image_webp_supported(): bool
 {
+    return function_exists('imagewebp') && (gd_info()['WebP Support'] ?? false);
+}
+
+/**
+ * แปลงรูปเป็นไฟล์ที่จะเก็บ: ตรวจชนิดจากเนื้อไฟล์จริง ย่อตามโปรไฟล์ และเข้ารหัสใหม่เป็น WebP (ลบ EXIF/GPS และโค้ดที่ซ่อนในไฟล์)
+ * @param string $profile logo|photo|evidence
+ * @return array{0:?string,1:?string,2:string} [ไบต์รูปที่แปลงแล้ว, mime, ข้อความผิดพลาด]
+ */
+function image_process(string $bytes, string $profile): array
+{
+    $prof = IMAGE_PROFILES[$profile] ?? IMAGE_PROFILES['photo'];
     if (!function_exists('imagecreatefromstring')) {
         return [null, null, 'เซิร์ฟเวอร์ยังไม่ได้เปิดใช้ส่วนขยาย GD จึงอัปโหลดรูปไม่ได้'];
     }
@@ -30,32 +51,42 @@ function image_process(string $bytes, string $kind): array
         return [null, null, 'อ่านไฟล์ภาพไม่ได้ (ไฟล์อาจเสียหาย)'];
     }
     [$w, $h] = [imagesx($src), imagesy($src)];
-    [$maxW, $maxH] = $kind === 'logo' ? [512, 512] : [600, 800];
-    $scale = min(1, $maxW / $w, $maxH / $h);
+    $scale = min(1, $prof['w'] / $w, $prof['h'] / $h);
     $nw = max(1, (int)round($w * $scale));
     $nh = max(1, (int)round($h * $scale));
 
     $dst = imagecreatetruecolor($nw, $nh);
-    ob_start();
-    if ($kind === 'logo') {
+    if ($prof['alpha']) {
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
         imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 0, 0, 0, 127));
-        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+    } else {
+        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));   // พื้นโปร่งใส -> พื้นขาว
+    }
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+    ob_start();
+    if (image_webp_supported()) {
+        imagewebp($dst, null, $prof['quality']);
+        $out = 'image/webp';
+    } elseif ($prof['alpha']) {
         imagepng($dst, null, 6);
         $out = 'image/png';
     } else {
-        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255)); // รูปถ่ายพื้นโปร่งใส -> พื้นขาว
-        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
         imagejpeg($dst, null, 85);
         $out = 'image/jpeg';
     }
     $data = (string)ob_get_clean();
     unset($src, $dst);
-    if ($data === '' || strlen($data) > MEDIA_MAX_BYTES) {
-        return [null, null, 'ประมวลผลภาพไม่สำเร็จ'];
+    if ($data === '' || strlen($data) > $prof['max_bytes']) {
+        return [null, null, 'ประมวลผลภาพไม่สำเร็จหรือไฟล์หลังแปลงใหญ่เกินไป'];
     }
     return [$data, $out, ''];
+}
+
+/** นามสกุลไฟล์ที่ตรงกับ mime ที่เก็บ */
+function image_ext(string $mime): string
+{
+    return ['image/webp' => '.webp', 'image/png' => '.png', 'image/jpeg' => '.jpg'][$mime] ?? '';
 }
 
 /**

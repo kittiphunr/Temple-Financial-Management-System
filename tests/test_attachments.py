@@ -61,10 +61,10 @@ def _run(R, q, app, smtp):
     slip = png_bytes(893, 1832, (20, 120, 200, 255))
     up(ca, xa, slip, 'slip ttb.png', 'image/png')
     row = q(f"SELECT CONCAT(mime,'|',filename) FROM transaction_attachments WHERE transaction_id={xa}")
-    check('A1 แนบสลิป PNG แนวตั้งได้ เก็บเป็น JPEG', row.startswith('image/jpeg|') and row.endswith('.jpg'), row)
+    check('A1 แนบสลิป PNG แนวตั้งได้ เก็บเป็น WebP', row.startswith('image/webp|') and row.endswith('.webp'), row)
     aid = q(f"SELECT id FROM transaction_attachments WHERE transaction_id={xa}")
     code, hd, body = ca.raw('/attachment.php?id=' + aid)
-    check('A2 เจ้าของเปิดไฟล์ได้ พร้อม nosniff และไม่แคช', code == 200 and hd.get('X-Content-Type-Options') == 'nosniff' and 'no-store' in hd.get('Cache-Control', '') and body[:2] == b'\xff\xd8')
+    check('A2 เจ้าของเปิดไฟล์ได้ พร้อม nosniff และไม่แคช', code == 200 and hd.get('X-Content-Type-Options') == 'nosniff' and 'no-store' in hd.get('Cache-Control', '') and (body[:4] == b'RIFF' and body[8:12] == b'WEBP'))
     import base64
     out = subprocess.run(['php', '-r', 'echo implode("x", array_slice(getimagesizefromstring(base64_decode($argv[1])),0,2));', base64.b64encode(body).decode()], capture_output=True, text=True).stdout
     check('A3 ย่อด้านยาวไม่เกิน 2000 px และคงสัดส่วน (ไม่ถูกบีบเป็นรูปถ่าย 600x800)', out == '893x1832', out)
