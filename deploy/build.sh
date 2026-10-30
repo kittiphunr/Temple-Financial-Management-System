@@ -23,10 +23,10 @@ rsync -a --prune-empty-dirs \
   --include='/includes/' --include='/includes/*.php' \
   --include='/assets/' --include='/assets/css/' --include='/assets/css/tailwind.css' --include='/assets/img/' --include='/assets/img/*' \
   --include='/assets/js/' --include='/assets/js/*.js' --include='/assets/vendor/' --include='/assets/vendor/*' --include='/assets/fonts/' --include='/assets/fonts/*' \
-  --include='/data/' --include='/data/temples_phrae.csv' --include='/data/temples_template.csv' --include='/data/thai_geo.json' --include='/data/thai_geo.LICENSE' \
+  --include='/data/' --include='/data/temples_phrae.csv' --include='/data/temples_template.csv' --include='/data/thai_geo.json' --include='/data/thai_geo.LICENSE' --include='/data/credits.json' \
   --include='/sql/' --include='/sql/*.sql' --include='/sql/migrations/' --include='/sql/migrations/*.sql' \
   --exclude='*' ./ "$OUT/"
-cp README.md UPGRADE.md LICENSE "$OUT/" 2>/dev/null || true
+cp README.md UPGRADE.md LICENSE CREDITS.md "$OUT/" 2>/dev/null || true
 
 # ---- storage/ เปล่า + กันเข้าถึงจากเว็บ ----
 mkdir -p "$OUT/storage"

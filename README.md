@@ -175,6 +175,8 @@ tailwind.config.js  package.json  config.php (ค่าเริ่มต้น)
 ```
 
 ## สัญญาอนุญาต (License)
+**นโยบายเครดิต:** ทุกครั้งที่นำโปรเจค ไลบรารี ฟอนต์ ข้อมูล หรือโค้ดของผู้อื่นมาใช้ ต้องให้เครดิตเสมอ — ดูรายการและขั้นตอนที่ [CREDITS.md](CREDITS.md) (ข้อมูลต้นทาง `data/credits.json` แสดงในหน้าต่าง "เกี่ยวกับ" และเว็บประชาสัมพันธ์อัตโนมัติ)
+
 โค้ดของระบบเผยแพร่ภายใต้ [MIT License](LICENSE) © 2026 Kittiphun Ruttanakorn — **ไม่รวม** รายการต่อไปนี้ ซึ่งอยู่ภายใต้สัญญาหรือสิทธิ์ของตนเอง:
 - ฟอนต์ JS Chanok (`assets/fonts/JS-Chanok-Normal.ttf`) — GNU GPL v2 (`assets/fonts/GPL-License-JS.pdf`)
 - ไลบรารีใน `assets/vendor/` — SweetAlert2 และ qrcode ตามไฟล์ `*.LICENSE` ในโฟลเดอร์เดียวกัน

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""รันชุดทดสอบทั้งหมด:  python3 tests/run_all.py [features|install|people|receipts|auth|ui|statements|import|subdistrict]
+"""รันชุดทดสอบทั้งหมด:  python3 tests/run_all.py [features|install|people|receipts|auth|ui|statements|import|subdistrict|credits]
 
 ต้องมี: PHP 8.1+ (CLI + pdo_mysql) และ MySQL/MariaDB ที่เชื่อมต่อได้ด้วยบัญชีที่สร้าง/ลบฐานข้อมูลได้
 ตั้งค่าผ่านตัวแปรสภาพแวดล้อม  TFMS_TEST_DB_HOST (127.0.0.1)  TFMS_TEST_DB_PORT (3306)
@@ -22,9 +22,10 @@ import test_ui  # noqa: E402
 import test_statements  # noqa: E402
 import test_import  # noqa: E402
 import test_subdistrict  # noqa: E402
+import test_credits  # noqa: E402
 from support import Db, DbUnavailable, Results  # noqa: E402
 
-SUITES = {'features': test_features, 'install': test_install, 'people': test_people, 'receipts': test_receipts, 'auth': test_auth, 'ui': test_ui, 'statements': test_statements, 'import': test_import, 'subdistrict': test_subdistrict}
+SUITES = {'features': test_features, 'install': test_install, 'people': test_people, 'receipts': test_receipts, 'auth': test_auth, 'ui': test_ui, 'statements': test_statements, 'import': test_import, 'subdistrict': test_subdistrict, 'credits': test_credits}
 
 
 def main(argv):
