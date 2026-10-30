@@ -9,12 +9,13 @@
   a { @apply text-brand-600; }
   h2 { @apply mb-3 mt-2 text-2xl font-bold leading-snug text-brand-700; }
   h3 { @apply mb-2 text-lg font-semibold leading-snug; }
+  /* ช่องกรอกใช้ input:where(...) (specificity เท่ากฎรีเซ็ต input{padding:0} ของ Tailwind แต่เขียนทีหลังจึงชนะ) และยังถูก .ctl-sm/.form-lg เขียนทับได้ */
   label { @apply mb-1 block text-sm text-stone-500; }
-  :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select, textarea) {
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden'])), select, textarea {
     @apply max-w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-stone-800
       focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-200;
   }
-  :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden']), select) { min-height: var(--ctl-h); }
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='hidden'])), select { min-height: var(--ctl-h); }
   textarea { min-height: calc(var(--ctl-h) * 2); }
   /* กล่องที่ทำหน้าที่เหมือนช่องกรอก (เช่น ตัวเลือกธนาคารพร้อมโลโก้) ใช้ความสูง/ขอบมนมาตรฐานเดียวกัน */
   .ctl-box { @apply rounded-xl border border-stone-300 bg-white px-3.5 py-2; min-height: var(--ctl-h); }

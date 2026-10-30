@@ -130,6 +130,9 @@ def _run(R, q, app):
             if re.search(r'(?<![\w-])(rounded(-[a-z0-9\[\]]+)?|h-\d+|min-h-\d+|!min-h-\d+)(?![\w-])', tag) and 'type="checkbox"' not in tag and 'type="radio"' not in tag:
                 odd.append(f'{f.name}: {tag[:80]}')
     check('U25 ช่องกรอก/ตัวเลือก/ปุ่มไม่กำหนดความสูงหรือรัศมีขอบเอง (ใช้ค่ากลางของระบบ)', not odd, '; '.join(odd[:4]))
+    src = (ROOT / 'assets/css/input.css').read_text(encoding='utf-8')
+    check('U30 กฎ padding ของช่องกรอกไม่ห่อด้วย :where() ทั้งก้อน (specificity 0 แพ้ input{padding:0} ของ Tailwind ทำให้อักษรชิดขอบ)',
+          ":where(input:not(" not in src and "input:where(:not(" in src, 'ตรวจ input.css')
     flat = css.replace(' ', '')
     check('U27 ลูกศร dropdown วาดเอง (appearance:none + ไอคอน chevron ชิดขวากึ่งกลาง + เว้นพื้นที่ด้านขวา) และเปลี่ยนสีเมื่อโฟกัส',
           'appearance:none' in flat and 'data:image/svg+xml' in flat and 'backgroundposition' not in flat and 'background-position:right.75remcenter' in flat.replace('0.', '.') + css.replace(' ', '') and 'padding-right:2.25rem' in flat and flat.count('data:image/svg+xml') >= 2)
