@@ -86,6 +86,9 @@ TFMS_MAIL_FROM=no-reply@your-domain.org
 ### ฐานข้อมูลที่ติดตั้งไว้ก่อนมีฟีเจอร์นี้
 ต้องรัน `sql/migrations/*.sql` ตามลำดับ (ครั้งเดียวต่อไฟล์) หลังสำรองฐานข้อมูล — ขั้นตอนเต็ม การตรวจว่าอยู่รุ่นไหน ข้อควรตรวจก่อนรัน และสิ่งที่ต้องทำหลังอัปเกรด ดู **[UPGRADE.md](UPGRADE.md)**
 
+## ขึ้นเซิร์ฟเวอร์จริง
+สร้างชุดไฟล์พร้อมอัปโหลดด้วย `bash deploy/build.sh` (ได้ `deploy/dist/tfms/` และไฟล์ zip) พร้อมตัวอย่าง Nginx/Apache/PHP และขั้นตอนตั้งสิทธิ์ ดู **[deploy/README.md](deploy/README.md)**
+
 ## การทดสอบ
 ```bash
 export TFMS_TEST_DB_USER=root TFMS_TEST_DB_PASS=...   # บัญชีที่สร้าง/ลบฐานข้อมูลได้
@@ -134,6 +137,7 @@ includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, 
 storage/   ไฟล์ที่ห้ามเข้าถึงจากเว็บ (รหัสผ่านเริ่มต้น, mail.log)
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
 sql/       schema.sql, seed.sql, migrations/      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
+deploy/    build.sh (สร้างชุดติดตั้งขึ้นเซิร์ฟเวอร์), ตัวอย่าง nginx/apache/php.ini, README
 tests/     ชุดทดสอบ end-to-end (python3 tests/run_all.py)
 tailwind.config.js  package.json  config.php (ค่าเริ่มต้น)  config.local.php (สร้างโดยตัวช่วยติดตั้ง ห้าม commit)
 ```

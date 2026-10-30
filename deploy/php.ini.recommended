@@ -1,0 +1,11 @@
+; ค่า PHP ที่แนะนำสำหรับเซิร์ฟเวอร์จริง (วางเป็นไฟล์ conf.d/99-tfms.ini หรือตั้งใน php-fpm pool)
+display_errors = Off
+log_errors = On
+expose_php = Off
+upload_max_filesize = 4M
+post_max_size = 8M
+session.cookie_httponly = 1
+session.cookie_secure = 1        ; ใช้เมื่อเปิดผ่าน HTTPS เท่านั้น
+session.use_strict_mode = 1
+date.timezone = Asia/Bangkok
+; ต้องเปิดส่วนขยาย: pdo_mysql, mbstring, sodium, gd, fileinfo (ตรวจด้วย php -m)

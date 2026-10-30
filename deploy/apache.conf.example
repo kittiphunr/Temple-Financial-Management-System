@@ -1,0 +1,24 @@
+# ตัวอย่าง Apache (mod_php หรือ php-fpm) — แก้ ServerName และ path ให้ตรง
+<VirtualHost *:80>
+    ServerName wat.example.org
+    Redirect permanent / https://wat.example.org/
+</VirtualHost>
+<VirtualHost *:443>
+    ServerName wat.example.org
+    DocumentRoot /var/www/tfms
+    SSLEngine on
+    SSLCertificateFile    /etc/letsencrypt/live/wat.example.org/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/wat.example.org/privkey.pem
+
+    <Directory /var/www/tfms>
+        AllowOverride All          # ให้ .htaccess ใน storage/ includes/ sql/ data/ มีผล (ห้ามเข้าถึงจากเว็บ)
+        Require all granted
+        Options -Indexes
+    </Directory>
+    <FilesMatch "^(README|UPGRADE)\.md$">
+        Require all denied
+    </FilesMatch>
+    Header always set X-Content-Type-Options nosniff
+    Header always set Strict-Transport-Security "max-age=31536000"
+    LimitRequestBody 4194304
+</VirtualHost>
