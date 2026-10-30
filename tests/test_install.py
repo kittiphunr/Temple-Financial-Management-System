@@ -25,7 +25,10 @@ def run(db, R):
         problems = app.php_problems()
         R.check('Z1 ไม่มี PHP warning/notice/fatal ใน log ของเซิร์ฟเวอร์', not problems, '\n'.join(problems[:3]))
         app.close()
-        smtp.stop()
+        try:
+            _provinces(db, R)
+        finally:
+            smtp.stop()
 
 
 def _run(db, R, smtp, wiz, full, app):
@@ -75,7 +78,7 @@ def _run(db, R, smtp, wiz, full, app):
     check('W2c ฐานข้อมูลที่มีข้อมูลอยู่แล้ว → ไม่เขียนทับ', 'มีข้อมูลผู้ใช้ของระบบอยู่แล้ว' in notice(b), notice(b))
     w.post('/install.php', {'action': 'db', 'db_host': db.host, 'db_port': db.port, 'db_name': wiz, 'db_user': db.user, 'db_pass': db.password}, '/install.php?step=2')
     c, loc, b = w.req('/install.php?step=3')
-    check('W2d ฐานข้อมูลใหม่ (ถูกสร้างให้) → ไปขั้น 3', 'ข้อมูลเว็บไซต์และแอดมินหลัก' in b)
+    check('W2d ฐานข้อมูลใหม่ (ถูกสร้างให้) → ไปขั้น 3', 'จังหวัดที่ดูแล และข้อมูลเบื้องต้น' in b)
     check('W2e ฐานข้อมูลที่ระบุถูกสร้างขึ้น',
           db.run(f"SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='{wiz}'") == wiz)
 
@@ -245,3 +248,94 @@ def _run(db, R, smtp, wiz, full, app):
     d = Client(base)
     c, loc, _ = d.post('/login.php', {'username': 'dist1', 'password': 'DistPass12345'})
     check('F15 เจ้าหน้าที่อำเภอไม่ถูกบังคับเปลี่ยนรหัส', loc == 'index.php' and d.req('/transactions.php?type=income')[0] == 200)
+
+
+def _provinces(db, R):
+    """ติดตั้งสำหรับจังหวัดอื่น: เลือกจังหวัด + อัปโหลดไฟล์ Excel ทะเบียนวัด / นำเข้าภายหลัง"""
+    from test_import import HEAD, make_xlsx, trow
+    check = R.check
+
+    def temple(i, district, code, province='น่าน'):
+        return trow(**{'ลำดับ': i, 'รหัสวัด': code, 'ชื่อวัด': f'วัดทดสอบ{i}', 'แขวง/ตำบล': 'ในเวียง', 'เขต/อำเภอ': district, 'จังหวัด': province, 'ประเภทวัด': 'วัดราษฎร์'})
+    rows = [HEAD] + [temple(1, 'เมืองน่าน', '05550101001'), temple(2, 'เมืองน่าน', '05550101002'), temple(3, 'ปัว', '05550201001'), temple(4, 'ท่าวังผา', '05550301001')]
+    xlsx = make_xlsx(rows)
+
+    def start(app):
+        """ผ่านขั้น 1–2 แล้วคืน (client, ชื่อฐานข้อมูล)"""
+        name = db.new_database('prov', create=False)
+        w = Client(app.serve())
+        w.post('/install.php', {'action': 'requirements'}, '/install.php?step=1')
+        w.post('/install.php', {'action': 'db', 'db_host': db.host, 'db_port': db.port, 'db_name': name, 'db_user': db.user, 'db_pass': db.password}, '/install.php?step=2')
+        return w, name
+
+    def finish(w):
+        w.post('/install.php', {'action': 'mail_save', 'mail_driver': 'log', 'smtp_port': '587', 'smtp_secure': 'none'}, '/install.php?step=4')
+        return w.post('/install.php', {'action': 'install'}, '/install.php?step=5')
+
+    def site(province, **kw):
+        d = {'action': 'site', 'province': province, 'site_name': 'ระบบวัด', 'site_sub': 'สำหรับคณะสงฆ์จังหวัด' + province, 'admin_user': 'mainadmin',
+             'admin_name': 'แอดมิน หลัก', 'admin_pass': ADMIN_PW, 'admin_pass2': ADMIN_PW, 'temple_source': 'later', 'make_accounts': '1'}
+        d.update(kw)
+        return d
+
+    # ---- น่าน + ไฟล์ Excel
+    app = App()
+    try:
+        w, name = start(app)
+        q = db.q(name)
+        w.upload('/install.php', site('น่าน', temple_source='builtin'), None, b'', '/install.php?step=3')
+        c, _, b = w.req('/install.php?step=3')
+        check('P1 ทะเบียนที่มากับชุดใช้ได้เฉพาะแพร่ → จังหวัดอื่นถูกปฏิเสธ', 'เป็นของจังหวัดแพร่เท่านั้น' in notice(b), notice(b))
+        w.upload('/install.php', site('น่าน', temple_source='file'), None, b'', '/install.php?step=3')
+        c, _, b = w.req('/install.php?step=3')
+        check('P2 เลือกอัปโหลดไฟล์แต่ไม่แนบ → แจ้งให้เลือกไฟล์', 'กรุณาเลือกไฟล์ทะเบียนวัด' in notice(b), notice(b))
+        w.upload('/install.php', site('แพร่', temple_source='file'), 'nan.xlsx', xlsx, '/install.php?step=3', field='temple_file')
+        c, _, b = w.req('/install.php?step=3')
+        check('P3 ไฟล์ของน่านแต่เลือกจังหวัดแพร่ → แจ้งไม่ตรงกัน', 'ไม่ตรงกับ' in notice(b) or 'แต่เลือกจังหวัดแพร่' in notice(b), notice(b))
+        w.upload('/install.php', site('น่าน', temple_source='file'), 'bad.xlsx', b'not a zip', '/install.php?step=3', field='temple_file')
+        c, _, b = w.req('/install.php?step=3')
+        check('P3b ไฟล์ .xlsx เสีย → แจ้งข้อผิดพลาด ไม่ล้ม', 'ไม่ใช่ไฟล์ Excel' in notice(b) or 'อ่านไฟล์' in notice(b), notice(b))
+        c, loc, _ = w.upload('/install.php', site('น่าน', temple_source='file'), 'nan.xlsx', xlsx, '/install.php?step=3', field='temple_file')
+        check('P4 ไฟล์น่าน + จังหวัดน่าน → ผ่านไปขั้น 4', c == 302 and loc == 'install.php?step=4', f'{c} {loc}')
+        staged = [f for f in os.listdir(os.path.join(app.dir, 'storage')) if f.startswith('install_temples_')]
+        check('P4b ไฟล์ที่อัปโหลดถูกเก็บชั่วคราวใน storage/ (1 ไฟล์)', len(staged) == 1, str(staged))
+        w.post('/install.php', {'action': 'mail_save', 'mail_driver': 'log', 'smtp_port': '587', 'smtp_secure': 'none'}, '/install.php?step=4')
+        c, _, b = w.req('/install.php?step=5')
+        check('P5 หน้าสรุปแสดงจังหวัดน่านและไฟล์ที่นำเข้า', 'น่าน' in b and 'nan.xlsx' in b and '4 วัด 3 อำเภอ' in b)
+        c, loc, _ = w.post('/install.php', {'action': 'install'}, '/install.php?step=5')
+        check('P6 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
+        c, _, b = w.req('/install.php?step=done')
+        check('P6b หน้าเสร็จสิ้นแสดงจังหวัดน่าน 3 อำเภอ + เตือนเปลี่ยนตราระบบ', 'น่าน' in b and '3 อำเภอ' in b and 'assets/img/logo.svg' in b)
+        check('P7 ตั้งชื่อจังหวัดในตาราง settings', q("SELECT v FROM settings WHERE k='province_name'") == 'น่าน')
+        check('P8 อำเภอมีเฉพาะของน่าน ไม่มีอำเภอตัวอย่างของแพร่',
+              sorted(q("SELECT name FROM districts ORDER BY name").split('\n')) == sorted(['เมืองน่าน', 'ปัว', 'ท่าวังผา']), q("SELECT GROUP_CONCAT(name) FROM districts"))
+        check('P9 นำเข้าวัด 4 วัด + รหัสอำเภอจากรหัสวัด', q("SELECT COUNT(*) FROM temples") == '4' and q("SELECT code FROM districts WHERE name='ปัว'") == '5502')
+        check('P10 สร้างบัญชีแอดมินวัด 4 บัญชี', q("SELECT COUNT(*) FROM users WHERE role='temple'") == '4')
+        check('P11 ไฟล์ชั่วคราวถูกลบหลังติดตั้ง', not [f for f in os.listdir(os.path.join(app.dir, 'storage')) if f.startswith('install_temples_')])
+        c, _, b = Client(app.serve()).req('/index.php')
+        check('P12 หน้าแรกแสดงข้อความของจังหวัดน่าน', c == 200 and 'จังหวัดน่าน' in b and 'จังหวัดแพร่' not in b, b[:0])
+        check('P12b ค่า province_name ถูกเขียนใน config.local.php', "'province_name' => 'น่าน'" in open(os.path.join(app.dir, 'config.local.php'), encoding='utf8').read())
+    finally:
+        problems = app.php_problems()
+        check('P13 ไม่มี PHP warning ในการติดตั้งจังหวัดอื่น', not problems, '\n'.join(problems[:3]))
+        app.close()
+
+    # ---- เชียงใหม่ + นำเข้าภายหลัง
+    app = App()
+    try:
+        w, name = start(app)
+        q = db.q(name)
+        c, loc, _ = w.upload('/install.php', site('เชียงใหม่'), None, b'', '/install.php?step=3')
+        check('Q1 เลือกนำเข้าภายหลัง → ผ่านขั้น 3', c == 302 and loc == 'install.php?step=4', f'{c} {loc}')
+        c, loc, _ = finish(w)
+        check('Q2 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
+        c, _, b = w.req('/install.php?step=done')
+        check('Q3 หน้าเสร็จสิ้นบอกให้นำเข้าทะเบียนวัดภายหลัง', 'นำเข้าทะเบียนวัด' in b and 'เชียงใหม่' in b)
+        check('Q4 ไม่มีอำเภอตัวอย่างของแพร่ และไม่มีวัด', q("SELECT COUNT(*) FROM districts") == '0' and q("SELECT COUNT(*) FROM temples") == '0')
+        cl = Client(app.serve())
+        check('Q5 หน้าสาธารณะใช้ได้แม้ยังไม่มีอำเภอ', all(cl.req(p)[0] == 200 for p in ['/index.php', '/temples.php', '/login.php']))
+        check('Q5b หน้าแรกแสดงจังหวัดเชียงใหม่', 'จังหวัดเชียงใหม่' in cl.req('/index.php')[2])
+    finally:
+        problems = app.php_problems()
+        check('Q6 ไม่มี PHP warning (ติดตั้งแบบนำเข้าภายหลัง)', not problems, '\n'.join(problems[:3]))
+        app.close()
