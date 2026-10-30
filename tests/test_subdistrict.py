@@ -32,7 +32,11 @@ def _run(R, q, app):
 
     # ================= A: สร้างผู้ใช้ทุกระดับของจังหวัดแพร่อัตโนมัติ =================
     import csv
-    n_tambon = int(q("SELECT COUNT(*) FROM (SELECT 1 FROM temples WHERE subdistrict IS NOT NULL AND subdistrict<>'' GROUP BY district_id, subdistrict) x"))
+    import json
+    from pathlib import Path
+    geo = json.loads((Path(__file__).resolve().parent.parent / 'data' / 'thai_geo.json').read_text(encoding='utf-8'))
+    phrae = next(p for p in geo['provinces'] if p['name'] == 'แพร่')
+    n_tambon = sum(len(d['subs']) for d in phrae['districts'])   # ตำบลตามฐานข้อมูลจังหวัด (78) — วังหงษ์/วังหงส์ในทะเบียนวัดใช้ผู้ใช้เดียวกัน
     files = sorted((app.dir / 'storage').glob('staff_accounts_*.csv'))
     rows = list(csv.reader(files[0].open(encoding='utf-8-sig'))) if files else []
     check('A1 setup.php สร้างผู้ใช้เจ้าคณะจังหวัด 1 + อำเภอ 8 + ตำบลตามทะเบียน (บัญชี=%d) และบอกจำนวน' % (9 + n_tambon),
@@ -42,10 +46,12 @@ def _run(R, q, app):
     check('A3 เจ้าคณะจังหวัด 1 บัญชี ชื่อผู้ใช้ province', q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT username FROM users WHERE role='province'") == 'province')
     check('A4 แอดมินประจำอำเภอครบ 8 อำเภอ ชื่อผู้ใช้ amphoe<รหัสอำเภอ> ไม่ซ้ำอำเภอ',
           q("SELECT COUNT(DISTINCT district_id) FROM users WHERE role='district'") == '8' and q("SELECT COUNT(*) FROM users WHERE role='district' AND username REGEXP '^amphoe54[0-9]{2}$'") == '8')
-    check('A5 เจ้าคณะตำบลตำบลละ 1 บัญชี (%d ตำบล) ทุกบัญชีมีตำบลที่ดูแลตำบลเดียว' % n_tambon,
-          q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == str(n_tambon) and q("SELECT COUNT(*) FROM user_subdistricts") == str(n_tambon)
-          and q("SELECT COUNT(*) FROM (SELECT user_id FROM user_subdistricts GROUP BY user_id HAVING COUNT(*)<>1) x") == '0')
-    check('A6 ชื่อผู้ใช้เจ้าคณะตำบลมาจากรหัสตำบลของรหัสวัด (ร้องกวาง ทุ่งศรี = tambon540207) และไม่ซ้ำกัน',
+    check('A5 เจ้าคณะตำบลตำบลละ 1 บัญชี (%d ตำบลตามฐานข้อมูลจังหวัด แม้ตำบลที่ยังไม่มีวัด)' % n_tambon,
+          q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == str(n_tambon) and q("SELECT COUNT(*) FROM districts") == '8'
+          and q("SELECT COUNT(*) FROM (SELECT user_id FROM user_subdistricts GROUP BY user_id HAVING COUNT(*)<1) x") == '0')
+    check('A5b ตำบลที่ทะเบียนวัดสะกดต่าง (วังหงษ์/วังหงส์) ใช้เจ้าคณะตำบลคนเดียวดูแลทั้งสองชื่อ',
+          q("SELECT COUNT(*) FROM (SELECT user_id FROM user_subdistricts WHERE subdistrict IN ('วังหงส์','วังหงษ์') GROUP BY user_id HAVING COUNT(*)=2) x") == '1')
+    check('A6 ชื่อผู้ใช้เจ้าคณะตำบลมาจากรหัสตำบลท้องถิ่น (ร้องกวาง ทุ่งศรี = tambon540207) และไม่ซ้ำกัน',
           q("SELECT u.username FROM users u JOIN user_subdistricts s ON s.user_id=u.id WHERE s.subdistrict='ทุ่งศรี'") == 'tambon540207'
           and q("SELECT COUNT(DISTINCT username) FROM users WHERE role='subdistrict'") == str(n_tambon))
     check('A7 บัญชีที่สร้างทั้งหมดต้องเปลี่ยนรหัสผ่านครั้งแรก และเก็บเป็นแฮช',

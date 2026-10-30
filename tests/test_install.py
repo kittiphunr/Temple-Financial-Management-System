@@ -250,6 +250,13 @@ def _run(db, R, smtp, wiz, full, app):
     check('F15 เจ้าหน้าที่อำเภอไม่ถูกบังคับเปลี่ยนรหัส', loc == 'index.php' and d.req('/transactions.php?type=income')[0] == 200)
 
 
+def _geo(name):
+    import json
+    g = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'thai_geo.json'), encoding='utf-8'))
+    p = next(x for x in g['provinces'] if x['name'] == name)
+    return len(p['districts']), sum(len(d['subs']) for d in p['districts'])
+
+
 def _provinces(db, R):
     """ติดตั้งสำหรับจังหวัดอื่น: เลือกจังหวัด + อัปโหลดไฟล์ Excel ทะเบียนวัด / นำเข้าภายหลัง"""
     from test_import import HEAD, make_xlsx, trow
@@ -257,7 +264,7 @@ def _provinces(db, R):
 
     def temple(i, district, code, province='น่าน'):
         return trow(**{'ลำดับ': i, 'รหัสวัด': code, 'ชื่อวัด': f'วัดทดสอบ{i}', 'แขวง/ตำบล': 'ในเวียง', 'เขต/อำเภอ': district, 'จังหวัด': province, 'ประเภทวัด': 'วัดราษฎร์'})
-    rows = [HEAD] + [temple(1, 'เมืองน่าน', '05550101001'), temple(2, 'เมืองน่าน', '05550101002'), temple(3, 'ปัว', '05550201001'), temple(4, 'ท่าวังผา', '05550301001')]
+    rows = [HEAD] + [temple(1, 'เมืองน่าน', '05550101001'), temple(2, 'เมืองน่าน', '05550101002'), temple(3, 'ปัว', '05550501001'), temple(4, 'ท่าวังผา', '05550601001')]
     xlsx = make_xlsx(rows)
 
     def start(app):
@@ -301,26 +308,29 @@ def _provinces(db, R):
         check('P4b ไฟล์ที่อัปโหลดถูกเก็บชั่วคราวใน storage/ (1 ไฟล์)', len(staged) == 1, str(staged))
         w.post('/install.php', {'action': 'mail_save', 'mail_driver': 'log', 'smtp_port': '587', 'smtp_secure': 'none'}, '/install.php?step=4')
         c, _, b = w.req('/install.php?step=5')
-        check('P5 หน้าสรุปแสดงจังหวัดน่านและไฟล์ที่นำเข้า', 'น่าน' in b and 'nan.xlsx' in b and '4 วัด 3 อำเภอ' in b)
+        check('P5 หน้าสรุปแสดงจังหวัดน่านและไฟล์ที่นำเข้า', 'น่าน' in b and 'nan.xlsx' in b and '4 วัด 3 อำเภอ' in b and 'จากฐานข้อมูลจังหวัด' in b)
         c, loc, _ = w.post('/install.php', {'action': 'install'}, '/install.php?step=5')
         check('P6 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
         c, _, b = w.req('/install.php?step=done')
-        check('P6b หน้าเสร็จสิ้นแสดงจังหวัดน่าน 3 อำเภอ + เตือนเปลี่ยนตราระบบ', 'น่าน' in b and '3 อำเภอ' in b and 'assets/img/logo.svg' in b)
-        check('P6c หน้าเสร็จสิ้นมีปุ่มดาวน์โหลดรหัสผ่านผู้ใช้จังหวัด/อำเภอ/ตำบล', 'download=staff' in b and '7 บัญชี' in b)
+        nd, ns = _geo('น่าน')
+        check('P6b หน้าเสร็จสิ้นแสดงจังหวัดน่านและจำนวนอำเภอจากฐานข้อมูลจังหวัด + เตือนเปลี่ยนตราระบบ', 'น่าน' in b and f'{nd} อำเภอ' in b and 'assets/img/logo.svg' in b)
+        check('P6c หน้าเสร็จสิ้นมีปุ่มดาวน์โหลดรหัสผ่านผู้ใช้จังหวัด/อำเภอ/ตำบล', 'download=staff' in b and f'{1 + nd + ns} บัญชี' in b)
         c, _, sb = w.req('/install.php?download=staff')
         c2, _, _ = w.req('/install.php?download=staff')
-        check('P6d ดาวน์โหลด CSV ผู้ใช้จังหวัด/อำเภอ/ตำบล ได้ครั้งเดียว (7 บัญชี)', c == 200 and sb.count('\n') == 8 and 'เจ้าคณะจังหวัดน่าน' in sb and 'province' in sb and 'tambon' in sb and 'amphoe' in sb and 'download=staff' not in w.req('/install.php?step=done')[2], str(sb[:150]))
-        check('P6e สร้างผู้ใช้เจ้าคณะจังหวัด 1 · แอดมินอำเภอ 3 · เจ้าคณะตำบล 3 (ตามไฟล์) และบังคับเปลี่ยนรหัส',
-              q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT COUNT(*) FROM users WHERE role='district'") == '3'
-              and q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == '3' and q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict') AND must_change_password=0") == '0')
+        check('P6d ดาวน์โหลด CSV ผู้ใช้จังหวัด/อำเภอ/ตำบล ได้ครั้งเดียว', c == 200 and sb.count('\n') == 2 + nd + ns and 'เจ้าคณะจังหวัดน่าน' in sb and 'province' in sb and 'tambon' in sb and 'amphoe' in sb and 'download=staff' not in w.req('/install.php?step=done')[2], str(sb[:150]))
+        check('P6e สร้างผู้ใช้ตามฐานข้อมูลจังหวัดน่าน: เจ้าคณะจังหวัด 1 · แอดมินอำเภอ %d · เจ้าคณะตำบล %d และบังคับเปลี่ยนรหัส' % (nd, ns),
+              q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT COUNT(*) FROM users WHERE role='district'") == str(nd)
+              and q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == str(ns) and q("SELECT COUNT(*) FROM users WHERE role IN ('province','district','subdistrict') AND must_change_password=0") == '0')
         check('P7 ตั้งชื่อจังหวัดในตาราง settings', q("SELECT v FROM settings WHERE k='province_name'") == 'น่าน')
-        check('P8 อำเภอมีเฉพาะของน่าน ไม่มีอำเภอตัวอย่างของแพร่',
-              sorted(q("SELECT name FROM districts ORDER BY name").split('\n')) == sorted(['เมืองน่าน', 'ปัว', 'ท่าวังผา']), q("SELECT GROUP_CONCAT(name) FROM districts"))
-        check('P9 นำเข้าวัด 4 วัด + รหัสอำเภอจากรหัสวัด', q("SELECT COUNT(*) FROM temples") == '4' and q("SELECT code FROM districts WHERE name='ปัว'") == '5502')
+        check('P8 อำเภอครบตามฐานข้อมูลจังหวัดน่าน (ไฟล์ใช้ชื่อตรงกัน ไม่เกิดอำเภอซ้ำ) ไม่มีอำเภอตัวอย่างของแพร่',
+              q("SELECT COUNT(*) FROM districts") == str(nd) and q("SELECT COUNT(*) FROM districts WHERE name='เมืองแพร่'") == '0' and q("SELECT COUNT(DISTINCT t.district_id) FROM temples t") == '3', q("SELECT COUNT(*) FROM districts"))
+        check('P9 นำเข้าวัด 4 วัด + รหัสอำเภอจากรหัสวัด', q("SELECT COUNT(*) FROM temples") == '4' and q("SELECT code FROM districts WHERE name='ปัว'") == '5505')
         check('P10 สร้างบัญชีแอดมินวัด 4 บัญชี', q("SELECT COUNT(*) FROM users WHERE role='temple'") == '4')
         check('P11 ไฟล์ชั่วคราวถูกลบหลังติดตั้ง', not [f for f in os.listdir(os.path.join(app.dir, 'storage')) if f.startswith('install_temples_')])
         c, _, b = Client(app.serve()).req('/index.php')
         check('P12 หน้าแรกแสดงข้อความของจังหวัดน่าน', c == 200 and 'จังหวัดน่าน' in b and 'จังหวัดแพร่' not in b, b[:0])
+        check('P12a เจ้าคณะตำบลได้ตำบลของตนเอง (เมืองน่าน ในเวียง = tambon550101) และทุกตำบลมีผู้ดูแล', q("SELECT COUNT(*) FROM users WHERE username='tambon550101'") == '1'
+              and int(q("SELECT COUNT(*) FROM (SELECT district_id, subdistrict FROM user_subdistricts GROUP BY district_id, subdistrict) x")) >= ns)
         check('P12b ค่า province_name ถูกเขียนใน config.local.php', "'province_name' => 'น่าน'" in open(os.path.join(app.dir, 'config.local.php'), encoding='utf8').read())
     finally:
         problems = app.php_problems()
@@ -346,4 +356,28 @@ def _provinces(db, R):
     finally:
         problems = app.php_problems()
         check('Q6 ไม่มี PHP warning (ติดตั้งแบบนำเข้าภายหลัง)', not problems, '\n'.join(problems[:3]))
+        app.close()
+
+    # ---- ภูเก็ต + ไม่มีไฟล์ทะเบียนวัด: สร้างอำเภอและผู้ใช้จากฐานข้อมูลจังหวัดอย่างเดียว
+    app = App()
+    try:
+        w, name = start(app)
+        q = db.q(name)
+        gd, gs = _geo('ภูเก็ต')
+        c, loc, _ = w.upload('/install.php', site('ภูเก็ต', make_staff='1'), None, b'', '/install.php?step=3')
+        check('R1 เลือกภูเก็ต + นำเข้าภายหลัง + สร้างผู้ใช้จากฐานข้อมูลจังหวัด → ผ่านขั้น 3', c == 302 and loc == 'install.php?step=4', f'{c} {loc}')
+        c, _, b = w.req('/install.php?step=5') if w.post('/install.php', {'action': 'mail_save', 'mail_driver': 'log', 'smtp_port': '587', 'smtp_secure': 'none'}, '/install.php?step=4') else (0, 0, '')
+        check('R2 หน้าสรุปแสดงจำนวนอำเภอ/ตำบลของภูเก็ต', f'{gd} อำเภอ {gs} ตำบล' in b)
+        c, loc, _ = w.post('/install.php', {'action': 'install'}, '/install.php?step=5')
+        check('R3 ติดตั้งสำเร็จ', c == 302 and loc == 'install.php?step=done', f'{c} {loc}')
+        check('R4 อำเภอครบตามฐานข้อมูลภูเก็ต ไม่มีวัด', q("SELECT COUNT(*) FROM districts") == str(gd) and q("SELECT COUNT(*) FROM temples") == '0')
+        check('R5 ผู้ใช้: เจ้าคณะจังหวัด 1 · แอดมินอำเภอ %d · เจ้าคณะตำบล %d (ยังไม่มีวัดก็สร้างครบ)' % (gd, gs),
+              q("SELECT COUNT(*) FROM users WHERE role='province'") == '1' and q("SELECT COUNT(*) FROM users WHERE role='district'") == str(gd)
+              and q("SELECT COUNT(*) FROM users WHERE role='subdistrict'") == str(gs) and q("SELECT COUNT(*) FROM user_subdistricts") == str(gs))
+        check('R6 ชื่อผู้ใช้ตามรหัสท้องถิ่น (amphoe8301 / tambon830101) และไม่มีบัญชีวัด', q("SELECT COUNT(*) FROM users WHERE username='amphoe8301'") == '1'
+              and q("SELECT COUNT(*) FROM users WHERE username='tambon830101'") == '1' and q("SELECT COUNT(*) FROM users WHERE role='temple'") == '0')
+        check('R7 โควตาผู้ใช้ระดับจังหวัด/อำเภอ = อำเภอ + 2 (ไม่นับเจ้าคณะตำบล)', q("SELECT COUNT(*) FROM users WHERE role NOT IN ('temple','subdistrict')") == str(gd + 2))
+    finally:
+        problems = app.php_problems()
+        check('R8 ไม่มี PHP warning (ติดตั้งจากฐานข้อมูลจังหวัด)', not problems, '\n'.join(problems[:3]))
         app.close()

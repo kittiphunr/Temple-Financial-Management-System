@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
     if ($act === 'provision_staff') {
-        $created = staff_provision_all($pdo);
+        $created = staff_provision_all($pdo, true, true, true, thai_geo_province(province_name()));
         if ($created) {
             $_SESSION['new_staff_creds'] = array_merge($_SESSION['new_staff_creds'] ?? [], $created);
             audit('provision_staff', 'user', null, count($created) . ' accounts');

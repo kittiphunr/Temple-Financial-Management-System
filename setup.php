@@ -14,6 +14,7 @@ require __DIR__ . '/includes/temple_import.php';
 require __DIR__ . '/includes/crypto.php';
 require __DIR__ . '/includes/staff.php';
 require __DIR__ . '/includes/subdistricts.php';
+require __DIR__ . '/includes/thai_geo.php';
 require __DIR__ . '/includes/staff_provision.php';
 $CONFIG = $cfg;   // crypto.php อ่านค่ากุญแจจากตัวแปร $CONFIG
 
@@ -55,7 +56,11 @@ if ($created) {
     echo "→ วัดต้องตั้งรหัสผ่านใหม่เองตอนเข้าสู่ระบบครั้งแรก (หลังยืนยันอีเมล)\n";
 }
 
-$staff = $noStaff ? [] : staff_provision_all($pdo);
+$geoProv = thai_geo_province((string)($cfg['province_name'] ?? ''));
+if ($geoProv && !$noStaff) {
+    thai_geo_seed_districts($pdo, $geoProv);   // อำเภอครบตามฐานข้อมูลจังหวัด (แพร่ 8 อำเภอมีอยู่แล้ว)
+}
+$staff = $noStaff ? [] : staff_provision_all($pdo, true, true, true, $geoProv);
 if ($staff) {
     $dir = __DIR__ . '/storage';
     is_dir($dir) || mkdir($dir, 0750, true);
@@ -64,7 +69,7 @@ if ($staff) {
     write_staff_credentials_csv($fh, $staff);
     fclose($fh);
     chmod($file, 0600);
-    echo 'สร้างผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล ' . count($staff) . " บัญชี (เจ้าคณะจังหวัด 1 · แอดมินอำเภอและเจ้าคณะตำบลตามทะเบียนวัด)\n";
+    echo 'สร้างผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล ' . count($staff) . " บัญชี (เจ้าคณะจังหวัด 1 · แอดมินอำเภอและเจ้าคณะตำบลตามฐานข้อมูลจังหวัด)\n";
     echo "บันทึกชื่อผู้ใช้/รหัสผ่านเริ่มต้นไว้ที่ $file — ต้องลงอีเมลของแต่ละบัญชีในระบบก่อนจึงเข้าสู่ระบบได้ แล้วลบไฟล์นี้หลังแจกจ่าย\n";
 }
 

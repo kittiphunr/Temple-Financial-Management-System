@@ -5,7 +5,8 @@
  *  - แอดมินประจำอำเภอ อำเภอละ 1 บัญชี: amphoe<รหัสอำเภอ> เช่น amphoe5401
  *  - เจ้าคณะตำบล ตำบลละ 1 บัญชี (ดูอย่างเดียว): tambon<รหัสตำบล 6 หลักจากรหัสวัด> เช่น tambon540207
  * รหัสผ่านเริ่มต้นสุ่ม (ในฐานข้อมูลเก็บเฉพาะแฮช) บังคับเปลี่ยนตอนเข้าสู่ระบบครั้งแรก — ยังไม่มีอีเมล: แอดมินหลักต้องลงอีเมลก่อนจึงเข้าสู่ระบบได้ (รหัสยืนยัน 2 ชั้น)
- * ต้องโหลด accounts.php (gen_password) และ subdistricts.php ก่อน
+ * ตำบลมาจากฐานข้อมูลจังหวัด (data/thai_geo.json ผ่าน $geoProvince) ร่วมกับตำบลที่พบในทะเบียนวัด (กรณีสะกดต่างจากฐานข้อมูล) ตัวที่ไม่มีรหัสตำบลใช้ชื่อสำรอง
+ * ต้องโหลด accounts.php (gen_password) subdistricts.php staff.php และ thai_geo.php ก่อน
  */
 
 /** รหัสผ่านสุ่มสำหรับผู้ใช้ระดับจังหวัด/อำเภอ/ตำบล: 12 ตัว มีทั้งตัวอักษรและตัวเลข (ตามเงื่อนไขของบัญชีที่ไม่ใช่วัด) */
@@ -38,9 +39,10 @@ function staff_tambon_geocode(PDO $pdo, int $districtId, string $districtCode, s
 }
 
 /**
+ * @param array|null $geoProvince ข้อมูลจังหวัดจาก thai_geo_province() — ใส่แล้วสร้างเจ้าคณะตำบลครบทุกตำบลของจังหวัด แม้ยังไม่มีวัดในตำบลนั้น
  * @return array<int,array{0:string,1:string,2:string,3:string,4:string}> แถว [ตำแหน่ง, ขอบเขต, ชื่อ-สกุลในระบบ, ชื่อผู้ใช้, รหัสผ่านเริ่มต้น]
  */
-function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = true, bool $tambons = true): array
+function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = true, bool $tambons = true, ?array $geoProvince = null): array
 {
     @set_time_limit(0);
     $rows = [];
@@ -82,21 +84,47 @@ function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = 
         }
     }
     if ($tambons) {
+        // ตำบลที่ต้องมีเจ้าคณะ: จากฐานข้อมูลจังหวัด (มีรหัสตำบล) + ตำบลในทะเบียนวัดที่ชื่อไม่ตรงกับฐานข้อมูล (ไม่มีรหัส)
+        $cands = [];
+        $seen = [];
+        $byGeo = [];
+        $dcode = array_column($dist, 'code', 'id');
+        foreach ($geoProvince ? thai_geo_subdistricts($pdo, $geoProvince) : [] as $g) {
+            $k = $g['district_id'] . '|' . $g['subdistrict'];
+            if (!isset($seen[$k])) {
+                $seen[$k] = true;
+                $byGeo[$g['code']] = count($cands);
+                $cands[] = ['district_id' => $g['district_id'], 'subdistrict' => $g['subdistrict'], 'code' => $g['code'], 'aliases' => []];
+            }
+        }
+        foreach (subdistrict_options($pdo) as $o) {
+            $k = $o['district_id'] . '|' . $o['subdistrict'];
+            if (isset($seen[$k])) {
+                continue;
+            }
+            $seen[$k] = true;
+            // ชื่อตำบลในทะเบียนวัดสะกดต่างจากฐานข้อมูล (เช่น วังหงษ์/วังหงส์) แต่รหัสตำบลในรหัสวัดตรงกัน = ตำบลเดียวกัน: ให้เจ้าคณะตำบลคนเดิมดูแลทั้งสองชื่อ
+            $dc = preg_replace('/[^0-9]/', '', (string)($dcode[$o['district_id']] ?? ''));
+            $geo = $dc !== '' ? staff_tambon_geocode($pdo, $o['district_id'], $dc, $o['subdistrict']) : null;
+            if ($geo !== null && isset($byGeo[$geo]) && $cands[$byGeo[$geo]]['district_id'] === $o['district_id']) {
+                $cands[$byGeo[$geo]]['aliases'][] = $o['subdistrict'];
+                continue;
+            }
+            $cands[] = ['district_id' => $o['district_id'], 'subdistrict' => $o['subdistrict'], 'code' => null, 'aliases' => []];
+        }
         $assigned = [];
         foreach ($pdo->query('SELECT district_id, subdistrict FROM user_subdistricts') as $a) {
             $assigned[$a['district_id'] . '|' . $a['subdistrict']] = true;
         }
-        $dcode = array_column($dist, 'code', 'id');
+        $dname = array_column($dist, 'name', 'id');
         $used = array_flip($pdo->query("SELECT username FROM users WHERE role = 'subdistrict'")->fetchAll(PDO::FETCH_COLUMN));
         $seq = [];
-        $dname = array_column($dist, 'name', 'id');
-        foreach (subdistrict_options($pdo) as $o) {
-            $key = $o['district_id'] . '|' . $o['subdistrict'];
-            if (isset($assigned[$key])) {
+        foreach ($cands as $o) {
+            if (isset($assigned[$o['district_id'] . '|' . $o['subdistrict']])) {
                 continue;
             }
             $dc = preg_replace('/[^0-9]/', '', (string)($dcode[$o['district_id']] ?? ''));
-            $geo = $dc !== '' ? staff_tambon_geocode($pdo, $o['district_id'], $dc, $o['subdistrict']) : null;
+            $geo = $o['code'] ?: ($dc !== '' ? staff_tambon_geocode($pdo, $o['district_id'], $dc, $o['subdistrict']) : null);
             $username = $geo ? 'tambon' . $geo : '';
             if ($username === '' || isset($used[$username])) {
                 do {
@@ -110,7 +138,10 @@ function staff_provision_all(PDO $pdo, bool $province = true, bool $districts = 
                 $pdo->commit();
                 continue;
             }
-            $pdo->prepare('INSERT INTO user_subdistricts (user_id, district_id, subdistrict) VALUES (?,?,?)')->execute([$id, $o['district_id'], $o['subdistrict']]);
+            $insArea = $pdo->prepare('INSERT INTO user_subdistricts (user_id, district_id, subdistrict) VALUES (?,?,?)');
+            foreach (array_merge([$o['subdistrict']], $o['aliases']) as $nm) {
+                $insArea->execute([$id, $o['district_id'], $nm]);
+            }
             $pdo->commit();
             $used[$username] = true;
         }
