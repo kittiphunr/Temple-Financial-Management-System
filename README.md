@@ -84,8 +84,7 @@ TFMS_MAIL_FROM=no-reply@your-domain.org
 (มี `.htaccess` สำหรับ Apache แล้ว; Nginx ให้ `deny all` เอง)
 
 ### ฐานข้อมูลที่ติดตั้งไว้ก่อนมีฟีเจอร์นี้
-รัน `sql/migrations/2026_temple_accounts.sql` และ `sql/migrations/2026_must_change_password.sql` (บัญชีวัดที่มีอยู่จะถูกขอให้ตั้งรหัสผ่านใหม่หนึ่งครั้ง)
-ส่วนโลโก้/บุคลากร/โควตาผู้ใช้ รัน `sql/migrations/2026_logos_people_staff.sql` และอนุโมทนาบัตรรัน `sql/migrations/2026_donation_receipts.sql` (ตรวจก่อนว่าไม่มีแอดมินอำเภอซ้ำในอำเภอเดียวกัน) แล้วกดปุ่ม "สร้างบัญชีให้วัดที่ยังไม่มี" ที่ จัดการระบบ → บัญชีวัด
+ต้องรัน `sql/migrations/*.sql` ตามลำดับ (ครั้งเดียวต่อไฟล์) หลังสำรองฐานข้อมูล — ขั้นตอนเต็ม การตรวจว่าอยู่รุ่นไหน ข้อควรตรวจก่อนรัน และสิ่งที่ต้องทำหลังอัปเกรด ดู **[UPGRADE.md](UPGRADE.md)**
 
 ## การทดสอบ
 ```bash
