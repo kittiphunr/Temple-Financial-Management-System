@@ -73,6 +73,13 @@ TFMS_MAIL_FROM=no-reply@your-domain.org
 ### ฐานข้อมูลที่ติดตั้งไว้ก่อนมีฟีเจอร์นี้
 รัน `sql/migrations/2026_temple_accounts.sql` และ `sql/migrations/2026_must_change_password.sql` (บัญชีวัดที่มีอยู่จะถูกขอให้ตั้งรหัสผ่านใหม่หนึ่งครั้ง) แล้วกดปุ่ม "สร้างบัญชีให้วัดที่ยังไม่มี" ที่ จัดการระบบ → บัญชีวัด
 
+## การทดสอบ
+```bash
+export TFMS_TEST_DB_USER=root TFMS_TEST_DB_PASS=...   # บัญชีที่สร้าง/ลบฐานข้อมูลได้
+python3 tests/run_all.py                              # ราว 1 นาที; รันบนสำเนาชั่วคราว + ฐานข้อมูลชื่อสุ่ม ไม่แตะข้อมูลจริง
+```
+รายละเอียดและข้อจำกัดดู `tests/README.md`
+
 ## การจัดหน้า (Tailwind CSS)
 ทุกหน้าใช้ Tailwind CSS 3 จัดหน้า รองรับมือถือ/แท็บเล็ต/เดสก์ท็อป และพิมพ์รายงานได้ (`print:` variants)
 ไฟล์ `assets/css/tailwind.css` ที่ build แล้วถูก commit ไว้ ใช้งานบนเซิร์ฟเวอร์ PHP ได้เลยโดยไม่ต้องมี Node
@@ -113,5 +120,6 @@ includes/  bootstrap (DB, auth, CSRF, scope), install_lib, accounts, twofactor, 
 storage/   ไฟล์ที่ห้ามเข้าถึงจากเว็บ (รหัสผ่านเริ่มต้น, mail.log)
 data/      temples_phrae.csv (ทะเบียนวัด), temples_template.csv   tools/  build_temples_csv.py
 sql/       schema.sql, seed.sql, migrations/      assets/  css (input.css, tailwind.css), img/logo.svg (ตัวอย่าง — เปลี่ยนเป็นตราจริงได้)
+tests/     ชุดทดสอบ end-to-end (python3 tests/run_all.py)
 tailwind.config.js  package.json  config.php (ค่าเริ่มต้น)  config.local.php (สร้างโดยตัวช่วยติดตั้ง ห้าม commit)
 ```
