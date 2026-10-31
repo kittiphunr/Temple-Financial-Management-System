@@ -272,11 +272,37 @@ CREATE TABLE IF NOT EXISTS monthly_reports (
   note VARCHAR(255) NULL,
   closed_at DATETIME NULL COMMENT 'ปิดงวดแล้ว (ล็อกการแก้ไขรายการของเดือนนี้) NULL = ยังเปิดอยู่',
   closed_by INT UNSIGNED NULL,
+  sub_approved_at DATETIME NULL COMMENT 'เจ้าคณะตำบลรับรองรอบส่งปัจจุบันเมื่อ',
+  sub_approved_by INT UNSIGNED NULL,
+  dist_approved_at DATETIME NULL COMMENT 'อำเภอรับรองรอบส่งปัจจุบันเมื่อ',
+  dist_approved_by INT UNSIGNED NULL,
+  returned_at DATETIME NULL COMMENT 'ถูกส่งกลับแก้ไขเมื่อ (ล้างเมื่อวัดส่งใหม่)',
+  returned_by INT UNSIGNED NULL,
+  return_reason VARCHAR(255) NULL,
   UNIQUE KEY uq_report (temple_id, report_year, report_month),
   KEY idx_report_period (report_year, report_month),
   CONSTRAINT fk_report_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_report_user FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
-  CONSTRAINT fk_report_closer FOREIGN KEY (closed_by) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_report_closer FOREIGN KEY (closed_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_report_sub_appr FOREIGN KEY (sub_approved_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_report_dist_appr FOREIGN KEY (dist_approved_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_report_returner FOREIGN KEY (returned_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ประวัติการรับรอง/ส่งกลับรายงาน (เก็บถาวร ไม่ถูกล้างเมื่อวัดส่งใหม่)
+CREATE TABLE IF NOT EXISTS report_review_events (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  report_year SMALLINT UNSIGNED NOT NULL,
+  report_month TINYINT UNSIGNED NOT NULL,
+  revision SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  action ENUM('sub_approve','dist_approve','return') NOT NULL,
+  reason VARCHAR(255) NULL,
+  by_user INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL,
+  KEY idx_review_temple (temple_id, report_year, report_month),
+  CONSTRAINT fk_review_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_review_user FOREIGN KEY (by_user) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ประวัติการปิด/เปิดงวด (เปิดงวดต้องระบุเหตุผล)
