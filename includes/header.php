@@ -59,6 +59,7 @@ if (!$u) {
     if ($canWrite) {
         $menu[] = nav_group('บันทึกบัญชี', 'edit-3', [
             nav_link('quick.php', 'บันทึกด่วน', 'zap', $cur === 'quick.php'),
+            recurring_available() ? nav_link('recurring.php', 'รายการประจำ', 'repeat', $cur === 'recurring.php') : null,
             nav_link('transactions.php?type=income', 'บัญชีรายรับ', 'trending-up', $cur === 'transactions.php' && $type === 'income'),
             nav_link('transactions.php?type=expense', 'บัญชีรายจ่าย', 'trending-down', $cur === 'transactions.php' && $type === 'expense'),
             nav_link('receipts.php', 'อนุโมทนาบัตร', 'award', in_array($cur, ['receipts.php', 'receipt.php'], true)),
@@ -153,6 +154,12 @@ if ($u && $role === 'temple' && !$forced && !in_array($cur, ['profile.php', 'acc
   <div class="callout flex flex-wrap items-center justify-between gap-2 border-sky-200 bg-sky-50 text-sky-950 print:hidden">
     <span>ยังไม่ได้ตั้ง <strong>ยอดยกมาเงินสด</strong> และรายละเอียดบัญชีธนาคารของวัด — ใช้ออกรายงานแบบที่ 1–3 ประจำเดือน</span>
     <a class="btn btn-outline btn-sm" href="<?= BASE ?>profile.php#accounts">กรอกบัญชีของวัด →</a>
+  </div>
+    <?php endif;
+    if ($cur === 'dashboard.php' && ($dueN = recurring_due_count(db(), (int)$u['temple_id'])) > 0): ?>
+  <div class="callout flex flex-wrap items-center justify-between gap-2 border-sky-200 bg-sky-50 text-sky-950 print:hidden">
+    <span>มี <strong>รายการประจำ <?= $dueN ?> รายการ</strong> ถึงกำหนดรอยืนยันบันทึก</span>
+    <a class="btn btn-outline btn-sm" href="<?= BASE ?>recurring.php">ตรวจและบันทึก →</a>
   </div>
     <?php endif;
 endif; ?>
