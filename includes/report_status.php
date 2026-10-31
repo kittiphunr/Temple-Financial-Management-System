@@ -107,7 +107,9 @@ function report_submit(PDO $pdo, int $templeId, int $beYear, int $month, ?int $u
         return [false, 'เดือนนี้ปิดงวดแล้ว ส่งรายงานใหม่ไม่ได้ (ต้องเปิดงวดก่อน)'];
     }
     if ($old) {
-        $pdo->prepare('UPDATE monthly_reports SET submitted_at = NOW(), submitted_by = ?, revision = revision + 1, txn_count = ?, income_total = ?, expense_total = ?, note = ?
+        // ส่งใหม่ = การรับรองและการส่งกลับของรอบก่อนหมดผล (ประวัติยังอยู่ใน report_review_events)
+        $reset = report_approval_available() ? ', sub_approved_at = NULL, sub_approved_by = NULL, dist_approved_at = NULL, dist_approved_by = NULL, returned_at = NULL, returned_by = NULL, return_reason = NULL' : '';
+        $pdo->prepare('UPDATE monthly_reports SET submitted_at = NOW(), submitted_by = ?, revision = revision + 1, txn_count = ?, income_total = ?, expense_total = ?, note = ?' . $reset . '
             WHERE id = ?')->execute([$userId, $snap['count'], $snap['income'], $snap['expense'], $note ?: null, $old['id']]);
         return [true, 'ส่งรายงานใหม่แล้ว (ครั้งที่ ' . ((int)$old['revision'] + 1) . ')'];
     }
@@ -125,7 +127,8 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
     [$from, $to] = report_month_range($beYear, $month);
     [$sc, $sp] = scope_sql('t');
     $sql = "SELECT t.id, t.name, t.subdistrict, t.email, d.id AS district_id, d.name AS district, d.sort_order,
-            r.submitted_at, r.revision, " . (month_close_available() ? 'r.closed_at' : 'NULL') . " AS closed_at, r.txn_count AS r_count, r.income_total AS r_income, r.expense_total AS r_expense, r.note, ub.full_name AS by_name,
+            r.submitted_at, r.revision, " . (month_close_available() ? 'r.closed_at' : 'NULL') . " AS closed_at,
+            " . (report_approval_available() ? 'r.sub_approved_at, r.dist_approved_at, r.returned_at, r.return_reason' : 'NULL AS sub_approved_at, NULL AS dist_approved_at, NULL AS returned_at, NULL AS return_reason') . ", r.txn_count AS r_count, r.income_total AS r_income, r.expense_total AS r_expense, r.note, ub.full_name AS by_name,
             COALESCE(s.c, 0) AS n_count, COALESCE(s.i, 0) AS n_income, COALESCE(s.e, 0) AS n_expense, m.sent_at AS reminded_at
         FROM temples t JOIN districts d ON d.id = t.district_id
         LEFT JOIN monthly_reports r ON r.temple_id = t.id AND r.report_year = ? AND r.report_month = ?
@@ -150,7 +153,11 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
     foreach ($st->fetchAll() as $r) {
         $rep = $r['submitted_at'] ? ['txn_count' => $r['r_count'], 'income_total' => $r['r_income'], 'expense_total' => $r['r_expense']] : null;
         $r['state'] = report_state($rep, ['count' => (int)$r['n_count'], 'income' => (float)$r['n_income'], 'expense' => (float)$r['n_expense']], $beYear, $month);
+        $r['approval'] = report_approval_state($r, $r['state']);
         $keep = match ($status) {
+            'awaiting' => in_array($r['approval'], ['waiting', 'sub'], true),
+            'returned' => $r['approval'] === 'returned',
+            'approved' => $r['approval'] === 'done',
             'sent' => in_array($r['state'], ['ok', 'changed'], true),
             'unsent' => in_array($r['state'], ['pending', 'late', 'future'], true),
             'late' => $r['state'] === 'late',
@@ -168,8 +175,12 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
 /** สรุปจำนวนตามสถานะ @return array{total:int,sent:int,unsent:int,late:int,changed:int} */
 function report_summary(array $rows): array
 {
-    $s = ['total' => count($rows), 'sent' => 0, 'unsent' => 0, 'late' => 0, 'changed' => 0, 'closed' => 0];
+    $s = ['total' => count($rows), 'sent' => 0, 'unsent' => 0, 'late' => 0, 'changed' => 0, 'closed' => 0, 'awaiting' => 0, 'returned' => 0, 'approved' => 0];
     foreach ($rows as $r) {
+        $a = $r['approval'] ?? 'none';
+        if (in_array($a, ['waiting', 'sub'], true)) $s['awaiting']++;
+        elseif ($a === 'returned') $s['returned']++;
+        elseif ($a === 'done') $s['approved']++;
         if (!empty($r['closed_at'])) $s['closed']++;
         if (in_array($r['state'], ['ok', 'changed'], true)) $s['sent']++;
         elseif ($r['state'] !== 'future') $s['unsent']++;
@@ -218,6 +229,212 @@ function report_send_reminders(PDO $pdo, array $rows, int $beYear, int $month, ?
         }
     }
     return $res;
+}
+
+// ===================== รับรองรายงานเป็นลำดับชั้น =====================
+// วัดส่งรายงาน → เจ้าคณะตำบลตรวจและ "รับรอง" → อำเภอ "รับรอง" (หรือส่งกลับแก้ไขพร้อมเหตุผลในขั้นใดก็ได้)
+// - รับรองได้เมื่อยอดปัจจุบันตรงกับตอนส่ง (state = ok) และยังไม่ถูกส่งกลับ · วัดส่งใหม่ = การรับรองรอบก่อนหมดผล
+// - อำเภอรับรองได้หลังเจ้าคณะตำบลรับรองแล้ว ยกเว้นตำบลนั้นยังไม่มีเจ้าคณะตำบลในระบบ (ข้ามขั้นได้) · แอดมินหลักรับรองในนามอำเภอได้เสมอ
+// - ส่งกลับ: ล้างการรับรอง เปิดงวดให้อัตโนมัติถ้าปิดอยู่ (บันทึกประวัติ) และแจ้งอีเมลวัด · เจ้าคณะตำบลส่งกลับไม่ได้หลังอำเภอรับรองแล้ว
+
+/** ฐานข้อมูลมีคอลัมน์รับรองหรือยัง (ยังไม่รัน migration 2026_report_approval.sql = ไม่มีขั้นตอนรับรอง ระบบทำงานแบบเดิม) */
+function report_approval_available(): bool
+{
+    static $ok = null;
+    if ($ok === null) {
+        try {
+            $ok = report_available();
+            if ($ok) {
+                db()->query('SELECT sub_approved_at, dist_approved_at, returned_at, return_reason FROM monthly_reports LIMIT 1');
+                db()->query('SELECT 1 FROM report_review_events LIMIT 1');
+            }
+        } catch (PDOException) {
+            $ok = false;
+        }
+    }
+    return $ok;
+}
+
+const REPORT_APPROVAL_LABEL = [
+    'none' => ['', ''], 'waiting' => ['รอรับรอง', 'badge-mute'], 'sub' => ['ตำบลรับรองแล้ว รออำเภอ', 'badge-mute'],
+    'done' => ['อำเภอรับรองแล้ว', 'badge-ok'], 'returned' => ['ส่งกลับแก้ไข', 'badge-err'], 'stale' => ['แก้ไขหลังรับรอง', ''],
+];
+
+/**
+ * สถานะการรับรอง: none = ยังไม่ส่ง/ยังไม่มีขั้นตอนรับรอง · waiting = รอเจ้าคณะตำบล · sub = ตำบลรับรองแล้วรออำเภอ · done = อำเภอรับรองแล้ว
+ *                 returned = ถูกส่งกลับแก้ไข · stale = เคยรับรองแต่มีการแก้ไขรายการหลังส่ง (ต้องส่งใหม่)
+ * @param array|null $r แถวที่มี sub_approved_at/dist_approved_at/returned_at  @param string $state ผลของ report_state()
+ */
+function report_approval_state(?array $r, string $state): string
+{
+    if (!$r || !in_array($state, ['ok', 'changed'], true) || !report_approval_available()) {
+        return 'none';
+    }
+    if (!empty($r['returned_at'])) {
+        return 'returned';
+    }
+    $approved = !empty($r['sub_approved_at']) || !empty($r['dist_approved_at']);
+    if ($state === 'changed') {
+        return $approved ? 'stale' : 'waiting';
+    }
+    return !empty($r['dist_approved_at']) ? 'done' : (!empty($r['sub_approved_at']) ? 'sub' : 'waiting');
+}
+
+/** ตำบลของวัดนี้มีเจ้าคณะตำบล (บัญชีที่ใช้งานอยู่) ดูแลอยู่หรือไม่ */
+function report_has_subdistrict_chief(PDO $pdo, int $templeId): bool
+{
+    $st = $pdo->prepare("SELECT 1 FROM temples t JOIN user_subdistricts us ON us.district_id = t.district_id AND us.subdistrict = t.subdistrict
+        JOIN users u ON u.id = us.user_id AND u.role = 'subdistrict' AND u.is_active = 1 WHERE t.id = ? LIMIT 1");
+    $st->execute([$templeId]);
+    return (bool)$st->fetchColumn();
+}
+
+/**
+ * ขั้นที่ผู้ใช้ปัจจุบันตรวจรายงานของวัดนี้ได้: 'subdistrict' | 'district' | null (admin ถือเป็นขั้นอำเภอ)
+ * province / temple ไม่มีสิทธิ์รับรอง
+ */
+function report_review_level(int $templeId): ?string
+{
+    $u = user();
+    if (!$u || !report_approval_available()) {
+        return null;
+    }
+    $t = temple_row($templeId);
+    if (!$t || empty($t['is_active'])) {
+        return null;
+    }
+    return match ($u['role']) {
+        'admin' => 'district',
+        'district' => (int)$t['district_id'] === (int)$u['district_id'] ? 'district' : null,
+        'subdistrict' => subdistrict_can_view_temple($templeId, (int)$u['id']) ? 'subdistrict' : null,
+        default => null,
+    };
+}
+
+/** @return array{0:bool,1:string} [ผ่าน, ข้อความผิดพลาด] ตรวจเงื่อนไขกดรับรอง */
+function report_can_approve(PDO $pdo, int $templeId, int $beYear, int $month, ?array $rep, ?string $level): array
+{
+    if ($level === null) {
+        return [false, 'ไม่มีสิทธิ์รับรองรายงานของวัดนี้'];
+    }
+    if (!$rep) {
+        return [false, 'วัดยังไม่ได้ส่งรายงานเดือนนี้'];
+    }
+    if (!empty($rep['returned_at'])) {
+        return [false, 'รายงานถูกส่งกลับแก้ไข รอวัดส่งใหม่ก่อนจึงจะรับรองได้'];
+    }
+    if (report_state($rep, report_snapshot($pdo, $templeId, $beYear, $month), $beYear, $month) !== 'ok') {
+        return [false, 'มีการแก้ไขรายการหลังวัดส่งรายงาน — รอวัดส่งรายงานใหม่ก่อนจึงจะรับรองได้'];
+    }
+    if ($level === 'subdistrict') {
+        return empty($rep['sub_approved_at']) ? [true, ''] : [false, 'รับรองในขั้นตำบลแล้ว'];
+    }
+    if (!empty($rep['dist_approved_at'])) {
+        return [false, 'อำเภอรับรองแล้ว'];
+    }
+    if (empty($rep['sub_approved_at']) && (user()['role'] ?? '') !== 'admin' && report_has_subdistrict_chief($pdo, $templeId)) {
+        return [false, 'ต้องให้เจ้าคณะ' . unit_subdistrict() . 'รับรองก่อน จึงจะรับรองในขั้น' . unit_district() . 'ได้'];
+    }
+    return [true, ''];
+}
+
+/** รับรองรายงาน (ขั้นตามบทบาทของผู้ใช้ปัจจุบัน) @return array{0:bool,1:string} */
+function report_approve(PDO $pdo, int $templeId, int $beYear, int $month, int $userId): array
+{
+    $level = report_review_level($templeId);
+    $rep = report_approval_available() ? report_row($pdo, $templeId, $beYear, $month) : null;
+    [$ok, $err] = report_can_approve($pdo, $templeId, $beYear, $month, $rep, $level);
+    if (!$ok) {
+        return [false, $err];
+    }
+    $col = $level === 'subdistrict' ? 'sub' : 'dist';
+    // เงื่อนไข IS NULL กันกดซ้ำพร้อมกัน
+    $up = $pdo->prepare("UPDATE monthly_reports SET {$col}_approved_at = NOW(), {$col}_approved_by = ? WHERE id = ? AND {$col}_approved_at IS NULL AND returned_at IS NULL");
+    $up->execute([$userId, $rep['id']]);
+    if (!$up->rowCount()) {
+        return [false, 'รายงานนี้มีการเปลี่ยนแปลงสถานะแล้ว กรุณาโหลดหน้าใหม่'];
+    }
+    $pdo->prepare('INSERT INTO report_review_events (temple_id, report_year, report_month, revision, action, by_user, created_at) VALUES (?,?,?,?,?,?,NOW())')
+        ->execute([$templeId, $beYear, $month, (int)$rep['revision'], $level === 'subdistrict' ? 'sub_approve' : 'dist_approve', $userId]);
+    return [true, 'รับรองรายงานเดือน' . TH_MONTHS[$month] . ' ' . $beYear . ' ในขั้น' . ($level === 'subdistrict' ? unit_subdistrict() : unit_district()) . 'แล้ว'];
+}
+
+/** ส่งรายงานกลับให้วัดแก้ไข (ต้องมีเหตุผลอย่างน้อย 5 ตัวอักษร) @return array{0:bool,1:string} */
+function report_return(PDO $pdo, int $templeId, int $beYear, int $month, int $userId, string $reason): array
+{
+    $level = report_review_level($templeId);
+    if ($level === null) {
+        return [false, 'ไม่มีสิทธิ์ส่งรายงานของวัดนี้กลับ'];
+    }
+    $reason = mb_substr(trim($reason), 0, 255);
+    if (mb_strlen($reason) < 5) {
+        return [false, 'กรุณาระบุเหตุผลที่ส่งกลับ (อย่างน้อย 5 ตัวอักษร)'];
+    }
+    $rep = report_row($pdo, $templeId, $beYear, $month);
+    if (!$rep) {
+        return [false, 'วัดยังไม่ได้ส่งรายงานเดือนนี้'];
+    }
+    if (!empty($rep['returned_at'])) {
+        return [false, 'รายงานนี้ถูกส่งกลับไปแล้ว รอวัดส่งใหม่'];
+    }
+    if ($level === 'subdistrict' && !empty($rep['dist_approved_at'])) {
+        return [false, unit_district() . 'รับรองรายงานนี้แล้ว เจ้าคณะ' . unit_subdistrict() . 'ส่งกลับไม่ได้'];
+    }
+    $reopened = false;
+    $pdo->beginTransaction();
+    try {
+        $up = $pdo->prepare('UPDATE monthly_reports SET sub_approved_at = NULL, sub_approved_by = NULL, dist_approved_at = NULL, dist_approved_by = NULL,
+            returned_at = NOW(), returned_by = ?, return_reason = ? WHERE id = ? AND returned_at IS NULL');
+        $up->execute([$userId, $reason, $rep['id']]);
+        if (!$up->rowCount()) {
+            $pdo->rollBack();
+            return [false, 'รายงานนี้มีการเปลี่ยนแปลงสถานะแล้ว กรุณาโหลดหน้าใหม่'];
+        }
+        if (month_close_available() && !empty($rep['closed_at'])) {   // ส่งกลับ = ต้องแก้ไขได้ จึงเปิดงวดให้
+            $pdo->prepare('UPDATE monthly_reports SET closed_at = NULL, closed_by = NULL WHERE id = ?')->execute([$rep['id']]);
+            $pdo->prepare("INSERT INTO month_close_events (temple_id, report_year, report_month, action, reason, by_user, created_at) VALUES (?,?,?,'reopen',?,?,NOW())")
+                ->execute([$templeId, $beYear, $month, 'ส่งกลับแก้ไข: ' . $reason, $userId]);
+            $reopened = true;
+        }
+        $pdo->prepare("INSERT INTO report_review_events (temple_id, report_year, report_month, revision, action, reason, by_user, created_at) VALUES (?,?,?,?,'return',?,?,NOW())")
+            ->execute([$templeId, $beYear, $month, (int)$rep['revision'], $reason, $userId]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->inTransaction() && $pdo->rollBack();
+        throw $e;
+    }
+    report_notify_returned($templeId, $beYear, $month, $reason);
+    return [true, 'ส่งรายงานเดือน' . TH_MONTHS[$month] . ' ' . $beYear . ' กลับให้วัดแก้ไขแล้ว' . ($reopened ? ' (เปิดงวดให้อัตโนมัติ)' : '')];
+}
+
+/** แจ้งอีเมลวัดว่ารายงานถูกส่งกลับ (ไม่มีอีเมลหรือส่งไม่สำเร็จก็ไม่ขัดขวางการส่งกลับ) */
+function report_notify_returned(int $templeId, int $beYear, int $month, string $reason): void
+{
+    global $CONFIG;
+    $t = temple_row($templeId);
+    if (!$t || trim((string)($t['email'] ?? '')) === '') {
+        return;
+    }
+    $link = trim((string)($CONFIG['app_url'] ?? ''));
+    $body = "เรียน ผู้ดูแล" . $t['name'] . "\n\nรายงานประจำเดือน" . TH_MONTHS[$month] . ' พ.ศ. ' . $beYear . " ของวัดท่านถูกส่งกลับให้แก้ไข\nเหตุผล: " . $reason
+        . "\n\nกรุณาเข้าสู่ระบบ แก้ไขรายการให้ถูกต้อง แล้วกดส่งรายงานประจำเดือนใหม่"
+        . ($link !== '' ? "\n" . rtrim($link, '/') . '/statements.php' : '') . "\n\nอีเมลนี้ส่งจากระบบอัตโนมัติ";
+    try {
+        send_mail(trim($t['email']), 'รายงานประจำเดือน' . TH_MONTHS[$month] . ' ' . $beYear . ' ถูกส่งกลับให้แก้ไข', $body);
+    } catch (Throwable) {
+    }
+}
+
+/** ประวัติรับรอง/ส่งกลับของวัดในเดือนนั้น (ใหม่ → เก่า) */
+function report_review_events(PDO $pdo, int $templeId, int $beYear, int $month): array
+{
+    if (!report_approval_available()) {
+        return [];
+    }
+    $st = $pdo->prepare('SELECT e.*, u.full_name FROM report_review_events e LEFT JOIN users u ON u.id = e.by_user
+        WHERE e.temple_id = ? AND e.report_year = ? AND e.report_month = ? ORDER BY e.id DESC');
+    $st->execute([$templeId, $beYear, $month]);
+    return $st->fetchAll();
 }
 
 // ===================== ปิดงวดรายเดือน =====================

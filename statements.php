@@ -42,6 +42,22 @@ if ($canClose && $_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['actio
     redirect('statements.php?' . http_build_query(['temple' => $tid, 'year' => $year, 'month' => $month, 'form' => $form]));
 }
 
+// รับรอง/ส่งกลับรายงาน: เจ้าคณะตำบล (ขั้นตำบล) · แอดมินอำเภอ/แอดมินหลัก (ขั้นอำเภอ)
+$reviewLevel = $temple && report_approval_available() ? report_review_level($tid) : null;
+if ($reviewLevel !== null && $_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['approve_report', 'return_report'], true)) {
+    csrf_check();
+    if ($_POST['action'] === 'approve_report') {
+        [$ok, $msg] = report_approve($pdo, $tid, $year, $month, (int)$u['id']);
+        $ok && audit('report_approve', 'temple', $tid, "$year/$month $reviewLevel");
+    } else {
+        $reason = (string)($_POST['reason'] ?? '');
+        [$ok, $msg] = report_return($pdo, $tid, $year, $month, (int)$u['id'], $reason);
+        $ok && audit('report_return', 'temple', $tid, "$year/$month " . mb_substr(trim($reason), 0, 100));
+    }
+    flash($msg, $ok ? 'ok' : 'err');
+    redirect('statements.php?' . http_build_query(['temple' => $tid, 'year' => $year, 'month' => $month, 'form' => $form]));
+}
+
 $pageTitle = 'รายงานแบบที่ 1–3 ประจำเดือน';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -103,6 +119,46 @@ if (!$temple) {
             echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="เปิดงวดเดือนนี้ให้แก้ไขรายการได้?">' . csrf_field()
                 . '<input type="hidden" name="action" value="reopen_month"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '">'
                 . '<input name="reason" required minlength="5" maxlength="255" placeholder="เหตุผลที่เปิดงวด (จำเป็น)" class="w-64 ctl-sm"><button class="btn btn-sm btn-danger">เปิดงวด</button></form>';
+        }
+        if (report_approval_available() && $rep) {
+            $ap = report_approval_state($rep, $state);
+            [$apLabel, $apCls] = REPORT_APPROVAL_LABEL[$ap];
+            echo '<div class="basis-full text-sm"><span class="text-stone-600">การรับรอง:</span> <span class="badge ' . $apCls . '">' . e($apLabel) . '</span>';
+            if (!empty($rep['sub_approved_at'])) {
+                echo ' <span class="text-stone-600">เจ้าคณะ' . e(unit_subdistrict()) . 'รับรอง ' . e(th_datetime($rep['sub_approved_at'])) . '</span>';
+            }
+            if (!empty($rep['dist_approved_at'])) {
+                echo ' <span class="text-stone-600">' . e(unit_district()) . 'รับรอง ' . e(th_datetime($rep['dist_approved_at'])) . '</span>';
+            }
+            if ($ap === 'returned') {
+                echo '<div class="mt-1 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-red-900">รายงานถูกส่งกลับให้แก้ไขเมื่อ ' . e(th_datetime($rep['returned_at'])) . ' — เหตุผล: ' . e((string)$rep['return_reason']) . '<br>แก้ไขรายการให้ถูกต้องแล้วกด "ส่งรายงานใหม่"</div>';
+            }
+            echo '</div>';
+            if ($reviewLevel !== null) {
+                [$canApprove, $whyNot] = report_can_approve($pdo, $tid, $year, $month, $rep, $reviewLevel);
+                $canReturn = $ap !== 'returned' && !($reviewLevel === 'subdistrict' && !empty($rep['dist_approved_at']));
+                if ($canApprove) {
+                    echo '<form method="post" data-confirm="รับรองรายงานเดือนนี้ในนาม' . e($reviewLevel === 'subdistrict' ? 'เจ้าคณะ' . unit_subdistrict() : unit_district()) . '?">' . csrf_field()
+                        . '<input type="hidden" name="action" value="approve_report"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '"><input type="hidden" name="temple" value="' . $tid . '">'
+                        . '<button class="btn btn-sm">' . icon('check') . ' รับรองรายงาน</button></form>';
+                } elseif ($ap !== 'returned' && $whyNot !== '' && !in_array($ap, ['done'], true) && !($reviewLevel === 'subdistrict' && $ap === 'sub')) {
+                    echo '<div class="basis-full text-sm text-amber-900">' . e($whyNot) . '</div>';
+                }
+                if ($canReturn) {
+                    echo '<form method="post" class="flex flex-wrap items-center gap-2" data-confirm="ส่งรายงานเดือนนี้กลับให้วัดแก้ไข? (ถ้าปิดงวดอยู่ ระบบจะเปิดงวดให้)">' . csrf_field()
+                        . '<input type="hidden" name="action" value="return_report"><input type="hidden" name="year" value="' . $year . '"><input type="hidden" name="month" value="' . $month . '"><input type="hidden" name="temple" value="' . $tid . '">'
+                        . '<input name="reason" required minlength="5" maxlength="255" placeholder="เหตุผลที่ส่งกลับ (จำเป็น)" class="w-64 ctl-sm"><button class="btn btn-sm btn-danger">ส่งกลับแก้ไข</button></form>';
+                }
+            }
+        }
+        $revs = report_review_events($pdo, $tid, $year, $month);
+        if ($revs) {
+            $revLabel = ['sub_approve' => 'เจ้าคณะ' . unit_subdistrict() . 'รับรอง', 'dist_approve' => unit_district() . 'รับรอง', 'return' => 'ส่งกลับแก้ไข'];
+            echo '<details class="basis-full text-sm"><summary class="cursor-pointer text-stone-600">ประวัติการรับรอง/ส่งกลับ (' . count($revs) . ')</summary><ul class="mt-1 grid gap-0.5">';
+            foreach ($revs as $ev) {
+                echo '<li>' . e($revLabel[$ev['action']]) . ' · ครั้งที่ส่ง ' . (int)$ev['revision'] . ' · ' . e(th_datetime($ev['created_at'])) . ' · ' . e((string)($ev['full_name'] ?? '-')) . ($ev['reason'] ? ' · เหตุผล: ' . e($ev['reason']) : '') . '</li>';
+            }
+            echo '</ul></details>';
         }
         if ($evs) {
             echo '<details class="basis-full text-sm"><summary class="cursor-pointer text-stone-600">ประวัติปิด/เปิดงวด (' . count($evs) . ')</summary><ul class="mt-1 grid gap-0.5">';
