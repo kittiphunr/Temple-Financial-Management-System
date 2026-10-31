@@ -112,8 +112,8 @@ require __DIR__ . '/includes/header.php';
 <section class="card-table mb-6">
   <form method="post" id="due-form">
   <?= csrf_field() ?><input type="hidden" name="action" value="post_selected"><input type="hidden" name="temple" value="<?= $tid ?>">
+  <h3 class="px-5 pt-4">ถึงกำหนด รอยืนยัน (<?= count($due) ?>)</h3>
   <table class="data-table">
-    <caption class="px-5 pt-4 text-left text-lg font-semibold">ถึงกำหนด รอยืนยัน (<?= count($due) ?>)</caption>
     <thead><tr><th></th><th>วันที่</th><th>รายการ</th><th>หมวด / บัญชี</th><th class="text-right">จำนวนเงิน (บาท)</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($due as $d): $it = $d['item']; $key = $it['id'] . '|' . $d['period']; ?>
@@ -169,8 +169,8 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <section class="card-table">
+  <h3 class="px-5 pt-4">รายการประจำทั้งหมด (<?= count($items) ?>)</h3>
   <table class="data-table">
-    <caption class="px-5 pt-4 text-left text-lg font-semibold">รายการประจำทั้งหมด (<?= count($items) ?>)</caption>
     <thead><tr><th>รายการ</th><th>หมวด</th><th>บัญชี</th><th class="text-right">จำนวนเงิน</th><th>ทุกวันที่</th><th>ช่วงเวลา</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($items as $r): ?>
