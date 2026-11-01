@@ -343,6 +343,17 @@ CREATE TABLE IF NOT EXISTS report_review_events (
   CONSTRAINT fk_review_user FOREIGN KEY (by_user) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- ชุดกรองที่บันทึกไว้ของหน้า ค้นหารายการ (ต่อผู้ใช้)
+CREATE TABLE IF NOT EXISTS saved_searches (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  name VARCHAR(60) NOT NULL,
+  params TEXT NOT NULL COMMENT 'เงื่อนไขกรองแบบ JSON',
+  created_at DATETIME NOT NULL,
+  KEY idx_saved_user (user_id),
+  CONSTRAINT fk_saved_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- แจ้งเตือนอัตโนมัติ (cron) ที่ส่งไปแล้ว กันส่งซ้ำ
 CREATE TABLE IF NOT EXISTS report_notices (
   recipient VARCHAR(20) NOT NULL COMMENT 'ผู้รับ t+รหัสวัด หรือ u+รหัสผู้ใช้',
