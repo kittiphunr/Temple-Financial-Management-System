@@ -100,7 +100,7 @@ def _run(R, q, app):
     check('U18 เมนูแถบแนวนอนไม่มีลิงก์ซ้ำ และเมนูมือถือมีลิงก์ชุดเดียวกัน (แยกเป็นหัวกลุ่ม)', len(hrefs_d) == len(set(hrefs_d)) and sorted(re.findall(r'<a class="[^"]*" href="([^"]+)"', mob)) == sorted(hrefs_d))
     check('U19 รายการที่อยู่ในกลุ่มมีไอคอนทุกรายการ และมีขนาดเมนูกระชับ (ลิงก์ระดับบนสุดไม่เกิน 8 ข้อ)', desk.count('<svg class="icon') >= len(hrefs_d) and len(re.findall(r'<details class="nav-group', desk)) + len(re.findall(r'</details><a|^<a', desk)) <= 8)
     check('U20 กล่องแจ้งเตือนมีไอคอน และบัญชีของฉัน/ออกจากระบบแสดงแต่ไอคอนบนแถบแคบ (มี title และข้อความสำหรับโปรแกรมอ่านหน้าจอ)',
-          'sr-only 2xl:not-sr-only' in desk and 'title="ออกจากระบบ"' in desk and 'aria-hidden="true"' in desk)
+          '2xl:not-sr-only' not in desk and 'sr-only' in desk and 'title="ออกจากระบบ"' in desk and 'aria-hidden="true"' in desk)
 
     # ================= การ์ดกลาง: ช่องว่างเท่ากันทั้งระบบ =================
     css = g.raw('/assets/css/tailwind.css')[2].decode('utf-8', 'ignore')

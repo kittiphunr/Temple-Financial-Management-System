@@ -23,9 +23,9 @@ function nav_render(array $menu, bool $mobile): string
 {
     $link = function (array $it, bool $inPanel) use ($mobile): string {
         $cls = $it['active'] ? 'bg-brand-600 text-white' : 'text-stone-700 hover:bg-gold-100';
-        $compact = !$mobile && !$inPanel && !empty($it['compact']);   // แถบแนวนอน: แสดงแต่ไอคอนจนกว่าจอจะกว้างมาก
+        $compact = !$mobile && !$inPanel && !empty($it['compact']);   // แถบแนวนอน: แสดงแต่ไอคอนทุกความกว้าง (ข้อความอยู่ใน title และ sr-only)
         return '<a class="flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 font-semibold no-underline ' . $cls . '" href="' . e(BASE . $it['href']) . '"' . ($it['active'] ? ' aria-current="page"' : '') . ($compact ? ' title="' . e($it['label']) . '"' : '') . '>'
-            . icon($it['icon']) . '<span' . ($compact ? ' class="sr-only 2xl:not-sr-only"' : '') . '>' . e($it['label']) . '</span></a>';
+            . icon($it['icon']) . '<span' . ($compact ? ' class="sr-only"' : '') . '>' . e($it['label']) . '</span></a>';
     };
     $h = '';
     foreach ($menu as $m) {
@@ -96,7 +96,7 @@ $authLabel = $u ? 'ออกจากระบบ' : 'เข้าสู่ร�
 $authHref = BASE . ($u ? 'logout.php' : 'login.php');
 $authIcon = icon($u ? 'log-out' : 'log-in');
 $authBtn = '<a class="btn btn-outline btn-sm ml-1 inline-flex items-center gap-1.5 whitespace-nowrap" href="' . $authHref . '">' . $authIcon . $authLabel . '</a>';
-$authBtnBar = '<a class="btn btn-outline btn-sm ml-1 inline-flex items-center gap-1.5 whitespace-nowrap" href="' . $authHref . '" title="' . $authLabel . '">' . $authIcon . '<span class="sr-only 2xl:not-sr-only">' . $authLabel . '</span></a>';
+$authBtnBar = '<a class="btn btn-outline btn-sm ml-1 inline-flex items-center gap-1.5 whitespace-nowrap" href="' . $authHref . '" title="' . $authLabel . '">' . $authIcon . '<span class="sr-only">' . $authLabel . '</span></a>';
 $navDesktop = nav_render(array_merge($menu, $userMenu), false) . $authBtnBar;
 $navMobile = nav_render(array_merge($menu, $userMenu), true) . '<div class="mt-1 border-t border-stone-100 pt-2">' . $authBtn . '</div>';
 ?>
