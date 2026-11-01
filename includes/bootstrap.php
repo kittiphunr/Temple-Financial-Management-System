@@ -291,6 +291,7 @@ require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/ledger.php';
 require_once __DIR__ . '/recurring.php';
 require_once __DIR__ . '/reminders.php';
+require_once __DIR__ . '/search.php';
 require_once __DIR__ . '/ledger_ui.php';
 
 // ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน: ทุกหน้า (ยกเว้นหน้าเปลี่ยนรหัสผ่านและออกจากระบบ) ถูกส่งไปหน้าเปลี่ยนรหัสผ่าน

@@ -34,6 +34,7 @@ python3 tests/run_all.py reportstatus # เฉพาะติดตามกา�
 python3 tests/run_all.py approval     # เฉพาะรับรองรายงานเป็นลำดับชั้น (ตำบล→อำเภอ ส่งกลับ เปิดงวดอัตโนมัติ สิทธิ์ ก่อน/หลังรัน migration)
 python3 tests/run_all.py recurring    # เฉพาะรายการประจำ (ถึงกำหนด ยืนยัน/แก้จำนวน/ข้าม ลบแล้วกลับมารอ ปิดงวด สิทธิ์ ก่อน/หลังรัน migration)
 python3 tests/run_all.py reminders    # เฉพาะแจ้งเตือนอัตโนมัติทางอีเมล cron (ก่อน/เกินกำหนด ส่งกลับค้าง ปิดงวด สรุป staff ไม่ส่งซ้ำ เปิด/ปิด สิทธิ์ ก่อน/หลังรัน migration)
+python3 tests/run_all.py search       # เฉพาะค้นหารายการขั้นสูง (กรองหลายเงื่อนไข ผลรวม แบ่งหน้า CSV สิทธิ์ ชุดกรองที่บันทึก ก่อน/หลังรัน migration)
 python3 tests/run_all.py bangkok       # เฉพาะคำเรียก เขต/แขวง ของกรุงเทพมหานคร
 python3 tests/run_all.py credits       # เฉพาะนโยบายเครดิต (ไม่ใช้ฐานข้อมูล): ผลงานของผู้อื่นที่ใช้ต้องมีเครดิตและสัญญาอนุญาต
 python3 tests/run_all.py subdistrict  # เฉพาะเจ้าคณะตำบล + การสร้างผู้ใช้จังหวัด/อำเภอ/ตำบลอัตโนมัติ

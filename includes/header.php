@@ -75,6 +75,7 @@ if (!$u) {
     ]);
     $menu[] = nav_group('รายงาน', 'bar-chart-2', [
         nav_link('reports.php', 'รายงานภาพรวม', 'pie-chart', $cur === 'reports.php'),
+        nav_link('search.php', 'ค้นหารายการ', 'search', $cur === 'search.php'),
         nav_link('annual.php', 'งบรายรับ-รายจ่ายประจำปี', 'file-text', $cur === 'annual.php'),
         nav_link('statements.php', 'รายงานแบบที่ 1–3', 'file', $cur === 'statements.php'),
         ($role !== 'temple' && report_available()) ? nav_link('report_status.php', 'ติดตามรายงาน', 'clipboard', $cur === 'report_status.php') : null,
