@@ -8,6 +8,7 @@
 | `nginx.conf.example` | ตัวอย่าง Nginx + PHP-FPM + HTTPS (ปิดทางเว็บของ `storage/ includes/ sql/ data/`) |
 | `apache.conf.example` | ตัวอย่าง Apache + HTTPS |
 | `php.ini.recommended` | ค่า PHP ที่แนะนำ (อัปโหลดรูป ซ่อน error คุกกี้ปลอดภัย) |
+| `cron.example` | ตัวอย่าง crontab สำหรับ `cron_reminders.php` (แจ้งเตือนอัตโนมัติทางอีเมลวันละครั้ง) |
 
 ## 1. สร้างชุดติดตั้ง (บนเครื่องที่มีซอร์ส)
 ```bash

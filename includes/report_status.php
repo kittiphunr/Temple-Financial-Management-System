@@ -120,7 +120,7 @@ function report_submit(PDO $pdo, int $templeId, int $beYear, int $month, ?int $u
 
 /**
  * รายชื่อวัดในขอบเขตของผู้ใช้ พร้อมสถานะการส่งของเดือนนั้น
- * @param array{district?:int,status?:string,q?:string} $f  status: all|sent|unsent|late|changed|closed
+ * @param array{district?:int,status?:string,q?:string,today?:string} $f  status: all|sent|unsent|late|changed|closed · today = วันที่ (Y-m-d ค.ศ.) ที่ใช้ตัดสินสถานะเกินกำหนด (ค่าเริ่มต้นวันนี้ ใช้กับ cron)
  */
 function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
 {
@@ -152,7 +152,7 @@ function report_list(PDO $pdo, int $beYear, int $month, array $f = []): array
     $status = $f['status'] ?? 'all';
     foreach ($st->fetchAll() as $r) {
         $rep = $r['submitted_at'] ? ['txn_count' => $r['r_count'], 'income_total' => $r['r_income'], 'expense_total' => $r['r_expense']] : null;
-        $r['state'] = report_state($rep, ['count' => (int)$r['n_count'], 'income' => (float)$r['n_income'], 'expense' => (float)$r['n_expense']], $beYear, $month);
+        $r['state'] = report_state($rep, ['count' => (int)$r['n_count'], 'income' => (float)$r['n_income'], 'expense' => (float)$r['n_expense']], $beYear, $month, $f['today'] ?? null);
         $r['approval'] = report_approval_state($r, $r['state']);
         $keep = match ($status) {
             'awaiting' => in_array($r['approval'], ['waiting', 'sub'], true),

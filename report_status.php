@@ -30,6 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $r = report_send_reminders($pdo, $rows, $year, $month, (int)$u['id']);
         audit('report_remind', 'report', null, "$year/$month sent={$r['sent']} skipped={$r['skipped']} failed={$r['failed']}");
         flash('ส่งอีเมลเตือนแล้ว ' . $r['sent'] . ' วัด · ข้าม ' . $r['skipped'] . ' วัด (ไม่มีอีเมล/ส่งส่วนนี้แล้ว/ยังไม่ถึงเดือน)' . ($r['failed'] ? ' · ส่งไม่สำเร็จ ' . $r['failed'] . ' วัด' : ''), $r['failed'] ? 'err' : 'ok');
+    } elseif ($act === 'set_auto' && $u['role'] === 'admin' && reminder_available()) {
+        $days = (int)($_POST['days_before'] ?? REMINDER_DAYS_DEFAULT);
+        setting_set('reminder_auto', !empty($_POST['auto_on']) ? '1' : '0');
+        setting_set('reminder_days_before', (string)max(1, min(20, $days)));
+        audit('reminder_auto', 'setting', null, (!empty($_POST['auto_on']) ? 'on' : 'off') . " days=$days");
+        flash('บันทึกการตั้งค่าแจ้งเตือนอัตโนมัติแล้ว');
     } elseif ($act === 'set_due' && $u['role'] === 'admin') {
         $d = (int)($_POST['due_day'] ?? 0);
         if ($d >= 1 && $d <= 28) {
@@ -119,6 +125,15 @@ require __DIR__ . '/includes/header.php';
 </div>
 <?php endif; ?>
 
+<?php if ($u['role'] === 'admin' && reminder_available()): $lr = reminder_last_run(); ?>
+<div class="card-bar flex flex-wrap items-center gap-3 text-sm">
+  <form method="post" class="flex flex-wrap items-center gap-3"><?= csrf_field() ?><input type="hidden" name="action" value="set_auto"><input type="hidden" name="year" value="<?= $year ?>"><input type="hidden" name="month" value="<?= $month ?>">
+    <label class="flex items-center gap-2 !mb-0"><input type="checkbox" name="auto_on" value="1" <?= reminder_enabled() ? 'checked' : '' ?>> แจ้งเตือนอัตโนมัติทางอีเมล</label>
+    <label class="!mb-0">เตือนก่อนครบกำหนด</label><input type="number" name="days_before" min="1" max="20" value="<?= reminder_days_before() ?>" class="w-20 ctl-sm"><span>วัน</span>
+    <button class="btn btn-sm btn-outline">บันทึก</button></form>
+  <span class="text-stone-600"><?= $lr ? 'รันล่าสุด ' . e(th_datetime($lr['at'])) . ' (เดือน' . e((string)$lr['month']) . ')' : 'ยังไม่เคยรัน — ตั้ง cron ให้รัน <code>php cron_reminders.php</code> วันละครั้ง ดู README' ?></span>
+</div>
+<?php endif; ?>
 <div class="card-table"><table class="data-table">
   <thead><tr><th><?= e(unit_district()) ?></th><th>วัด</th><th>สถานะ</th><?php if (report_approval_available()): ?><th>การรับรอง</th><?php endif; ?><th>ส่งเมื่อ</th><th class="text-right">รายการ</th><th class="text-right">รายรับ</th><th class="text-right">รายจ่าย</th><th>เตือน</th><th></th></tr></thead>
   <tbody>
