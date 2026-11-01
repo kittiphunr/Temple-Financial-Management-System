@@ -171,6 +171,40 @@ CREATE TABLE IF NOT EXISTS funds (
   CONSTRAINT fk_fund_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- รายการประจำ (แม่แบบรายรับ-รายจ่ายรายเดือน กดยืนยันบันทึกเมื่อถึงกำหนด)
+CREATE TABLE IF NOT EXISTS recurring_items (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  temple_id INT UNSIGNED NOT NULL,
+  type ENUM('income','expense') NOT NULL,
+  category_id INT UNSIGNED NOT NULL,
+  account_id INT UNSIGNED NULL COMMENT 'บัญชีที่รายการเกิดขึ้น NULL = เงินสด',
+  fund_id INT UNSIGNED NULL COMMENT 'กองทุน/โครงการ (ตรวจในโปรแกรม ไม่ผูกคีย์ต่างประเทศ เพื่อให้ใช้ได้แม้ยังไม่รัน migration กองทุน)',
+  description VARCHAR(255) NOT NULL,
+  amount DECIMAL(14,2) NOT NULL COMMENT 'จำนวนเงินตั้งต้น แก้ได้ตอนยืนยัน',
+  day_of_month TINYINT UNSIGNED NOT NULL COMMENT 'วันที่ของเดือน 1-31 ถ้าเดือนนั้นไม่มีวันนั้นใช้วันสุดท้ายของเดือน',
+  start_month DATE NOT NULL COMMENT 'เดือนแรกที่เริ่มนับ (วันที่ 1 ของเดือน)',
+  end_month DATE NULL COMMENT 'เดือนสุดท้าย NULL = ไม่มีกำหนดสิ้นสุด',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_by INT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_recurring_temple (temple_id, is_active),
+  CONSTRAINT fk_recurring_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
+  CONSTRAINT fk_recurring_cat FOREIGN KEY (category_id) REFERENCES categories(id),
+  CONSTRAINT fk_recurring_account FOREIGN KEY (account_id) REFERENCES accounts(id),
+  CONSTRAINT fk_recurring_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- เดือนที่เลือก "ข้าม" (ไม่บันทึก) ของรายการประจำ
+CREATE TABLE IF NOT EXISTS recurring_skips (
+  recurring_id INT UNSIGNED NOT NULL,
+  period DATE NOT NULL COMMENT 'วันที่ 1 ของเดือนที่ข้าม',
+  skipped_by INT UNSIGNED NULL,
+  skipped_at DATETIME NOT NULL,
+  PRIMARY KEY (recurring_id, period),
+  CONSTRAINT fk_rskip_item FOREIGN KEY (recurring_id) REFERENCES recurring_items(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rskip_user FOREIGN KEY (skipped_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS transactions (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   temple_id INT UNSIGNED NOT NULL,
@@ -184,6 +218,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   fund_id INT UNSIGNED NULL COMMENT 'กองทุน/โครงการที่รายการนี้เป็นของ NULL = เงินทั่วไป',
   asset_id INT UNSIGNED NULL COMMENT 'ทรัพย์สินที่รายจ่ายนี้ซื้อหรือซ่อม',
   asset_kind ENUM('purchase','repair') NULL COMMENT 'ซื้อ หรือ ซ่อมบำรุง',
+  recurring_id INT UNSIGNED NULL COMMENT 'มาจากรายการประจำใด',
+  recurring_period DATE NULL COMMENT 'เดือนของรายการประจำที่บันทึก (วันที่ 1)',
   transfer_id INT UNSIGNED NULL COMMENT 'รหัสกลุ่มรายการโอน/ฝาก-ถอนระหว่างบัญชี (ไม่นับเป็นรายรับ-รายจ่ายในสถิติ)',
   created_by INT UNSIGNED NULL,
   is_deleted TINYINT(1) NOT NULL DEFAULT 0,
@@ -195,11 +231,13 @@ CREATE TABLE IF NOT EXISTS transactions (
   KEY idx_txn_transfer (transfer_id),
   KEY idx_txn_fund (fund_id),
   KEY idx_txn_asset (asset_id),
+  KEY idx_txn_recurring (recurring_id, recurring_period),
   CONSTRAINT fk_txn_temple FOREIGN KEY (temple_id) REFERENCES temples(id),
   CONSTRAINT fk_txn_cat FOREIGN KEY (category_id) REFERENCES categories(id),
   CONSTRAINT fk_txn_account FOREIGN KEY (account_id) REFERENCES accounts(id),
   CONSTRAINT fk_txn_fund FOREIGN KEY (fund_id) REFERENCES funds(id),
   CONSTRAINT fk_txn_asset FOREIGN KEY (asset_id) REFERENCES assets(id),
+  CONSTRAINT fk_txn_recurring FOREIGN KEY (recurring_id) REFERENCES recurring_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_txn_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
 
