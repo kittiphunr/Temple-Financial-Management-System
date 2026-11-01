@@ -79,6 +79,7 @@ if (!$u) {
         nav_link('annual.php', 'งบรายรับ-รายจ่ายประจำปี', 'file-text', $cur === 'annual.php'),
         nav_link('statements.php', 'รายงานแบบที่ 1–3', 'file', $cur === 'statements.php'),
         ($role !== 'temple' && report_available()) ? nav_link('report_status.php', 'ติดตามรายงาน', 'clipboard', $cur === 'report_status.php') : null,
+        $role !== 'temple' ? nav_link('anomalies.php', 'วัดที่ควรติดตาม', 'alert-triangle', $cur === 'anomalies.php') : null,
     ]);
     $menu[] = nav_group('ทะเบียน', 'book-open', [
         $role === 'temple' ? nav_link('profile.php', 'ข้อมูลวัดของฉัน', 'home', $cur === 'profile.php') : nav_link('temples.php', 'ข้อมูลวัด', 'map-pin', $cur === 'temples.php'),
