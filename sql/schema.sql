@@ -343,6 +343,16 @@ CREATE TABLE IF NOT EXISTS report_review_events (
   CONSTRAINT fk_review_user FOREIGN KEY (by_user) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- แจ้งเตือนอัตโนมัติ (cron) ที่ส่งไปแล้ว กันส่งซ้ำ
+CREATE TABLE IF NOT EXISTS report_notices (
+  recipient VARCHAR(20) NOT NULL COMMENT 'ผู้รับ t+รหัสวัด หรือ u+รหัสผู้ใช้',
+  report_year SMALLINT UNSIGNED NOT NULL COMMENT 'ปี พ.ศ. ของเดือนรายงาน',
+  report_month TINYINT UNSIGNED NOT NULL,
+  kind VARCHAR(40) NOT NULL COMMENT 'due_soon overdue unclosed returned_nudge digest',
+  sent_at DATETIME NOT NULL,
+  PRIMARY KEY (recipient, report_year, report_month, kind)
+) ENGINE=InnoDB;
+
 -- ประวัติการปิด/เปิดงวด (เปิดงวดต้องระบุเหตุผล)
 CREATE TABLE IF NOT EXISTS month_close_events (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
