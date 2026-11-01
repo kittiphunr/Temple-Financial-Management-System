@@ -45,6 +45,7 @@ $scopeText = $u['role'] === 'temple' ? 'เฉพาะวัดของท่�
 $title = $subLabel !== '' ? 'แดชบอร์ดเจ้าคณะ' . unit_subdistrict() : ($dist ? 'แดชบอร์ด' . unit_district() . $distName : 'แดชบอร์ดทั้ง' . province_phrase());
 $q = fn(array $o = []) => http_build_query(array_merge(['district' => $dist, 'year' => $year], $o));
 
+$extraScripts = chart_scripts();
 $pageTitle = $title;
 require __DIR__ . '/includes/header.php';
 ?>
@@ -100,7 +101,7 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
         <span class="flex items-center gap-1"><i class="inline-block h-3 w-3 rounded-sm bg-red-500"></i>รายจ่าย</span>
       </span>
     </div>
-    <?= monthly_chart($series) ?>
+    <?= monthly_chart_js($series) ?>
     <details class="mt-2 text-sm print:hidden">
       <summary class="cursor-pointer text-stone-600">ดูตัวเลขรายเดือน</summary>
       <div class="mt-2 overflow-x-auto rounded-xl border border-stone-200"><table class="data-table">
@@ -117,11 +118,13 @@ echo letterhead($pdo, $lhTemple, $lhTemple ? 0 : $dist, 'สรุปภาพ�
 <div class="mt-4 grid gap-4 md:grid-cols-2">
   <section class="card">
     <h3>หมวดรายรับสูงสุด</h3>
-    <?= category_bars($incCats, 'bg-emerald-600') ?>
+    <?= category_doughnut($incCats, CHART_INCOME_SHADES, 'กราฟโดนัทสัดส่วนหมวดรายรับสูงสุด') ?>
+    <?= category_bars($incCats, 'bg-emerald-600', CHART_INCOME_SHADES) ?>
   </section>
   <section class="card">
     <h3>หมวดรายจ่ายสูงสุด</h3>
-    <?= category_bars($expCats, 'bg-red-500') ?>
+    <?= category_doughnut($expCats, CHART_EXPENSE_SHADES, 'กราฟโดนัทสัดส่วนหมวดรายจ่ายสูงสุด') ?>
+    <?= category_bars($expCats, 'bg-red-500', CHART_EXPENSE_SHADES) ?>
   </section>
 </div>
 

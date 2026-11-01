@@ -36,6 +36,18 @@
     ]
   },
   {
+    "id": "chartjs",
+    "name": "Chart.js 4.6.1",
+    "use": "กราฟรายรับ-รายจ่ายรายเดือนและสัดส่วนหมวดบัญชีบนแดชบอร์ดและหน้ารายงาน",
+    "author": "Chart.js Contributors",
+    "license": "MIT",
+    "url": "https://www.chartjs.org/",
+    "license_file": "assets/vendor/chart.LICENSE",
+    "files": [
+      "assets/vendor/chart.umd.min.js"
+    ]
+  },
+  {
     "id": "feather-icons",
     "name": "Feather Icons 4.29.2",
     "use": "ไอคอนบนเมนู ปุ่ม และการแจ้งเตือนทั่วระบบ (ไฟล์ sprite ฝังในระบบ)",

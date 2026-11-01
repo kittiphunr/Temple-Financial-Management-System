@@ -74,17 +74,70 @@ function monthly_chart(array $series): string
 }
 
 /** แท่งแนวนอนสำหรับรายการหมวด */
-function category_bars(array $rows, string $barCls): string
+function category_bars(array $rows, string $barCls, array $dots = []): string
 {
     if (!$rows) {
         return '<p class="text-sm text-stone-500">ยังไม่มีรายการ</p>';
     }
     $max = max(array_column($rows, 'total')) ?: 1;
     $h = '<ul class="grid gap-3">';
-    foreach ($rows as $r) {
-        $h .= '<li><div class="flex items-baseline justify-between gap-3 text-sm"><span>' . e($r['name']) . '</span>'
+    foreach (array_values($rows) as $i => $r) {
+        // $dots = สีของแต่ละชิ้นในกราฟโดนัท: จุดสีหน้าชื่อหมวดช่วยเทียบกับกราฟ
+        $dot = isset($dots[$i]) ? '<i class="mr-2 inline-block h-2.5 w-2.5 rounded-full align-baseline" style="background:' . e($dots[$i]) . '"></i>' : '';
+        $h .= '<li><div class="flex items-baseline justify-between gap-3 text-sm"><span>' . $dot . e($r['name']) . '</span>'
             . '<span class="whitespace-nowrap font-semibold">' . money($r['total']) . '</span></div>'
             . '<div class="mt-1 h-2.5 overflow-hidden rounded-full bg-stone-200"><i class="block h-full ' . $barCls . '" style="width:' . round($r['total'] / $max * 100) . '%"></i></div></li>';
     }
     return $h . '</ul>';
+}
+
+/** สีของกราฟ (ตรงกับกราฟ SVG เดิมและแถบหมวดบนแดชบอร์ด) */
+const CHART_INCOME = '#059669';
+const CHART_EXPENSE = '#ef4444';
+const CHART_INCOME_SHADES = ['#047857', '#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+const CHART_EXPENSE_SHADES = ['#b91c1c', '#dc2626', '#ef4444', '#f87171', '#fca5a5', '#fecaca'];
+
+/** แท็กสคริปต์ Chart.js (ใส่ใน $extraScripts เฉพาะหน้าที่มีกราฟ เพื่อไม่ให้หน้าอื่นโหลดไฟล์ใหญ่โดยไม่จำเป็น) */
+function chart_scripts(): string
+{
+    return '<script src="' . BASE . 'assets/vendor/chart.umd.min.js"></script><script src="' . BASE . 'assets/js/charts.js"></script>';
+}
+
+/**
+ * กล่องกราฟ Chart.js แบบ progressive enhancement — ไม่มี JavaScript จะเห็น $fallbackHtml แทน (ดู assets/js/charts.js)
+ * @param array $config type (bar|doughnut), labels, datasets[{label,data,color|colors}], unit, legend
+ */
+function chart_box(array $config, string $fallbackHtml, string $label, string $height = '18rem'): string
+{
+    $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    return '<div class="chart-box" data-chart="' . e($json) . '" data-chart-label="' . e($label) . '" data-chart-height="' . e($height) . '">'
+        . '<div data-chart-fallback>' . $fallbackHtml . '</div></div>';
+}
+
+/** กราฟแท่งรายเดือน (Chart.js) ใช้กราฟ SVG เดิมเป็นกราฟสำรอง · $series[เดือน 1–12] = ['inc'=>, 'exp'=>] */
+function monthly_chart_js(array $series): string
+{
+    $svg = monthly_chart($series);
+    if (!str_starts_with($svg, '<svg')) {
+        return $svg;   // ยังไม่มีรายการ: ข้อความเดิม ไม่ต้องสร้างกราฟ
+    }
+    $short = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    $inc = $exp = [];
+    for ($m = 1; $m <= 12; $m++) {
+        $inc[] = round((float)($series[$m]['inc'] ?? 0), 2);
+        $exp[] = round((float)($series[$m]['exp'] ?? 0), 2);
+    }
+    return chart_box(['type' => 'bar', 'labels' => array_slice($short, 1), 'unit' => 'บาท', 'legend' => false,
+        'datasets' => [['label' => 'รายรับ', 'data' => $inc, 'color' => CHART_INCOME], ['label' => 'รายจ่าย', 'data' => $exp, 'color' => CHART_EXPENSE]]],
+        $svg, 'กราฟแท่งรายรับและรายจ่ายรายเดือน', '18rem');
+}
+
+/** กราฟโดนัทสัดส่วนหมวด (Chart.js) · ไม่มีรายการ/ไม่มี JS ไม่แสดงอะไร (รายการข้างล่างยังครบ) @param array $rows [{name,total}] */
+function category_doughnut(array $rows, array $shades, string $label): string
+{
+    if (!$rows) {
+        return '';
+    }
+    return '<div class="mb-4">' . chart_box(['type' => 'doughnut', 'labels' => array_column($rows, 'name'), 'unit' => 'บาท', 'legend' => false,
+        'datasets' => [['data' => array_map(fn($r) => round((float)$r['total'], 2), $rows), 'colors' => array_slice($shades, 0, count($rows))]]], '', $label, '13rem') . '</div>';
 }
