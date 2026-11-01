@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/dashboard_ui.php';
 require __DIR__ . '/includes/stats.php';
 $u = require_login();
 
@@ -56,6 +57,7 @@ foreach ($monthly as $r) $mon[(int)$r['m']] = ['inc' => (float)$r['inc'], 'exp' 
 
 $districts = $pdo->query('SELECT id, name FROM districts ORDER BY sort_order')->fetchAll();
 $groups = temples_grouped();
+$extraScripts = chart_scripts();
 $pageTitle = 'รายงาน';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -86,6 +88,7 @@ $lhDist = $lhTemple ? 0 : ($dist ?: ($u['role'] === 'district' ? (int)$u['distri
 </div>
 
 <h3 class="mt-6">รายเดือน</h3>
+<div class="card mb-3 print:break-inside-avoid"><?= monthly_chart_js($mon) ?></div>
 <div class="card-table"><table class="data-table">
   <tr><th>เดือน</th><th class="text-right whitespace-nowrap">รายรับ</th><th class="text-right whitespace-nowrap">รายจ่าย</th><th class="text-right whitespace-nowrap">คงเหลือ</th></tr>
   <?php foreach ($mon as $m => $v): ?>
