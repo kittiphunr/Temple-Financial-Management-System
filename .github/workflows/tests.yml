@@ -39,9 +39,14 @@ jobs:
           php-version: '8.3'
           extensions: pdo_mysql, mbstring, gd, zip, sodium, fileinfo, xmlreader, iconv
           coverage: none
-      - name: สร้างบัญชีทดสอบ (mysql_native_password ใช้ได้ทั้ง MariaDB และ MySQL)
+      - name: สร้างบัญชีทดสอบ (MySQL 8.0 ต้องระบุ mysql_native_password ส่วน MariaDB ไม่รับไวยากรณ์ WITH ... BY)
         run: |
-          mysql -h127.0.0.1 -uroot -pci-root-pw -e "CREATE USER 'tfmstest'@'%' IDENTIFIED WITH mysql_native_password BY 'ci-test-pw'; GRANT ALL ON *.* TO 'tfmstest'@'%';"
+          if [[ "${{ matrix.db }}" == mysql* ]]; then
+            AUTH="IDENTIFIED WITH mysql_native_password BY 'ci-test-pw'"
+          else
+            AUTH="IDENTIFIED BY 'ci-test-pw'"
+          fi
+          mysql -h127.0.0.1 -uroot -pci-root-pw -e "CREATE USER 'tfmstest'@'%' $AUTH; GRANT ALL ON *.* TO 'tfmstest'@'%';"
       - name: รันชุดทดสอบ
         env:
           TFMS_TEST_DB_HOST: 127.0.0.1
